@@ -1,0 +1,54 @@
+\documentclass[cn,11pt,fancy,hide,pad]{elegantbook}
+
+
+\title{ISO/IEC 14882:2017(E) }
+\subtitle{编程语言：C++}
+
+\author{danix800}
+\institute{ISO/IEC}
+\date{2017-12}
+\version{第五版}
+
+\equote{Victory won\rq t come to us unless we go to it. --- M. Moore}
+
+\logo{logo.png}
+\cover{cover.jpg}
+
+% footnote counter is interrupted by chapter (start over from 1 in new chapters)
+% remove this feature, so the counter increases throughout the whole document.
+\usepackage{chngcntr}
+\counterwithout{footnote}{chapter}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+% \thispagestyle{empty}
+
+\mainmatter
+\hypersetup{pageanchor=true}
+
+\renewcommand{\theparagraph}{\S\arabic{paragraph}}
+
+\include{chapters/foreword}
+\include{chapters/1.scope}
+\include{chapters/2.refs}
+\include{chapters/3.defs}
+\include{chapters/4.intro}
+\include{chapters/5.lex}
+\include{chapters/6.basic}
+\include{chapters/7.conv}
+\include{chapters/8.expr}
+\include{chapters/9.stmt}
+\include{chapters/10.dcl.dcl}
+\include{chapters/11.dcl.decl}
+\include{chapters/12.class}
+\include{chapters/13.class.derived}
+\include{chapters/14.class.access}
+\include{chapters/15.special}
+\include{chapters/16.over}
+\include{chapters/17.temp}
+\include{chapters/18.except}
+\include{chapters/19.cpp}
+
+\end{document}

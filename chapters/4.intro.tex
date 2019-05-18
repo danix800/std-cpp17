@@ -128,10 +128,342 @@ C++内存模型中的基本存储单元是\textit{字节}。一个字节至少�
     } e;
   };
 \end{lstlisting}
-包含四个独立内存位置。」
-
+包含四个独立内存位置：成员a，位域d和e.ee每一个都是独立内存位置，可以同时修改而互
+不干扰。位域b和c一起组成第四个内存位置。位域b和c不能同时修改，但b和a可以。」
 
 \section{C++对象模型}
+
+\paragraph{}
+C++程序中的构造创建，销毁，引用，访问并操作对象。\textit{对象}由定义（6.1），
+\textit{new表达式}（8.3.4），隐式切换联合活动成员（12.3）或创建临时对象时创建。
+对象在其创建期（15.7），整个生存期（6.8）和销毁期（15.7）占据一段内存。「注：函
+数不是对象，无论它是否和对象一样占据内存。」对象属性在创建时确定。对象可以有
+名字（第6章）。对象有存储期（6.7），影响其生命期（6.8）。对象拥有类型（6.9）。某
+些对象是多态的（13.3）；实现生成关联于对象的信息，使其能够在程序执行期确定对象的
+类型。对其他对象，其内所含值的解释由访问对象的\textit{表达式}（第8章）类型确定。
+
+\paragraph{}
+对象可以包含其他对象，称为\textit{子对象}。子对象可以是一个\textit{成员子对象}
+（12.2），一个\textit{基类子对象}（第13章）或是一个数组元素。不是任何其他对象子
+对象的对象称为\textit{完整对象}。如一个对象在成员子对象或数组元素\textit{e}（可
+能在或不在其生命期内）所关联的存储内创建，且满足以下条件，那么所创建对象是包含
+\textit{e}的对象的子对象：
+\begin{enumerate}
+  \item \textit{e}的包含对象生命期已开始且未结束，且
+  \item 新对象的存储恰好覆盖\textit{e}所关联存储，且
+  \item 新对象与\textit{e}的类型相同（忽略cv-限定）。
+\end{enumerate}
+「注：如子对象包含引用成员或\texttt{cont}子对象，则原子对象名不能用于访问新子对
+象（6.8）。」 \\
+「例：
+\begin{lstlisting}
+  struct X { const int n; };
+  union U { X x; float f; };
+  void tong() {
+    U u = {{ 1 }};
+    u.f = 5.f;                          // OK, creates new subobject of u (12.3)
+    X *p = new (&u.x) X{2};             // OK, creates new subobject of u
+    assert(p->n == 2);                  // OK
+    assert(*std::launder(&u.x.n) == 2); // OK
+    assert(u.x.n == 2); // undefined behavior, u.x does not name new subobject
+  }
+\end{lstlisting}
+」
+
+\paragraph{}
+如一个完整对象在另一个类型为“大小为N的无符号字符数组”或“大小为N的std::byte数组”
+（21.2.1）的对象\textit{e}所关联内存内创建（8.3.4），所创建对象由那些数组提供存
+储，如果：
+\begin{enumerate}
+  \item \textit{e}的生命期已开始且未结束，且
+  \item 新对象存储完全在\textit{e}内，且
+  \item 没有更小的数组对象满足这些约束。
+\end{enumerate}
+「注：如数组的这一部分之前为其他对象提供存储，那个对象的生命期终止，因为其存储被
+重用了。」 \\
+「例：
+\begin{lstlisting}
+  template<typename ...T>
+  struct AlignedUnion {
+    alignas(T...) unsigned char data[max(sizeof(T)...)];
+  };
+  int f() {
+    AlignedUnion<int, char> au;
+    int *p = new (au.data) int;     // OK, au.data provides storage
+    char *c = new (au.data) char(); // OK, ends lifetime of *p
+    char *d = new (au.data + 1) char();
+    return *c + *d; // OK
+  }
+
+  struct A { unsigned char a[32]; };
+  struct B { unsigned char b[16]; };
+  A a;
+  B *b = new (a.a + 8) B; // a.a provides storage for *b
+  int *p = new (b->b + 4) int; // b->b provides storage for *p
+                               // a.a does not provide storage for *p (directly),
+                               // but *p is nested within a (see below)
+\end{lstlisting}
+」
+
+\paragraph{}
+对象\textit{a}嵌套于对象\textit{b}内，如果：
+\begin{enumerate}
+  \item \textit{a}是\textit{b}的子对象，或
+  \item \textit{b}为\textit{a}提供存储，或
+  \item 存在对象\textit{c}，\textit{a}嵌套于\textit{c}内，\textit{c}嵌套于
+    \textit{b}内。
+\end{enumerate}
+
+\paragraph{}
+对每一个对象\texttt{x}，存在对象称为\texttt{x}的\textit{完整对象}，由以下确定：
+\begin{enumerate}
+  \item 如\texttt{x}是完整对象，则\texttt{x}的完整对象为其自身。
+  \item 否则，\texttt{x}的完整对象为包含\texttt{x}的（唯一）对象的完整对象。
+\end{enumerate}
+
+\paragraph{}
+如一个完整对象，数据成员（12.2）或数组元素为类类型，则其类型被视为
+\textit{最终派生类}，以区别于任何基类子对象的类类型；最终派生类类型或非类类型对
+象称为最终派生对象。
+
+\paragraph{}
+除非它是位字段（12.2.4），否则最终派生对象应具有非零大小并且应占用一个或多个存储
+字节。基类子对象可以具有零大小。 平凡可复制或标准布局类型（6.9）对象应占用连续的
+存储字节。
+
+\paragraph{}
+除非对象是零字段或零大小的基类子对象，否则该对象的地址是它占用的第一个字节的地
+址。不是位字段的具有重叠生命周期的两个对象\textit{a}和\textit{b}，如果一个嵌套在
+另一个中，或者如果至少一个是零大小的基类子对象并且它们是不同类型，则可以具有相同
+的地址; 否则有不同的地址。\footnote{根据“as-if”规则，如果程序无法观察到差异，则
+允许实现在同一机器地址存储两个对象，或者根本不存在对象（4.6）。}
+「例：
+\begin{lstlisting}
+  static const char test1 = 'x';
+  static const char test2 = 'x';
+  const bool b = &test1 != &test2; // always true
+\end{lstlisting}
+」
+
+\paragraph{}
+「注：C++提供了各种基本类型以及从现有类型组成新类型的几种方法（6.9）。」
+
 \section{程序执行}
+
+\paragraph{}
+本文档中的语义描述定义了参数化的非确定性抽象机器。本文档不要求合规实现的结构。特
+别是，它们不需要复制或模拟抽象机器的结构。 相反，需要合规实现来模拟如下所述的（仅）
+抽象机器的可观察行为。\footnote{本条款有时被称为“as-if”规则，因为只要可以从该程序
+可观察的行为中确定结果好像符合要求，实现就可以自由地忽略本文件的任何要求。例如，
+实际实现不需要求值表达式某部分，如果它可以推断出它的值没有被使用，并且没有产生影
+响程序的可观察行为的副作用。}
+
+\paragraph{}
+抽象机的某些方面和操作在本文档中描述为实现定义的（例如，\texttt{sizeof(int)}）。
+这些构成了抽象机器的参数。每个实施应包括描述其在这些方面的特征和行为的文档。
+\footnote{这些文档也包括条件支持的结构和特定语言环境行为。见第4.1节。}
+此类文档应定义与该实现相对应的抽象机器的实例（以下称为”对应实例”）。
+
+\paragraph{}
+抽象机的某些其他方面和操作在本文档中描述为未指定（例如，如果分配函数未能分配内存
+，是否求值\textit{new初始化}中的表达式（8.3.4））。在可能的情况下，本文档定义了
+一组允许的行为。 这些定义了抽象机器的非确定性方面。 因此，抽象机器的实例可以对给
+定程序和给定输入具有多于一个可能的执行。
+
+\paragraph{}
+某些其他操作在本文档中描述为未定义（例如，尝试修改\texttt{const}对象的效果）。
+「注：本文档对包含未定义行为的程序的行为不作要求。」
+
+\paragraph{}
+执行良构程序的合规实现应该产生与具有相同程序和相同输入的抽象机相应实例的可能执行
+之一相同的可观察行为。但是，如果任何此类执行包含未定义操作，则本文档不对使用该输
+入执行该程序的实现作要求（甚至不考虑第一个未定义操作之前的操作）。
+
+\paragraph{}
+具有自动存储期（6.7.3）的每个对象实例与每次进入其所在块相关联。这样的对象存在并
+且在块的执行期间及块被暂停时（通过调用函数或接收信号）保持其最后存储值。
+
+\paragraph{}
+合规实现的最小需求为：
+\begin{enumerate}
+  \item 通过易失性泛左值访问严格按抽象机规则进行求值。
+  \item 程序终止时，写入文件的所有数据应与根据抽象语义产生的程序执行的可能结果之
+    一相同。
+  \item 交互设备的输入和输出动态应以这样一种方式进行，即在程序等待输入之前提示输
+    出实际被传送。构成交互设备的是实现定义的。
+\end{enumerate}
+这些统称为程序的\textit{可观察行为}。
+「注：每个实现可以定义抽象和实际语义之间更严格的对应关系。」
+
+\paragraph{}
+「注：只有在操作符确实是结合或可交换的情况下，操作符才能按照通常的数学规则重新组
+合。\footnote{重载运算符从不假设是结合或可交换的。}例如，在以下片段中
+\begin{lstlisting}
+  int a, b;
+  /* ... */
+  a = a + 32760 + b + 5;
+\end{lstlisting}
+由于运算符的结合性和优先级，表达式语句的行为与
+\begin{lstlisting}
+  a = (((a + 32760) + b) + 5);
+\end{lstlisting}
+完全相同。因此，\texttt{(a + 32760)}求和结果加上\texttt{b}，然后结果再加上5，产
+生结果并赋给\texttt{a}。在一台溢出会产生异常，\texttt{int}可表示值范围为
+\texttt{[-32768, +32767]}的机器上，实现不能将该表达式重写成
+\begin{lstlisting}
+  a = ((a + 32765) + b);
+\end{lstlisting}
+或
+\begin{lstlisting}
+  a = (a + (b + 32765));
+\end{lstlisting}
+因为\texttt{a}和\texttt{b}的值可能分别为4和-8或-17和12。但是，在溢出不会产生异常
+并且溢出结果是可逆的机器上，上述表达式语句可以通过上述任何一种方式重写，因为会出
+现相同的结果。
+」
+
+\paragraph{}
+\textit{构成表达式}定义如下：
+\begin{enumerate}
+  \item 表达式本身的构成表达式是其本身。
+  \item \textit{braced-init-list}或（可能含括号）\textit{expression-list}的构成
+    表达式为对应列表元素的构成表达式。
+  \item 形如= \textit{initializer-clause}的\textit{brace-or-equal-initializer}的
+    构成表达式为\textit{initializer-clause}的构成表达式。
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  struct A { int x; }
+  struct B { int y; struct A a; }
+  B b = { 5, { 1 + 1 } };
+\end{lstlisting}
+用于初始化b的\textit{initializer}的构成表达式为5和1+1。」
+
+\paragraph{}
+表达式\texttt{e}的\textit{直接子表达式}为：
+\begin{enumerate}
+  \item \texttt{e}的操作数的构成表达式（第8章）。
+  \item \texttt{e}所发起的任何函数调用。
+  \item 如果\texttt{e}是\textit{lambda-expression}（8.1.5），由拷贝抓取的实体初
+    始化，以及\textit{init-captures}的\textit{initializer}的构成表达式。
+  \item 如果\texttt{e}是函数调用（8.2.2）或隐式调用一个函数，调用中的每个缺省参
+    数的构成表达式，或
+  \item 如果\texttt{e}创建聚合对象（11.6.1），其初始化中所用的每一个缺省成员初始
+    化（12.2）的构成表达式。
+\end{enumerate}
+
+\paragraph{}
+表达式\texttt{e}的\textit{子表达式}为\texttt{e}的直接子表达式或\texttt{e}的直接
+子表达式的子表达式。「注：出现于\textit{lambda-expreession}的
+\textit{compound-statement}里的表达式不是\textit{lambda-expression}的子表达式。
+」
+
+\paragraph{}
+\textit{全表达式}指
+\begin{enumerate}
+  \item 不求值的操作数（第8章），
+  \item 常表达式（8.20），
+  \item \textit{init-declaration}（第11章）或\textit{mem-initializer}（15.6.2）
+    ，包括初始化的构成表达式，
+  \item 非临时对象生命期结束时产生的析构函数调用（15.2），或
+  \item 不是某表达式子表达式，且不是某全表达式部分的表达式。
+\end{enumerate}
+如果定义语言构造以产生函数隐式调用，则该构造的使用被认为是用于该定义的表达式。
+应用于表达式结果的转换以满足表达式出现的语言构造的要求也被认为是完整表达式的一部
+分。对于初始化，执行实体的初始化（包括计算聚合的缺省成员初始值）也被视为全表达式
+的一部分。「例：
+\begin{lstlisting}
+  struct S {
+    S(int i) : I(i) { } // full-expression is initialization of I
+    int& v() { return I; }
+    ~S() noexcept(false) { }
+  private:
+    int I;
+  };
+
+  S s1(1);             // full-expression is call of S::S(int)
+  void f() {
+    S s2 = 2;          // full-expression is call of S::S(int)
+    if (S(3).v())      // full-expression includes lvalue-to-rvalue and
+                       // int to bool conversions, performed before
+                       // temporary is deleted at end of full-expression
+    { }
+    bool b = noexcept(S()); // exception specification of destructor of S
+                               // considered for noexcept
+    // full-exception is destruction of s2 at end of block
+  }
+
+  struct B {
+    B(S = S(0);
+  };
+  B b[2] = { B(), B() }; // full-exception is the entire initialization
+                           // including the destruction of temporaries
+\end{lstlisting}
+」
+
+\paragraph{}
+「注：全表达式求值可以包含词法上不属于该全表达式部分的子表达式求值。例如，缺省参
+数求值所涉及的子表达式被认为是在调用函数时创建，而不是定义缺省参数的表达式。」
+
+\paragraph{}
+\texttt{volatile}泛左值（6.10）所指代对象的读取，修改对象，调用库I/O函数或调用进
+行以上任意操作的函数均是\textit{副作用}，即对执行环境状态的修改。表达式（或子表
+达式）\textit{求值}一般包括值计算和产生副作用。当调用I/O库函数返回时或访问
+volatile泛左值计算时认为副作用完成，即使由调用（如I/O本身）或volatile访问所蕴含
+的外部行为尚未完成。
+
+\paragraph{}
+\textit{前序}是单线程（4.7）所执行求值间的一种非对称，传递，配对关系，引入求值间
+的一种偏序关系。给定任意两个求值\textit{A}和\textit{B}，如果\textit{A}前序于
+\textit{B}（或等价的，\textit{B}\textit{后序}于\textit{A}），则\textit{A}的执行
+应在\textit{B}的执行之前。如果\textit{A}不前序于\textit{B}且\textit{B}不前序于
+\textit{A}，那么\textit{A}和\textit{B}为无序。「注：无序计算执行可以重叠。」
+当要么\textit{A}前序于\textit{B}或\textit{B}前序于\textit{A}但未指明哪一个成立时
+则\textit{A}和\textit{B}的求值为\textit{不确定性有序}。「注：不确定性有序求值不
+会重叠，但任一个都可能先执行。」表达式\textit{X}前序于表达式\textit{Y}，如果关联
+于表达式\textit{X}的每一个值计算和每一个副作用前序于关联于表达式\textit{Y}的每一
+个值计算和每一个副作用。
+
+\paragraph{}
+全表达式所关联的每个值计算和副作用前序于下一个待计算全表达式所关联的每一个值计算
+和副作用。\footnote{如第15.2节所述，全表达式计算之后会产生临时对象的一个或多个析
+构函数调用序列，通常是临时对象构造顺序的反序。}
+
+\paragraph{}
+除非另有说明，单个运算符的操作数求值和单个表达式的子表达式求值是无序的。「注：在
+程序执行过程内一个计算多次的表达式中，其子表达式的无序和不确定性有序计算在不同求
+值中不需要产生一致性结果。」运算符操作数的值计算前序于运算符结果的值计算。如一个
+内存位置（4.4）上的副作用相对于同一内存位置上的另一副作用或使用同一内存位置上的
+任何对象值的计算是无序的，且是潜在并发的（4.7），那么该行为是未定义的。「注：下
+一节对潜在并发计算作类似但更复杂的约束。」
+「例：
+\begin{lstlisting}
+  void g(int i) {
+    i = 7, i++, i++;     // i becomes 9
+
+    i = i++ +1;          // the value of i is incremented
+    i = i++ + i;         // the behavior is undefined
+    i = i + 1;           // the value of i is incremented
+  }
+\end{lstlisting}
+」
+
+\paragraph{}
+当调用函数时（无论是否内联），任何实参表达式或指代所调用函数的后缀表达式，所关联
+的每一个值计算和副作用前序于所调用函数体内任一表达式或语句的执行。对函数调用
+\textit{F}，出现于\textit{F}内的每一个计算\textit{A}和不出现于\textit{F}内的每一
+个值计算\textit{B}，但在同一线程和同一信号处理器（如果有）内计算，要么\textit{A}
+前序于\textit{B}，要么\textit{B}前序于\textit{A}。\footnote{换句话说就是函数执行
+不会彼此交织。}「注：如果\textit{A}和\textit{B}没有说明顺序则为不确定性有序。」
+即使翻译单元里没有出现对应函数调用语法，在C++里的多个上下文中都会引起函数调用
+计算。「例：\textit{new-expression}求值调用一个或多个分配和构造函数；见8.3.4。
+另外，转换函数（15.3.2）可以在无函数调用语法出现的上下文中调用。」被函数调用执行
+的有序约束是函数调用执行时的特性，不论调用函数的表达式语法形式如何。
+
+\paragraph{}
+如信号处理器因调用\texttt{std::raise}函数而执行，那么处理器的执行后序于
+\texttt{std::raise}函数调用，前序于其返回。「注：当信号处理器因其他原因接收到信
+号时，其执行通常无序于程序其他部分。」
+
 \section{多线程执行与数据竞争}
 \section{致谢}

@@ -1,13 +1,732 @@
 \chapter{基本概念}
 
+\paragraph{}
+「注：本章介绍C++语言的基本概念。解释了对象与名字间的区别，以及它们与表达式值类
+别的关联。本章引入了声明与定义的概念，并介绍C++类型，作用域，链接及存储期概念。
+讨论了程序启动与终止机制。最后，本章介绍了语言的基本类型，并列举从这些类型构建
+复合类型的方法。」
+
+\paragraph{}
+「注：本章不涵盖只涉及语言单个部分的概念。这些概念在相关章节讨论。」
+
+\paragraph{}
+一个\textit{实体}指一个值、对象、引用、函数、枚举、类型、类成员、位域、模板、
+模板特例化、命名空间或参数包。
+
+\paragraph{}
+\textit{名字}指使用\textit{标识符}（5.10）、
+\textit{operator-function-id}（16.5）、
+\textit{literal-operator-id}（16.5.8）、
+\textit{conversion-function-id}或
+\textit{template-id}的使用，名字指代实体或标号（9.6.4，9.1）。
+
+\paragraph{}
+每个指代实体的名字由\textit{声明}引入。每个指代标号的名字由\texttt{goto}
+语句（9.6.4）或\textit{labeled-statement}（9.1）引入。
+
+\paragraph{}
+\textit{变量}由非静态数据成员引用的声明或对象的声明引入。变量名（如有的话）指代
+引用或对象。
+
+\paragraph{}
+某些名字指代类型或模板。一般而言，无论何时当遇到一个名字时，在继续分析程序前都必
+须确定该名字是否指代某一个实体。这一过程称为\textit{名字查询}（6.4）。
+
+\paragraph{}
+如满足以下条件则两个名字是\textit{相同}的：
+\begin{enumerate}
+  \item{相同字符序列组成的\textit{标识符}，或}
+  \item{同一运算符所形成的\textit{operator-function-ids}，或}
+  \item{同一类型所形成的\textit{conversion-functions-ids}，或}
+  \item{引用同一个类、函数或变量（17.4）的\textit{template-ids}，或}
+  \item{同一字面值后缀标识符所形成的字面值运算符（16.5.8）名字。}
+\end{enumerate}
+
+\paragraph{}
+根据每个翻译单元中指定名称的链接（6.5），多个翻译单元中使用的名称可能引用这些翻
+译单元中的同一实体。
+
+
+% s1
 \section{声明与定义}
+
+\paragraph{}
+声明（第10章）可以向翻译单元内引入一个或多个名字，或重声明之前的声明引入的名字。
+如果是这样，声明将指定这些名字的解释与属性。声明也可以有以下作用：
+\begin{enumerate}
+  \item{静态断言（第10章），}
+  \item{控制模板实例化（17.7.2），}
+  \item{指导构造函数模板参数推导（17.9），}
+  \item{属性使用（第10章），和}
+  \item{空声明（\textit{empty-declaration}）。}
+\end{enumerate}
+
+\paragraph{}
+除以下情形的声明是一个\textit{定义}：
+\begin{enumerate}
+  \item{声明函数而不带函数体（11.4），}
+  \item{声明含\texttt{extern}说明符（10.1.1）或
+      \textit{linkage-specification}（10.5）
+        \footnote{出现在\textit{linkage-specification}由花括号包含的
+             \textit{declaration-seq}中不会影响声明是否为定义。}，
+        而没有\textit{初始化}和\textit{函数体}，}
+  \item{在类定义（12.2，12.2.3）中声明非内联静态数据成员，}
+  \item{类定义外声明静态数据成员，该变量在类内使用\texttt{constexpr}说明符
+    （该用法已弃用；见D.1）定义，}
+  \item{类名声明（12.1），}
+  \item{\textit{不可见枚举声明}（\textit{opaque-enum-declaration}）（10.2），}
+  \item{模板参数（17.1），}
+  \item{非\textit{函数定义}\textit{声明子}的函数声明子中的\textit{参数声明}
+    （11.3.5），}
+  \item{\texttt{typedef}声明（10.1.3），}
+  \item{\textit{别名声明}（\textit{alias-declaration}）（10.1.3），}
+  \item{\textit{using-declaration}（10.3.3），}
+  \item{\textit{推导指南}（\textit{deduction-guide}）（17.9），}
+  \item{\textit{静态断言声明}（\textit{assert-declaration}）（第10章），}
+  \item{\textit{属性声明}（\textit{attribute-declaration}）（第10章），}
+  \item{\textit{空声明}（\textit{empty-declaration}）（第10章），}
+  \item{\textit{using-directive}（10.3.4），}
+  \item{显式实例化声明（17.7.2），或}
+  \item{显式特例化（17.7.3），它的\textit{声明}不是定义。}
+\end{enumerate}
+「例：以下仅有一个不是定义：
+\begin{lstlisting}
+  int a;                         // defines a
+  extern const int c = 1;        // defines c
+  int f(int x) { return x + a; } // defines f and defines x
+  struct S { int a; int b; }     // defines S, S::a, and S::b
+  struct X {                     // defines X
+    int x;                       // defines non-static data member x
+    static int y;                // declares static data member y
+    X() : x(0) { }               // defines a constructor of X
+  };
+  int X::y = 1;                  // defines X::y
+  enum { up, down };             // defines up and down
+  namespace N { int d; }         // defines N and N::d
+  namespace N1 = N;              // defines N1
+  X anX;                         // defines anX
+\end{lstlisting}
+而以下均为声明：
+\begin{lstlisting}
+  extern int a;                  // declares a
+  extern const int c;            // declares c
+  int f(int);                    // declares f
+  struct S;                      // declares S
+  typedef int Int;               // declares Int
+  extern X anotherX;             // declares anotherX
+  using N::d;                    // declares d
+\end{lstlisting}
+」
+
+\paragraph{}
+「注：某些情况下，C++实现隐式定义缺省构造函数（15.1），拷贝构造函数（15.8），移
+动构造函数（15.8），拷贝赋值构造运算符（15.8），移动赋值构造运算符（15.8）或析构
+成员函数。」「例：给定
+\begin{lstlisting}
+  #include <string>
+  struct C {
+    std::string s;      // std::string is the standard library class (Clause 24)
+  };
+  int main() {
+    C a;
+    C b = a;
+    b = a;
+  }
+\end{lstlisting}
+实现会隐式定义函数使得C的定义等价于
+\begin{lstlisting}
+  struct C {
+    std::string s;
+    C() : s() { }
+    C(const C& x) : s(x.s) { }
+    C(C&& x) : s(static_cast<std::string&&>(x.s) { }
+      //: s(std::move(x.s)) { }
+    C& operator=(const C& x) { s = x.s; return *this; }
+    C& operator=(C&& x) { s = static_cast<std::string&&>(x.s); return *this; }
+      //{ s = std::move(x.s); return *this; }
+    ~C() { }
+  };
+\end{lstlisting}」
+
+\paragraph{}
+「注：类名可以使用\textit{详尽类型说明符}（\textit{elaborated-type-specifier}）
+（10.1.7.3）隐式声明。」
+
+\paragraph{}
+如果任何对象的定义给予对象一个不完整的类型，则程序的格式不正确。
+
+
+%s2
 \section{单一定义原则}
+
+\paragraph{}
+翻译单元不得包含任何变量、函数、类类型、枚举类型或模板的多个定义。
+
+\paragraph{}
+除非表达式是未求值操作数（第8章）或其子表达式，否则它\textit{潜在求值}
+（\textit{potentially evaluated}）。表达式\texttt{e}的\textit{潜在结果}集定义如
+下：
+\begin{enumerate}
+  \item{如\texttt{e}为\textit{id-expression}（8.1.4），则集合仅包含\texttt{e}。}
+  \item{如\texttt{e}为带数组操作数的下标操作（8.2.1），则集合包含该操作数的潜在
+    结果。}
+  \item{如\texttt{e}为类成员访问表达式（8.2.5），集合包含对象表达式的潜在结果。}
+  \item{如\texttt{e}为成员指针表达式（8.5），其第二操作数为常表达式，集合包含对
+    象表达式的潜在结果。}
+  \item{如\texttt{e}形如\texttt{(e1)}，集合包含\texttt{e1}的潜在结果。}
+  \item{如\texttt{e}为泛左值条件表达式（8.16），集合为第二、第三操作数的潜在结果
+    集的并集。}
+  \item{如\texttt{e}为逗号表达式（8.19），集合包含右操作数的潜在结果。}
+  \item{否则，集合为空。}
+\end{enumerate}
+「注：该集合（可能为空）是\textit{ie-expressions}集，每一个元素为\textit{e}或
+\textit{e}的子表达式。「例：以下例子中，初始化\texttt{n}的潜在结果集包含第一个
+子表达式\texttt{S::x}，但不包括第二个子表达式\texttt{S::x}。
+\begin{lstlisting}
+  struct S { static const int x = 0; };
+  const int &f(const int &r);
+  int n = b ? (1, S::x)  // S::x is not odr-used here
+            : f(S::x);    // S::x is odr-used here, so a definition is required
+\end{lstlisting}」」
+
+\paragraph{}
+名字出现于潜在求值表达式\texttt{ex}中的变量\texttt{x}被\texttt{ex}
+\textit{单一定义原则-使用}（\textit{odr-used}），除非满足，对\texttt{x}应用左值
+到右值转换（7.1）产生不调用任何非平凡函数的常表达式（8.20），并且，如果
+\texttt{x}是对象，\texttt{ex}是表达式\texttt{e}潜在结果集的一个元素，\texttt{e}
+要么被应用了左值到右值转换（7.1），要么是弃值表达式（第8章）。
+\texttt{this}是odr-used，如果它出现在潜在求值表达式中（包括非静态成员函数体内隐
+式变换的结果（12.2.2））。虚成员函数是odr-used，如果它不是纯虚函数。名字出现于
+潜在求值表达式的函数是odr-used，如果它是唯一查询结果，或是一组重载函数
+（6.4，16.3，16.4）所选成员，除非它是纯虚函数且名字没有显式限定或表达式构成成员
+指针（8.3.1）。「注：这包括调用具名函数（8.2.2），运算符重载（第16章），自定义转
+换（15.3.2），用于定点（placement）\textit{new-expressions}（8.3.4）的分配函数以
+及非缺省初始化（11.6）。被选作拷贝或移动类类型对象的构造函数是odr-used，即使调用
+实际被实现消除了（15.8）。」如第8.3.4节和第15.5节所述，类分配和回收函数被出现于
+潜在求值表达式中的\textit{new-expression} odr-used。第8.3.5节和第15.5节说明类的
+回收函数被出现于潜在求值表达式中的删除（delete）表达式odr-used。 类的非定点分配
+和回收函数被该类的构造函数定义odr-used。类的非定点回收函数被该类的析构函数的定义
+或于虚析构（15.4）定义点查询所选中的析构函数定义所odr-used。\footnote{不要求实现
+从构造函数或析构函数中调用分配与回收函数；但这是允许的技术。}第15.8节说明类内的
+赋值运算符函数被为其他类隐式定义的拷贝赋值或移动赋值函数odr-used。第11.6节说明
+类的构造函数是odr-used。如被潜在调用，类的析构函数是odr-used（15.4）。
+
+\paragraph{}
+每个程序应仅包含该程序中废弃语句（9.4.1）之外odr-used的每个非内联函数或变量的一
+个定义；无需诊断。定义可显式出现在程序中，在标准或用户定义库中，或（合适时）隐式
+定义（见15.1，15.4和15.8）。废弃语句外odr-used的内联函数或变量在每一个翻译单元中
+都应被定义。
+
+\paragraph{}
+如果类的使用方式要求类类型完整，则在翻译单元中只需要一个类定义。「例：以下完整的
+翻译单元结构良好，即使没有定义\texttt{X}：
+\begin{lstlisting}
+  struct X;      // declare X as a struct type
+  struct X* x1;  // use X in pointer formation
+  X* x2;         // use X in pointer formation
+\end{lstlisting}
+」「注：声明和表达式规则描述了哪些情况下需要完整的类类型。类类型\texttt{T}必须是
+完整的，如果：
+\begin{enumerate}
+  \item{定义\texttt{T}的对象（6.1），或}
+  \item{声明类型为\texttt{T}的非静态类成员（12.2），或}
+  \item{\textit{new-expression}（8.3.4）中\texttt{T}作为分配类型或数组元素类型，
+    或}
+  \item{对引用\texttt{T}类型对象的泛左值应用左值到右值转换（7.1），或}
+  \item{表达式被转换（隐式或显式）成\texttt{T}
+    （第7章，8.2.3，8.2.7，8.2.9，8.4），或}
+  \item{非\textit{cv}限定\texttt{void *}类型且不是零指针常量的表达式使用标准转换
+      （第7章）、\texttt{dynamic\_cast}（8.2.7）或\texttt{static\_cast}（8.2.9）
+      转换成\texttt{T}的指针或\texttt{T}的引用，或}
+  \item{类成员访问运算符应用于\texttt{T}类型表达式，或}
+  \item{\texttt{typeid}运算符（8.2.8）或\texttt{sizeof}运算符（8.3.3）应用于
+    \texttt{T}类型操作数，或}
+  \item{定义（6.1）或调用（8.2.2）返回类型或参数类型为\texttt{T}的函数，或}
+  \item{定义基类类型为\texttt{T}的类（第13章），或}
+  \item{向\texttt{T}类型左值赋值（8.18），或}
+  \item{类型\texttt{T}为\texttt{alignof}表达式的主体（8.3.6），或}
+  \item{\textit{异常声明}（\textit{exception-declaration}）类型为\texttt{T}，引
+    用\texttt{T}，或指向\texttt{T}（18.3）。}
+\end{enumerate}
+
+\paragraph{}
+假定出现于不同翻译单元且满足以下要求，一个程序内的类类型（第12章）、枚举类型
+（10.2）、外部链接内联函数（10.1.6）、外部链接内联变量（10.1.6）、类模板
+（第17章）、非静态函数模板（17.5.6）、类模板静态数据成员（17.5.1.3）、类模板成员
+函数（17.5.1.1）或某些模板参数未指明的模板特例化（17.7，17.5.5）定义可以有多个。
+给定定义于多个翻译单元里名为\texttt{D}的实体，那么
+\begin{enumerate}
+  \item{每一个\texttt{D}的定义应包含相同标记序列；且}
+  \item{每一个\texttt{D}的定义中，根据第6.4节查询，重载解析（16.3）和部分模板
+      特例化匹配（17.8.3）以后，对应名字应引用\texttt{D}的定义内的实体，或引用
+      同一实体，除非一个名字可以引用
+      \begin{enumerate}
+        \item{带内部链接或无链接的非易变\texttt{const}对象，如果对象
+            \begin{enumerate}
+              \item{在所有\texttt{D}的定义内有相同字面类型，}
+              \item{使用常表达式初始化，}
+              \item{不在任何\texttt{D}的定义内odr-used，且}
+              \item{在所有\texttt{D}的定义内有相同值，}
+            \end{enumerate}
+            或
+          }
+        \item{使用常表达式初始化带内部链接或无链接的引用，使得引用指向所有
+          \texttt{D}内的同一实体；}
+      \end{enumerate}
+      且
+    }
+  \item{在\texttt{D}的每一个定义中，对应实体有相同的语言链接；且}
+  \item{在\texttt{D}的每一个定义中，所引用的重载运算符，转换函数的隐式调用，构造
+      函数，new运算符函数和delete运算符函数，应引用相同函数，或\texttt{D}内定义
+      的函数；且}
+  \item{在\texttt{D}的每一个定义中，函数调用（隐式或显式）所用缺省参数被当成如
+    同其标记序列出现在\texttt{D}的定义中；也就是，本段所述要求对缺省参数也适用，
+   （并且，如果缺省参数有带缺省参数的子表达式，要求递归地适用）
+    \footnote{第11.3.6节描述缺省参数如何查询。}；且}
+  \item{如果\texttt{D}是带隐式声明构造函数（15.1）的类，就如同该构造函数是在
+      odr-used的每个翻译单元中隐式定义，且每个翻译单元中的隐式定义应该为
+      \texttt{D}的子对象调用相同的构造函数。「例：
+\begin{lstlisting}
+  // translation unit 1:
+  struct X {
+    X(int, int);
+    X(int, int, int);
+  };
+  X::X(int, int = 0) { }
+  class D {
+    X x = 0;
+  };
+  D d1;      // X(int, int) called by D()
+
+  // translation unit 2:
+  struct X {
+    X(int, int);
+    X(int, int, int);
+  };
+  X::X(int, int = 0, int = 0) { }
+  class D {
+    X x = 0;
+  };
+  D d2;      // X(int, int, int) called by D();
+             // D()'s implicit definition violates the ODR
+\end{lstlisting}」}
+\end{enumerate}
+如果\texttt{D}是一个模板且在多个翻译单元中定义，那么以上要求对模板定义（17.6.3）
+中所用的模板包含作用域内的名字以及实例化（17.6.2）时的依赖名（17.6.2）均适用。
+如果这些要求均满足，则行为如同仅有一个\texttt{D}的定义。如果\texttt{D}的定义不满
+足这些需求，则行为未定义。
+
+
+%3
 \section{作用域}
+\subsection{声明性区域与作用域}
+
+\paragraph{}
+每个名称都在程序文本的某一部分中引入，该部分\textit{称为声明性区域}，是程序中该
+名称\textit{有效}的最大部分，也就是说，在该部分中，该名称可以用作引用同一实体的
+非限定名称。一般来说，每个特定名称仅在称为\textit{作用域}的程序文本的某些可能不
+连续部分内有效。为了确定声明作用域，引入声明的\textit{潜在作用域}会更方便。声明
+的作用域与其潜在作用域相同，除非潜在作用域包含另一个同名声明。在这种情况下，内部
+（被包含）声明性区域中声明的潜在作用域被排除在外部（包含）声明性区域中声明的作用
+域之外。
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  int j = 24;
+  int main() {
+    int i = j, j;
+    j = 42;
+  }
+\end{lstlisting}
+标识符\texttt{j}声明了两次（也被用两次）。第一个\texttt{j}的声明区域包括整个例子
+。第一个\texttt{j}的潜在作用域在其之后立即开始，直到整个程序结束，但其（实际）作
+用域不包括\texttt{,}和\texttt{\}}之间的文本。第二个\texttt{j}（分号前面）的声明
+区域包括\texttt{\{}和\texttt{\}}间的所有文本，其潜在作用域不包括\texttt{i}的声明
+。第二个\texttt{j}的作用域与其潜在作用域相同。」
+
+\paragraph{}
+声明的名字被引入到声明所在的作用域，除非存在\textit{友元}（\texttt{friend}）说明
+符（14.3），\textit{elaborated-type-specifier}（10.1.7.3）的某些使用，以及
+\textit{using-directives}（10.3.4）改变这一一般行为。
+
+\paragraph{}
+给定一个声明区域内的一组声明，每一个都说明相同的未限定名字，
+\begin{enumerate}
+  \item{都引用相同实体，或都引用函数或函数模板；或}
+  \item{仅有一个声明非类型定义名的类名或枚举名，其他声明都引用这一相同实体，非静
+    态数据成员或枚举器，或都引用函数或函数模板；这种情况下类名或枚举名被隐藏
+  （6.3.10）。「注：命名空间名或类模板名在其声明区域内必须唯一
+  （10.3.2，第17章）。」}
+\end{enumerate}
+「注：这些限制适用于名字引入的声明区域，不一定与声明所出现的区域一样。特别是，
+\textit{elaborated-type-specifier}（10.1.7.3）和友元声明（14.3）可能向包含的命名
+空间引入名字（可能不可见）；这些限制对那些区域适用。局部extern声明（6.5）可能向
+声明出现的区域引入名字，也会向包含的命名空间引入名字（可能不可见）；这些限制对两
+种区域均适用。」
+
+\paragraph{}
+「注：第6.4节总结了名字查询。」
+
+\subsection{声明点}
+
+\paragraph{}
+除以下说明，一个名字的声明点紧跟在其完整的声明子（第11章）之后，初始化（如有）之
+前。「例：
+\begin{lstlisting}
+  unsigned char x = 12;
+  { unsigned char x = x; }
+\end{lstlisting}
+这里的第二个x使用其自身值（不确定）初始化。」
+
+\paragraph{}
+「注：一个外层作用域的名字保持其可见性，直到会隐藏它的名字的声明点为止。
+「例：
+\begin{lstlisting}
+  const int i = 2;
+  { int i[i]; }
+\end{lstlisting}
+定义一个含两个整数的块作用域数组。」」
+
+
+\paragraph{}
+首次使用\textit{class-specifier}声明的类或类模板的声明点紧跟在其\textit{类头}
+（\textit{class-head}）（第12章）里面的标识符或\textit{simple-template-id}
+（如有）之后。枚举声明点紧跟其枚举说明符（10.2）或其第一个
+\textit{opaque-enum-declaration}（10.2）（先声明的那个）中的标识符之后。别名或别
+名模板声明点紧跟在别名所引用的\textit{type-id}之后。
+
+\paragraph{}
+不命名构造函数的\textit{using-declarator}的声明点紧跟在\textit{using-declarator}
+之后（10.3.3）。
+
+\paragraph{}
+枚举子声明点紧跟在其\textit{枚举子声明}（\textit{enumerator-definition}）之后。
+「例：
+\begin{lstlisting}
+  const int x = 12;
+  { enum { x = x }; }
+\end{lstlisting}
+这里枚举子x使用常量x初始化，即值12。」
+
+\paragraph{}
+在类成员声明点之后，成员名可在其类的作用域内查询。「注：即使类是不完整类也成立。
+例如：
+\begin{lstlisting}
+  struct X {
+    enum E { z = 16 };
+    int b[X::z];       // OK
+  }
+\end{lstlisting}
+」
+
+\paragraph{}
+首次使用\textit{elaborated-type-specifier}声明的类的声明点如下：
+\begin{enumerate}
+  \item{形如 \\
+    \mbox{\qquad\textit{class-key attribute-specifier-seq$_{opt}$ identifier;}}\\
+    的声明，在包含该声明的作用域内\textit{identifier}被声明成
+    \textit{class-name}，否则}
+  \item{对形如 \\
+    \mbox{\qquad\textit{class-key identifier}} \\
+    的\textit{elaborated-type-specifier}声明，如果
+    \textit{elaborated-type-specifier}在命名空间内声明的函数的
+    \textit{decl-specifier-seq}或\textit{parameter-declaration-clause}中使用，
+    那么该\textit{identifier}在含该声明的命名空间内被声明成\textit{class-name}；
+    否则，除非作为友元声明，\textit{identifier}在含该声明的最小块作用域或命名空
+    间内声明。「注：这些规则在模板内也适用。」「注：其他形式的
+    \textit{elaborated-type-specifier}不声明新名字，因此必须引用已有类型名。见
+    6.4.4和10.1.7.3。」}
+\end{enumerate}
+
+\paragraph{}
+injected-class-name（第12章）声明点紧跟类定义的左括号。
+
+\paragraph{}
+函数局部预定义变量（11.4）声明点在函数定义的函数体之前。
+
+\paragraph{}
+模板参数声明点紧跟其完整模板参数。「例：
+\begin{lstlisting}
+  typedef unsigned char T;
+  template<class T
+    = T              // lookup finds the typedef name of unsigned char
+    , T              // lookup finds the template parameter
+      N = 0> struct A {};
+\end{lstlisting}
+」
+
+\paragraph{}
+「注：友元声明引用最近包含命名空间成函数或类，但不向命名空间引入新名字
+（10.3.1.2）。块作用域函数声明和块作用域带\texttt{extern}的变量声明引用包含作用
+域成员，但不向该作用域引入新名字。」
+
+\paragraph{}
+「注：模板实例化声明点见17.6.4.1。」
+
+\subsection{块作用域}
+
+\paragraph{}
+块内声明（9.3）的名字局部于块内；它具有\textit{块作用域}。其潜在作用域始于声明点
+（6.3.2），结束于块结束处。块作用域变量为\textit{局部变量}。
+
+\paragraph{}
+函数参数名（包括\textit{lambda-declarator}内的参数），或函数定义（11.4）内的函数
+局部预定义变量的潜在作用域始于其声明点。如函数有\textit{function-try-block}，则
+参数或函数局部预定义变量的潜在作用域结束于最后一个关联的处理程序，否则结束于函数
+定义的最外层块。参数名不能在函数定义最外层块或任何关联于
+\textit{function-try-block}的处理程序最外层块内重声明。
+
+\paragraph{}
+定义于\textit{exception-declaration}的名字局部于\textit{处理程序}
+（\textit{handler}）内，且不能在\textit{处理程序}最外层块内重声明。
+
+\paragraph{}
+定义在\texttt{init-statement}、\texttt{for-range-declaration}和\texttt{if}、
+\texttt{while}、\texttt{for}和\texttt{switch}语句的\textit{条件}
+（\textit{condition}）里的名字局部于\texttt{if}、\texttt{while}、\texttt{for}和
+\texttt{switch}语句（包括受控语句），且即不能在该语句的后续条件中重声明，也不能
+在受控条件的最外层块（或者对\texttt{if}语句，任何最外层块）内重声明；见9.4。
+
+\subsection{函数原型作用域}
+\paragraph{}
+在函数声明或任何除函数定义声明子（11.4）外的声明子中的参数名（如有）有函数原型作
+用域，结束于最近包含的函数声明子结束处。
+
+\subsection{函数作用域}
+\paragraph{}
+标号（9.1）具有函数作用域，且可以在声明它的函数内任何地方使用。只有标号具有函数
+作用域。
+
+\subsection{命名空间作用域}
+\paragraph{}
+\textit{命名空间定义}（\textit{namespace-definition}）的声明区域为其
+\textit{namespace-body}。\textit{namespace-body}内声明的实体是命名空间
+\textit{成员}，由这些声明向命名空间声明区域引入的名字是命名空间的
+\textit{成员名}。命名空间成员名具有命名空间作用域。其潜在作用域包括从其声明点
+（6.3.2）开始；对提名成员命名空间的每一个\textit{using-directives}（10.3.4），成
+员的潜在作用域包括成员声明点之后的using指令潜在作用域的一部分。「例：
+\begin{lstlisting}
+  namespace N {
+    int i;
+    int g(int a) { return a; }
+    int j();
+    void q();
+  }
+
+  namespace { int l = 1; }
+  // the potential scope of l is from its point of declaration to the end of the
+  // translation unit
+
+  namespace N {
+    int g(char a) {    // overloads N::g(int)
+      return l + a;    // l is from unnamed namespace
+    }
+
+    int i;             // error: duplicate definition
+    int j();           // OK: duplicate function declaration
+
+    int j() {          // OK: definition of N::j()
+      return g(i);
+    }
+
+    int q();           // error: different return type
+  }
+\end{lstlisting}」
+
+\paragraph{}
+命名空间成员也可以跟在作用域解析运算符\texttt{::}（8.1）应用于其命名空间名称
+或在using指令中指定成员命名空间的命名空间名称之后引用；参见6.4.3.2。
+
+\paragraph{}
+翻译单元的最外层声明区域也是一个命名空间，称为\textit{全局命名空间}。声明于全局
+命名空间的名字具有\textit{全局命名空间作用域}（也称\textit{全局作用域}）。这种
+名字的潜在作用域始于其声明点（6.3.2），结束于其声明区即翻译单元结束处。具有全局
+命名空间作用域的名字为\textit{全局名字}。
+
+\subsection{类作用域}
+\paragraph{}
+类内声明名的潜在作用域不仅包括跟在名字声明点后的声明区域，还包括类内的函数体，缺
+省参数，\textit{noexcept-specifiers}和非静态数据成员的
+\textit{brace-or-equal-initializers}（含嵌套类内的这些项）。
+
+\paragraph{}
+在类\texttt{S}中使用的名字\texttt{N}，在其上下文内和在\texttt{S}的完整作用域内重
+求值的时候，应该引用同一个声明。违反此规则无需诊断。
+
+\paragraph{}
+成员函数中声明的名字会隐藏同名声明，该声明的作用域扩展到或越过成员函数类的结尾。
+
+\paragraph{}
+扩展到或超过类定义结尾的声明潜在作用域也扩展到由其成员定义所定义的区域，即使成员
+词法上定义在类外部（包括静态数据成员定义、嵌套类定义和成员函数定义，包括成员函数
+体和该定义声明子部分的任何部分，该定义跟在\textit{declarator-id}之后，
+\textit{declarator-id}包括\textit{参数声明子句}
+（\textit{parameter-declaration-clause}）和任何缺省参数（11.3.6））。
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  typedef int c;
+  enum { i = 1 };
+
+  class X {
+    char v[i];            // error: i refer to ::i but when reevaluated is X::i
+    int f() { return sizeof(c); }     // OK: X::c
+    char c;
+    enum { i = 2 };
+  }
+
+  typedef char* T;
+  struct Y {
+    T a;                  // error: T refers to ::T but when reevaluated is Y::T
+    typedef long T;
+    T b;
+  }
+
+  typedef int I;
+  class D {
+    typedef I I;          // error, even though no reordering involved
+  };
+\end{lstlisting}」
+
+\paragraph{}
+类成员名只能按如下使用：
+\begin{enumerate}
+  \item{其类或该类的派生类（第13章）作用域（如上所述）内，}
+  \item{跟在\texttt{.}运算符之后，作用于其类（8.2.5）或该类派生类类型的
+    表达式上，}
+  \item{跟在\texttt{->}运算符之后，作用于指向其类（8.2.5）或该类派生类类型对象的
+    指针上，}
+  \item{跟在作用域解析运算符\texttt{::}（8.1）之后，作用于其类或该类派生类名。}
+\end{enumerate}
+
+\subsection{枚举作用域}
+\paragraph{}
+作用域枚举子的名字具有枚举作用域。其潜在作用域始于其声明点，终于
+\textit{enum-specifiers}结束处。
+
+\subsection{模板参数作用域}
+\paragraph{}
+模板\textit{template-parameter}内的模板参数名声明区域为引入其名字的最小
+\textit{template-parameter-list}。
+
+\paragraph{}
+模板的模板参数名声明区域为引入其名字的最小\textit{template-declaration}。只有模
+板参数名属于这一声明区域；相反，\textit{template-declaration}的\textit{声明}引入
+的任何其他种类的名字被引入到与同名非模板声明所引入的相同区域。「例：
+\begin{lstlisting}
+  namespace N {
+    template<class T> struct A { };                   // #1
+    template<class U> void f(U) { };                  // #2
+    struct B {
+      template<class V> friend int g(struct C*);  // #3
+    };
+  }
+\end{lstlisting}
+\texttt{T}、\texttt{U}和\texttt{V}的声明区域为行\#1，\#2和\#3上对应的
+\textit{模板声明}。但名字\texttt{A}，\texttt{f}，\texttt{g}和\texttt{C}都属于同
+一声明区域-也就是\texttt{N}的\textit{namespace-body}。（尽管在限定和未限定名字
+查询时被隐藏，\texttt{g}仍被认为属于这一声明区域。）」
+
+\paragraph{}
+模板参数名潜在作用域始于其声明点（6.3.2），终止于其声明区域结束处。「注：这意味
+着\textit{template-parameter}可用于后续\textit{模板参数}和缺省参数声明，但不能用
+于之前的\textit{template-parameter}和缺省参数。如，
+\begin{lstlisting}
+  template<class T, T* p, class U = T> class X { /* ... */ };
+  template<class T> void f(T* p = new T);
+\end{lstlisting}
+同样也意味着\textit{template-parameter}可用于基类说明中。如，
+\begin{lstlisting}
+  template<class T> class X : public Array<T> { /* ... */ };
+  template<class T> class Y : public T { /* ... */ };
+\end{lstlisting}
+使用模板参数作为基类意味着当该类模板实例化时必须定义而不仅是声明了用作模板参数的
+类。」
+
+\paragraph{}
+模板参数名的声明区域嵌套于直接包含的声明区域。「注：结果就是，
+\textit{template-parameter}隐藏了包含作用域（6.3.10）里的任何实体。「例：
+\begin{lstlisting}
+  typedef int N;
+  template<N X, typename N, template<N Y> class T> struct A;
+\end{lstlisting}
+这里，\texttt{X}为\texttt{int}型的非类型模板参数，\texttt{Y}是与\texttt{A}的第二
+个模板参数同类型的非类型模板参数。」」
+
+\subsection{名字隐藏}
+\paragraph{}
+名字可被在嵌套声明区域或派生类（13.2）内显式声明的同名声明所隐藏。
+
+\paragraph{}
+类名（12.1）或枚举名（10.2）可被同作用域内声明的变量名，数据成员名，函数名或枚举
+子名所隐藏。如果一个类或枚举名和变量、数据成员、函数或枚举子在同一作用域内使用同
+一个名字声明（任何顺序），只要变量、数据成员、函数或枚举子名可见的地方，类或枚举
+名都被隐藏。
+
+\paragraph{}
+在成员函数定义中，块作用域中声明的名字隐藏类中的同名成员声明；见6.3.7。派生类中
+的成员声明（第13章）隐藏基类中的同名成员声明；见13.2。
+
+\paragraph{}
+在由命名空间名限定的名字查询中，由\textit{using-directives}引入的声明可被包含
+\textit{using-directives}的命名空间中的同名声明所隐藏；见6.4.3.2。
+
+\paragraph{}
+作用域中未被隐藏的名字是\textit{可见}（\textit{visible}）的。
+
+
+%4
 \section{名字查询}
+
+\subsection{未限定名查询}
+\subsection{参数依赖名查询}
+
+\subsection{限定名查询}
+\subsubsection{类名}
+\subsubsection{命名空间成员}
+
+\subsection{详尽类型说明符}
+
+\subsection{类成员访问}
+
+\subsection{Using指令和命名空间别名}
+
+%5
 \section{程序与链接}
+
+%6
 \section{程序启动与结束}
+\subsection{main函数}
+\subsection{静态初始化}
+\subsection{非局部变量动态初始化}
+\subsection{终止}
+
+%7
 \section{存储期}
+\subsection{静态存储期}
+\subsection{线程存储期}
+\subsection{自动存储期}
+
+\subsection{动态存储期}
+\subsubsection{分配函数}
+\subsubsection{回收函数}
+\subsubsection{安全派生指针}
+
+\subsection{子对象存储期}
+
+%8
 \section{对象生命期}
+
+%9
 \section{类型}
+\subsection{基本类型}
+\subsection{复合类型}
+\subsection{CV限定}
+
+%10
 \section{左值和右值}
+
+%11
 \section{对齐}

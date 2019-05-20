@@ -679,9 +679,291 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
 
 %4
 \section{名字查询}
+\paragraph{}
+名字查询规则统一适用于所有名字（包括\textit{typedef-names}（10.1.3）、
+\textit{namespace-names}（10.3）和\textit{class-names}（12.1）），只要所讨论规则
+的上下文内语法允许这样的名字。名字查询将该名字的一组声明与其使用关联起来。名字查
+询所找到的名字都应该声明相同实体，或都声明函数；后者形成一组重载函数（16.1）。重
+载解析（16.3）在名字查询成功后开始。访问规则（第14章）只在名字查询和函数重载解析
+（如适用）成功之后才考虑。只有在名字查询、函数重载解析（如适用）和访问规则检查都
+成功后，才进一步使用名字声明引入的属性进行表达式处理（第8章）。
+
+\paragraph{}
+``在表达式上下文中查询''的名字，在表达式所在作用域中按未限定名进行查询。
+
+\paragraph{}
+为名字隐藏和查询的目的，类的注入类名（第12章）也被认为是该类的成员。
+
+\paragraph{}
+「注：第6.5节讨论链接问题。作用域、声明点和名字隐藏的概念在第6.3节讨论。」
 
 \subsection{未限定名查询}
+\paragraph{}
+第6.4.1节所列的所有情况中，声明在作用域内按每一个对应类别所列顺序进行搜索；名字查
+询在名字找到后立即停止。如找不到声明则程序格式错。
+
+\paragraph{}
+使用\textit{using-directives}提名的命名空间内的声明在包含
+\textit{using-directives}的命名空间内变得可见；见10.3.4。为第6.4.1节所述的未限定
+名字查询的目的，由\textit{using-directives}提名的命名空间内的声明被当成是包含
+\textit{using-directives}命名空间里的成员。
+
+\paragraph{}
+作为函数调用\textit{后缀表达式}（\textit{postfix-expression}）的未限定名字查询于
+第6.4.2节讨论。「注：为确定（分析时）表达式是否为函数调用\textit{后缀表达式}的目
+的，常规名字查询规则是适用的。第6.4.2中的这一规则对表达式的语法解释无效果。例如，
+\begin{lstlisting}
+  typedef int f;
+  namespace N {
+    struct A {
+      friend void f(A &);
+      operator int();
+      void g(A a) {
+        int i = f(a);  // f is the typedef, not the friend function: equivalent
+                        // to int(a)
+      }
+    };
+  }
+\end{lstlisting}
+因该表达式不是函数调用，参数依赖名查询（6.4.2）不适用，友元函数\texttt{f}未找到。
+」
+
+\paragraph{}
+全局作用域中、任何函数、类或用户声明命名空间外的名字应于使用前在全局命名空间中声
+明。
+
+\paragraph{}
+用户声明命名空间里、任何函数或类外使用的名字应于使用前在该命名空间或包含该命名空
+间的命名空间里声明。
+
+\paragraph{}
+命名空间\texttt{N}的成员函数定义中，函数\textit{declarator-id}\footnote{指未限定
+名，如出现于\textit{parameter-declaration-clause}中的类型或缺省参数中，或用于
+函数体中。}后使用的名字，应在使用名字的块中或包含该块的块（9.3）之一，于使用前
+声明，或在命名空间\texttt{N}中于使用前声明，或如果\texttt{N}是嵌套命名空间，该名
+字应在使用前于\texttt{N}的一个包含命名空间中声明。「例：
+\begin{lstlisting}
+  namespace A {
+    namespace N {
+      void f();
+    }
+  }
+  void A::N::f() {
+    i = 5;
+    // The following scopes are searched for a declaration of i:
+    // 1) outermost block scope of A::N::f, before the use of i
+    // 2) scope of namespace N
+    // 3) scope of namespace A
+    // 3) global scope, before the definition of A::N::f
+  }
+\end{lstlisting}」
+
+\paragraph{}
+类\texttt{X}中，成员函数体、缺省参数、\textit{noexcept-specifiers}、非静态数据成
+员的\textit{brace-or-equal-initializer}或嵌套类定义\footnote{指类名后的未限定名；
+这种名字可能用于\textit{base-clause}或用于该类定义。}之外使用的名字，应按以下一种
+方式声明：
+\begin{enumerate}
+  \item{使用前于类\texttt{X}中，或作为\texttt{X}的基类成员（13.2），或}
+  \item{如\texttt{X}是类\texttt{Y}的嵌套类（12.2.5），\texttt{Y}中\texttt{X}定义
+    前，或作为\texttt{Y}的基类成员（从最内层包含类开始，该查询依次适用于
+    \texttt{Y}的包含类），\footnote{无论\texttt{X}的定义是否嵌套于\texttt{Y}
+    的定义中，或\texttt{X}的定义是否出现于包含\texttt{Y}定义的命名空间中，该查
+    询规则均适用。}或}
+  \item{如\texttt{X}是局部类（12.4）或局部类的嵌套类，在包含类\texttt{X}定义的
+    块中，于该定义之前，或}
+  \item{如\texttt{X}是命名空间\texttt{N}的成员，或\texttt{N}的成员类的嵌套类，或
+    \texttt{N}的成员函数的局部类的嵌套类，在\texttt{N}中类\texttt{X}的定义前，或
+    在\texttt{N}的包含命名空间之一中。}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  namespace M {
+    class B { };
+  }
+  namespace N {
+    class Y : public M::B {
+      class X {
+        int a[i];
+      };
+    };
+  }
+  // The following scopes are searched for a declaration of i:
+  // 1) scope of class N::Y::X, before the use of i
+  // 2) scope of class N::Y, before the definition of N::Y::X
+  // 3) scope of N::Y's base class M::B
+  // 4) scope of namespace N, before the definition of N::Y
+  // 5) global scope, before the definition of N
+\end{lstlisting}」「注：查询先前由友元声明引入的类或函数声明不考虑最内层包含命名
+空间作用域之外的作用域；见10.3.1.2。」「注：第6.3.7节进一步描述类定义中所用名字
+的限制。第12.2.5节进一步描述嵌套类定义中所用名字的限制。第12.4节进一步描述局部类
+定义中所用名字的限制。」
+
+\paragraph{}
+对类\texttt{X}的成员，跟在成员\textit{declarator-id}之后\footnote{指未限定名，如
+出现于\textit{parameter-declaration-clause}或\textit{noexcept-specifiers}中的类型
+中。}，在成员函数体、缺省参数、\textit{noexcept-specifier}、非静态数据成员的
+\textit{brace-or-equal-initializer}或\texttt{X}定义外的类成员定义中使用的名字，应
+按以下方法之一声明：
+\begin{enumerate}
+  \item{在使用它的块或包含该块的块（9.3）中，于使用之前，或}
+  \item{作为类\texttt{X}的成员或\texttt{X}的基类成员，或}
+  \item{如\texttt{X}是类\texttt{Y}的嵌套类（12.7），作为\texttt{Y}的成员，或
+    \texttt{Y}的基类成员（从最内层包含类开始，该查询依次适用于
+    \texttt{Y}的包含类），\footnote{无论成员函数是否定义于\texttt{X}的定义中，
+      或成员函数是否定义于包含\texttt{X}定义的命名空间作用域中，该查询规则均
+      适用。}
+    或}
+  \item{如\texttt{X}是局部类（12.4）或局部类的嵌套类，在包含类\texttt{X}定义的块
+    中，类\texttt{X}定义之前，或}
+  \item{如\texttt{X}是命名空间\texttt{N}的成员，或\texttt{N}的成员类的嵌套类，或
+    是N的成员函数局部类或该局部类的嵌套类，在命名空间\texttt{N}内或\texttt{N}的包
+  含命名空间内，于使用之前。}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  class B {};
+  namespace M {
+    namespace N {
+      class X : public B {
+        void f();
+      };
+    }
+  }
+
+  void M::N::X::f() {
+    i = 16;
+  }
+
+  // The following scopes are searched for a declaration of i:
+  // 1) outermost block scope of M::N::X::f, before the use of i
+  // 2) scope of class M::N::X
+  // 3) scope of M::N::X's base class B
+  // 4) scope of namespace M::N
+  // 5) scope of namespace M
+  // 5) global scope, before definition of M::N::X::f
+\end{lstlisting}」「注：第12.2.1节和第12.2.3节进一步描述成员函数定义所用名字的限
+制。第12.2.5节进一步描述嵌套类作用域内所用名字的限制。第12.4节进一步描述局部类定
+义所用名字的限制。」
+
+\paragraph{}
+在授予友元关系的类中，内联定义友元函数（14.3）的定义中所用名字的名字查询应按成员
+函数定义中的查找方式进行。如授予友元关系的类中未定义友元函数，则友元函数定义中的
+名字查找应按命名空间成员函数定义中的查找所述进行。
+
+\paragraph{}
+在命名成员函数的\textit{友元}声明中，在函数声明子而不是\textit{declarator-id}中
+的\textit{template-argument}的一部分中使用的名称，首先在成员函数的类（13.2）作用
+域中查询。 如果找不到，或者名称是\textit{declarator-id}中
+\textit{template-argument}的一部分，则查找与授予友元关系的类定义中的非限定名称一
+样。「例：
+\begin{lstlisting}
+  struct A {
+    typedef int AT;
+    void f1(AT);
+    void f2(float);
+    template<class T> void f3();
+  };
+  struct B {
+    typedef char AT;
+    typedef float BT;
+    friend void A::f1(AT);    // parameter type is A::AT
+    friend void A::f2(BT);    // parameter type is B::BT
+    friend void A::f3<AT>();  // template argument is B::AT
+  }
+\end{lstlisting}」
+
+\paragraph{}
+在查询用作函数\textit{parameter-declaration-clause}中的缺省参数名或用作构造函数
+\textit{mem-initializer}的\textit{expression}中的名字时，函数参数名可见，且隐藏
+块中定义实体、类或包含函数声明的命名空间作用域。「注：第11.3.6节进一步描述缺省参
+数所用名字的限制。第15.6.2节进一步描述\textit{ctor-initializer}中所用名字的限制。
+」
+
+\paragraph{}
+在\textit{枚举定义}的\textit{constant-expression}名查询中，之前的
+\textit{enumerators}声明可见并隐藏块、类或含\textit{enum-specifier}的命名空间
+作用域内声明的实体。
+
+\paragraph{}
+类\texttt{X}静态数据成员（12.2.3.2）声明中所用的名字（在静态成员的
+\textit{quafilied-id}之后）如同该名字用于\texttt{X}的成员函数时的查询一样。「注：
+第12.2.3.2节进一步描述静态数据成员定义所用名字的限制。」
+
+\paragraph{}
+如命名空间内的变量在其命名空间作用域外定义，那么任何出现于该成员定义（在
+\textit{declarator-id}之后）的名字如同该成员定义在其命名空间里一样查询。「例：
+\begin{lstlisting}
+  namespace N {
+    int i = 4;
+    extern int j;
+  }
+
+  int i = 2;
+
+  int N::j = i; // N::j == 4
+\end{lstlisting}
+」
+
+\paragraph{}
+用于\textit{function-try-block}（第18章）的处理程序的名字如同该名字用于函数定义
+最外层块中一样查询。特别是，函数参数名不应在\textit{exception-declaration}和
+\textit{function-try-block}的处理程序最外层块中重声明。函数定义最外层块内声明的
+名字在\textit{function-try-block}处理程序的作用域内查询时找不到。「注：但函数参
+数名可找到。」
+
+\paragraph{}
+「注：模板定义内的名字查询在第17.6节中描述。」
+
 \subsection{参数依赖名查询}
+\paragraph{}
+当函数调用（8.2.2）中的\textit{postfix-expression}是一个
+\textit{unqualified-id}时，常规未限定名查询（6.4.1）时未考虑的其他命名空间可能被
+搜索，且在那些命名空间中，不可见的命名空间作用域友元函数或函数模板声明（14.3）可
+能被搜索。这些对搜索的修改依赖于参数类型（对于模板的模板参数，指模板参数的命名空
+间）。「例：
+\begin{lstlisting}
+  namespace N {
+    struct S {};
+    void f(S);
+  }
+
+  void g() {
+    N::S s;
+    f(s);        // OK: calls N::f
+    (f)(s);      // error: N::f not considered; parentheses prevent argument-
+                 //        dependent lookup
+  }
+\end{lstlisting}」
+
+\paragraph{}
+对函数调用中的每一个参数类型\texttt{T}，存在一组零或多个\textit{关联命名空间}和
+一组零或多个\textit{关联类}待考虑。该命名空间和类集完全由函数参数类型确定（及任
+何模板的模板参数命名空间）。用于说明类型的类型定义名和\textit{using-declarations}
+不贡献该集合。该命名空间和类集合按如下方式确定：
+\begin{enumerate}
+  \item{如\texttt{T}为基本类型，其关联命名空间和类集均为空。}
+  \item{如\texttt{T}为类类型，其关联类为：类本身；该类作为其成员的类（如有）；
+    其直接与非直接基类。其关联命名空间为该类关联类的最内层包含命名空间。进一步，
+    如果\texttt{T}类模板特例化，其关联命名空间和关联类还包括：为模板类型形参（不
+    包括模板的模板形参）提供的模板实参类型所关联的命名空间和类；模板的模板实参作
+    为其成员的命名空间；以及有成员模板作为其成员的类，该成员模板用作模板的模板实
+    参。「注：非类型模板实参不贡献关联命名空间集。」}
+  \item{如\texttt{T}为枚举类型，其关联命名空间为其声明的最内层包含命名空间。如果
+    它是一个类成员，其关联类为该成员的类；否则它没有关联类。}
+  \item{如\texttt{T}为函数类型，其关联命名空间和关联类为关联于函数参数类型和关联
+    于其返回类型的命名空间和类。}
+  \item{如\texttt{T}为指向\texttt{U}的指针或\texttt{U}的数组，其关联命名空间和关
+    联类为那些关联于函数参数类型和其返回类型的命名空间和类。}
+  \item{如\texttt{T}为类\texttt{X}的成员函数指针，其关联命名空间和类为关联于函数
+    参数类型和返回类型，以及关联于类\texttt{X}的命名空间和类。}
+  \item{如\texttt{T}为类\texttt{X}的数据成员指针，其关联命名空间和类为关联于成员
+    类型和关联于类\texttt{X}的命名空间和类。}
+\end{enumerate}
+如关联命名空间是一个内联命名空间（10.3.1），其包含命名空间也包含于该集合。如关联
+命名空间直接包含内联命名空间，那些内联命名空间也包含于该集合。
+
+\paragraph{}
 
 \subsection{限定名查询}
 \subsubsection{类名}

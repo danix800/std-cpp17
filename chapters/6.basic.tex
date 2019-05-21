@@ -970,10 +970,139 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
 \subsubsection{命名空间成员}
 
 \subsection{详尽类型说明符}
+\paragraph{}
+一个\textit{elaborated-type-specifier}（10.1.7.3）可用来引用先前声明的
+\textit{class-name}或\textit{enum-name}，即使该名字被非类型声明（6.3.10）隐藏。
+
+\paragraph{}
+如果\textit{elaborated-type-specifier}没有\textit{nested-name-specifier}，且除非
+该\textit{elaborated-type-specifier}出现于如下形式的声明中：\\
+\mbox{\qquad \textit{class-key attribute-specifier-seq$_{opt}$ identifier;}} \\
+该\textit{标识符}按第6.4.1节查询，但忽略掉任何已声明的非类型名字。如果
+\textit{elaborated-type-specifier}由\texttt{enum}关键字引入而查询未找到已声明的
+\textit{type-name}，则该\textit{elaborated-type-specifier}格式错误。如果
+\textit{elaborated-type-specifier}由\texttt{class}关键字引入而查询未找到已声明的
+\textit{type-name}，或如果该\textit{elaborated-type-specifier}出现于以下形式的声
+明中： \\
+\mbox{\qquad \textit{class-key attribute-specifier-$_{opt}$ identifier;}} \\
+则该\textit{elaborated-type-specifier}为第6.3.2节中所述引入\textit{class-name}的
+声明。
+
+\paragraph{}
+如是\textit{elaborated-type-specifier}有\textit{nested-name-specifier}，则按
+第6.4.3节进行限定名查询，忽略掉任何已声明的非类型名字。如果名字查询找不到已声明
+\textit{type-name}，则该\textit{elaborated-type-specifier}格式错误。「例：
+\begin{lstlisting}
+  struct Node {
+    struct Node* Next;        // OK: Refers to Node at global scope
+    struct Data* Data;        // OK: Declares type Data
+                              // at global scope and member data
+  };
+
+  struct Data {
+    struct Node* Node;        // OK: Refers to Node at global scope
+    friend struct ::Glob;     // error: Glob is not declared, cannot introduce a
+                              //          qualified type (10.1.7.3)
+    friend struct Glob;       // OK: Refers to (as yet) undeclared Glob at
+                              // global scope.
+    /* ... */
+  };
+
+  struct Base {
+    struct Data;              // OK: Declares nested Data
+    struct ::Data* thatData;  // OK: Refers to ::Data
+    struct Base::Data* thisData; // OK: Refers to nested Data
+    friend class ::Data;         // OK: global Data is a friend
+    friend class Data;           // OK: nested Data is a friend
+    struct Data { /* ... */ };   // Defines nested Data
+  };
+
+  struct Data;            // OK: Redeclares Data at global scope
+  struct ::Data;          // error: cannot introduce a qualified name (10.1.7.3)
+  struct Base::Data;      // error: cannot introduce a qualified name (10.1.7.3)
+  struct Base::Datum;     // error: Datum undefined;
+  struct Base::Data* pBase; // OK: refers to nested Data
+\end{lstlisting}」
 
 \subsection{类成员访问}
+\paragraph{}
+在类成员访问表达式中（8.2.5），如果\texttt{.}或\texttt{->}标记直接跟上一个
+\textit{标识符}，再跟上\texttt{<}，则必须查询标识符以确定\texttt{<}是模板参数列
+表（17.2）的开始还是小于运算符。标识符首先在对象表达式的类中查询。如未找到，则在
+整个\textit{postfix-expression}的上下文中查询，且应该命名一个类模板。
+
+\paragraph{}
+如果类成员访问中的（8.2.5）\textit{id-expression}是一个\textit{unqualified-id}，
+且对象表达式的类型为类类型\texttt{C}，则\textit{unqualified-id}在类\texttt{C}的
+作用域中查询。对一个伪析构调用（8.2.4），该\textit{unqualified-id}在完整
+\textit{postfix-expression}的上下文中查询。
+
+\paragraph{}
+如果\textit{unqualified-id}是\textit{~type-name}，该\textit{type-name}在整个
+\textit{postfix-expression}的上下文中查询。如果对象表达式的类型\texttt{T}为类类
+型\texttt{C}，该\textit{type-name}也在类\texttt{C}的作用域中查询。至少一个查询应
+找到引用\textit{cv} \texttt{T}的名字。「例：
+\begin{lstlisting}
+  struct A {};
+
+  struct B {
+    struct A {};
+    void f(::A* a);
+  };
+
+  void B::f(::A* a) {
+    a->~A();          // OK: lookup in *a finds the injected-class-name
+  };
+\end{lstlisting}」
+
+\paragraph{}
+如果类成员访问中的\textit{id-expression}是形如
+\begin{lstlisting}
+  class-name-or-namespace-name::...
+\end{lstlisting}
+的\textit{qualified-id}，跟在\texttt{.}和\texttt{->}运算符之后的
+\textit{class-name-or-namespace-name}首先在对象表达式的类中查询，如找到则使用该
+名字。否则在整个\textit{postfix-expression}的上下文中查询。「注：见第6.4.3节，描
+述::之前的名字查询，该查询只能类型或命名空间名。」
+
+\paragraph{}
+如果\textit{qualified-id}形如
+\begin{lstlisting}
+  ::class-name-or-namespace-name::...
+\end{lstlisting}
+该\textit{class-name-or-namespace-name}在全局作用域中作为\textit{class-name}或
+\textit{namespace-name}进行查询。
+
+\paragraph{}
+如果\textit{class-name-or-namespace-name}包含\textit{simple-template-id}（17.2）
+则其\textit{template-arguments}中的名字在整个\textit{postfix-expression}所出现的
+上下文中查询。
+
+\paragraph{}
+如果\textit{id-expression}是\textit{conversion-function-id}，其
+\textit{conversion-type-id}首先在对象表达式的类中查询，如找到则使用该名字。否则
+在完整\textit{postfix-expression}的上下文中查询。在每一个这些查询中，只有代表类
+型或特例化是类型的模板的名字才被考虑。「例：
+\begin{lstlisting}
+  struct A {};
+  namespace N {
+    struct A {
+      void g() {}
+      template <class T> operator T();
+    };
+  }
+
+  int main() {
+    N::A a;
+    a.operator A();  // calls N::A::operator N::A
+  }
+\end{lstlisting}」
 
 \subsection{Using指令和命名空间别名}
+\paragraph{}
+在\textit{using-directive}或\textit{namespace-alias-definition}中，查询
+\textit{namespace-name}或查询\textit{nested-name-specifier}中的名字时只考虑命名
+空间名。
 
 %5
 \section{程序与链接}

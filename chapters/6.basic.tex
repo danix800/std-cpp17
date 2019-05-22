@@ -1106,6 +1106,150 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
 
 %5
 \section{程序与链接}
+\paragraph{}
+程序由一个或多个\textit{翻译单元}（\textit{translation unit}）（第5章）链接起来。
+翻译单元由声明序列组成。 \\
+\mbox{ \qquad \qquad \textit{translation-unit:} }       \\
+\mbox{ \qquad \qquad \qquad \textit{declaration-seq$_{opt}$}}
+
+\paragraph{}
+当一个名称可能表示相同对象、引用、函数、类型、模板、名称空间或值作为另一个作用域
+内的声明引入的名称时，该名称被称为具有链接：
+\begin{enumerate}
+  \item{当名字有\textit{外部链接}（\textit{external linkage}）时，其所代表的实体
+    可从其他翻译单元或从同一翻译单元里不同的作用域内引用。}
+  \item{当名字有\textit{内部链接}（\textit{internal linkage}）时，其所代表的实体
+    可从同一翻译单元内的其他作用域内引用。}
+  \item{当名字\textit{无链接}（\textit{no linkage}）时，其所代表的实体不能从其他
+    作用域内引用。}
+\end{enumerate}
+
+\paragraph{}
+具有命名空间作用域（6.3.6）的名字有内部链接，如果它是一个：
+\begin{enumerate}
+  \item{显式定义为\texttt{static}的变量、函数或函数模板；或}
+  \item{即没有显式定义为\texttt{extern}也没有先前定义成外部链接的非易失const限定
+    类型的非内联变量；或}
+  \item{匿名联合数据成员}
+\end{enumerate}的名字。
+
+\paragraph{}
+无名命名空间或无名命名空间内直接或间接声明的无名命名空间具有内部链接。所有其他命
+名空间具有外部链接。具有命名空间作用域，未给予内部链接的名字，如果是以下的名字：
+\begin{enumerate}
+  \item{变量；或}
+  \item{函数；或}
+  \item{具名类（第12章），或类型声明中定义的不具名类，该类有类型定义名作为链接目
+    的（10.1.3）；或}
+  \item{具名枚举（10.2），或类型声明中定义的不具名枚举，该枚举有类型定义名作为链
+    接目的（10.1.3）；或}
+  \item{模板。}
+\end{enumerate}则该名字具有和包含命名空间相同的链接。
+
+\paragraph{}
+更进一步，成员函数，静态数据成员，类作用域具名类或枚举，或类型定义名作链接目的
+（10.1.3）的类作用域类型定义声明中定义的类或枚举，与作为其成员的类名具有相同的作
+用域（如有）。
+
+\paragraph{}
+块作用域声明的函数名和块作用域\texttt{extern}声明的变量名具有链接。如有同名同类
+型带链接实体声明可见，忽略掉最内层包含命名空间作用域外声明的实体，块作用域声明所
+声明的相同实体接收到之前声明的链接。如有多于一个这样的实体则程序格式错误。否则，
+如果没有匹配实体，块作用域实体有外部链接。如果有翻译单元内，相同的实体被声明成即
+有外部链接又有内部链接，则程序格式错误。「例：
+\begin{lstlisting}
+  static void f();
+  static int i = 0;      // #1
+  void g() {
+    extern void f();     // internal linkage
+    int i;               // #2: i has no linkage
+    {
+      extern void f();   // internal linkage
+      extern int i;      // #3: external linkage, ill-formed
+    }
+  }
+\end{lstlisting}
+没有\#2行的声明，\#3行的声明将会与\#1行的声明链接。因为内部链接声明被隐藏，\#3行
+将是外部链接，使得程序格式错误。」
+
+\paragraph{}
+当有链接实体的块作用域声明没有引用其他声明时，该实体为最内层包含命名空间的成员。
+然而这样的声明不向其命名空间引入成员名字。「例：
+\begin{lstlisting}
+  namespace X {
+    void p() {
+      q();                  // error: q not yet declared
+      extern void q();      // q is a member of namespace X
+    }
+
+    void middle () {
+      q();                  // error: q not yet declared
+    }
+
+    void q() { /* ... */ }  // definition of X::q
+  }
+
+  void q() { /* ... */ }    // some other, unrelated q
+\end{lstlisting}」
+
+\paragraph{}
+这些规则没有覆盖的名字无链接。更进一步，除另有说明，块作用域（6.3.3）内声明的名
+字无作用域。一个类型有链接当且仅当：
+\begin{enumerate}
+  \item{具名类或枚举（或有作链接目的的名字（10.1.3））且名字有链接；或}
+  \item{带链接类的无名类或枚举成员；或}
+  \item{类模板特例化（第17章）\footnote{类模板具有其声明所在的最内包含类或命名
+    空间的链接。}；或}
+  \item{基本类型（6.9.1）；或}
+  \item{除类或枚举以外的复合类型（6.9.2），完全由有链接类型复合而成；或}
+  \item{有链接类型的cv-限定版本（6.9.3）。}
+\end{enumerate}
+无链接类型不应用作带外部链接变量或函数类型，除非
+\begin{enumerate}
+  \setcounter{enumi}{6}
+  \item{实体有C语言链接（10.5），或}
+  \item{实体声明于不具名命名空间（10.3.1），或}
+  \item{实体不是odr-used（6.2）或不在同一翻译单元内定义。}
+\end{enumerate}
+「注：换名话说，无链接类型包含不能在其翻译单元之外命名的类或枚举。使用这种类型声
+明的外部链接实体不能对应于程序的其他翻译单元的任何实体，因此如果它是odr-used，必
+须在本翻译单元内定义。还要注意有链接类可以包含无链接类型的成员，并且在确定类型是
+否有链接时会忽略typedef名字。」「例：
+\begin{lstlisting}
+  template <class T> struct B {
+    void g(T) {}
+    void h(T);
+    friend void i(B, T) {}
+  };
+
+  void f() {
+    struct A { int x; }  // no linkage
+    A a = { 1 };
+    B<A> ba;             // declares B<A>::g(A) and B(A)::h(A)
+    ba.g(a);             // OK
+    ba.h(a);             // error: B<A>::h(A) not defined in the translation
+                         // unit
+    i(ba, a);            // OK
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如满足以下，两个声明于不同作用域的相同名字（第6章）应代表同一个变量、函数、
+类型、模板或命名空间：
+\begin{enumerate}
+  \item{两个名字都有外部链接或内部链接且有同一个翻译单元内声明；且}
+  \item{两个名字都引用同一命名空间成员，或同一个类的成员（非继承）；且}
+  \item{两个名字都代表函数，函数的参数类型列表（11.3.5）相同；且}
+  \item{两个名字都代表函数模板，模板签名（17.5.6.1）一致。}
+\end{enumerate}
+
+\paragraph{}
+在所有类型调整完成后（类型定义（10.1.3）替换成对应定义），所有引用变量或函数的声
+明所指定类型应该一致，除数组对象声明的主数组界（11.3.4）可以不同或不存在。违反类
+型一致规则无需诊断。
+
+\paragraph{}
+「注：链接到非C++声明可以通过\textit{linkage-specification}（10.5）实现。」
 
 %6
 \section{程序启动与结束}

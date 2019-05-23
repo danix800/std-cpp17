@@ -153,7 +153,7 @@
 （10.1.7.3）隐式声明。」
 
 \paragraph{}
-如果任何对象的定义给予对象一个不完整的类型，则程序的格式不正确。
+如果任何对象的定义给予对象一个不完整的类型，则程序为病态的。
 
 
 %s2
@@ -700,7 +700,7 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
 \subsection{未限定名查询}
 \paragraph{}
 第6.4.1节所列的所有情况中，声明在作用域内按每一个对应类别所列顺序进行搜索；名字查
-询在名字找到后立即停止。如找不到声明则程序格式错。
+询在名字找到后立即停止。如找不到声明则程序为病态的。
 
 \paragraph{}
 使用\textit{using-directives}提名的命名空间内的声明在包含
@@ -980,7 +980,7 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
 \mbox{\qquad \textit{class-key attribute-specifier-seq$_{opt}$ identifier;}} \\
 该\textit{标识符}按第6.4.1节查询，但忽略掉任何已声明的非类型名字。如果
 \textit{elaborated-type-specifier}由\texttt{enum}关键字引入而查询未找到已声明的
-\textit{type-name}，则该\textit{elaborated-type-specifier}格式错误。如果
+\textit{type-name}，则该\textit{elaborated-type-specifier}为病态的。如果
 \textit{elaborated-type-specifier}由\texttt{class}关键字引入而查询未找到已声明的
 \textit{type-name}，或如果该\textit{elaborated-type-specifier}出现于以下形式的声
 明中： \\
@@ -991,7 +991,7 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
 \paragraph{}
 如是\textit{elaborated-type-specifier}有\textit{nested-name-specifier}，则按
 第6.4.3节进行限定名查询，忽略掉任何已声明的非类型名字。如果名字查询找不到已声明
-\textit{type-name}，则该\textit{elaborated-type-specifier}格式错误。「例：
+\textit{type-name}，则该\textit{elaborated-type-specifier}为病态的。「例：
 \begin{lstlisting}
   struct Node {
     struct Node* Next;        // OK: Refers to Node at global scope
@@ -1154,9 +1154,9 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
 \paragraph{}
 块作用域声明的函数名和块作用域\texttt{extern}声明的变量名具有链接。如有同名同类
 型带链接实体声明可见，忽略掉最内层包含命名空间作用域外声明的实体，块作用域声明所
-声明的相同实体接收到之前声明的链接。如有多于一个这样的实体则程序格式错误。否则，
+声明的相同实体接收到之前声明的链接。如有多于一个这样的实体则程序为病态的。否则，
 如果没有匹配实体，块作用域实体有外部链接。如果有翻译单元内，相同的实体被声明成即
-有外部链接又有内部链接，则程序格式错误。「例：
+有外部链接又有内部链接，则程序为病态的。「例：
 \begin{lstlisting}
   static void f();
   static int i = 0;      // #1
@@ -1170,7 +1170,7 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
   }
 \end{lstlisting}
 没有\#2行的声明，\#3行的声明将会与\#1行的声明链接。因为内部链接声明被隐藏，\#3行
-将是外部链接，使得程序格式错误。」
+将是外部链接，使得程序为病态的。」
 
 \paragraph{}
 当有链接实体的块作用域声明没有引用其他声明时，该实体为最内层包含命名空间的成员。
@@ -1279,9 +1279,208 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
 \subsection{基本类型}
 \subsection{复合类型}
 \subsection{CV限定}
+\paragraph{}
+第6.9.1节和第6.9.2节所提到的类型为\textit{cv-限定类型}。每个cv-限定完整或不完整
+对象类型或\texttt{void}（6.9），有其类型的三个对应cv-限定版本：
+\textit{const-限定}版本、\textit{volatile-限定}版本和
+\textit{const-volatile-限定}版本。当对象创建时，对象类型包含
+\textit{decl-specifier-seq}（10.1）中的\textit{cv-qualifiers}，
+\textit{declarator}（第11章），\textit{type-id}（11.1），或
+\textit{new-type-id}（8.3.4）。
+\begin{enumerate}
+  \item{\textit{const对象}指类型为\texttt{const T}的对象，或此对象的不可变子
+    对象。}
+  \item{\textit{volatile对象}指类型为\textit{volatile T}的对象，此对象的子对象，
+    或const volatile对象的可变子对象。}
+  \item{\textit{const volatile对象}指类型为\texttt{const volatile T}的对象，
+    此对象的不可变子对象，volatile对象的const子对象，或const对象的不可变volatile
+    子对象。}
+\end{enumerate}
+类型的cv-限定和cv-非限定版本为不同类型；然后，他们可以有相同的表示和对齐要求
+（6.11）。\footnote{相同的表示和对齐要求隐含函数参数，函数返回值和联合的非静态
+数据成员可以互换。}
+
+\paragraph{}
+复合类型（6.9.2）不由所用合成类型的cv-限定符（如有）所限定。任何应用于数组类型的
+cv-限定符影响数组元素类型（11.3.4）。
+
+\paragraph{}
+见第11.3.5节和第12.2.2.1节关于有\textit{cv-限定符}的函数类型。
+
+\paragraph{}
+cv-限定符有偏序关系，使得一个类型可以比另一个类型\textit{更多cv-限定}
+（\textit{more cv-qualified}）。表\ref{tab:cvrel}显示该序关系构成。
+\begin{table}
+  \centering
+  \caption{\texttt{const}和\texttt{volatile}关系}
+  \begin{tabular}{|ccc|}
+    \hline
+    \textit{no cv-qualifier} & $ < $ & \texttt{const}          \\
+    \textit{no cv-qualifier} & $ < $ & \texttt{volatile}       \\
+    \textit{no cv-qualifier} & $ < $ & \texttt{const volatile} \\
+    \texttt{const}           & $ < $ & \texttt{const volatile} \\
+    \texttt{volatile}        & $ < $ & \texttt{const volatile} \\
+    \hline
+  \end{tabular}
+  \label{tab:cvrel}
+\end{table}
+
+\paragraph{}
+本文档中，用于描述类型的\textit{cv}（或\textit{cv1}，\textit{cv2}等等）记号，表
+示任何cv-限定符集合，也就是\texttt{\{const\}}、\texttt{\{volatile\}}、
+\texttt{\{const, volatile\}}中的一个，或空集。对类型\textit{cv} \texttt{T}，该类
+型的\textit{顶层cv-限定符}（\textit{top-level cv-qualifiers}）由\textit{cv}表示
+。「例：对应于\textit{type-id} \texttt{const int\&}的类型没有顶层cv-限定符。对应
+于\textit{type-id} \texttt{volatile int * const}有顶层cv-限定符\texttt{const}。
+对类类型\texttt{C}，对应于\textit{type-id}
+\texttt{void (C::* volatile)(int) const}的类型有顶层cv-限定符
+\texttt{volatile}。」
+
+\paragraph{}
+应用于数组类型的cv-限定符用于底层元素类型，因此记号``\textit{cv} \texttt{T}''指
+的是元素如此限定的数组类型，这里\texttt{T}为数组类型。元素cv-限定的数组类型也被
+认为有与元素相同的cv-限定。「例：
+\begin{lstlisting}
+  typedef char CA[5];
+  typedef const char CC;
+  CC arr1[5] = { 0 };
+  const CA arr2 = { 0 };
+\end{lstlisting}
+\texttt{arr1}和\texttt{arr2}的类型均为``5个\texttt{const char}的数组''，且数组类
+型被认为是const-限定的。」
 
 %10
 \section{左值和右值}
+\paragraph{}
+表达式根据图\ref{fig:valuecat}分类法进行分类。
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=0.4\textwidth]{figure/valuecategories.pdf}
+  \caption{表达式分类}
+  \label{fig:valuecat}
+\end{figure}
+
+\begin{enumerate}
+  \item{\textit{glvalue}表达式求值确定对象、位域或函数实体。}
+  \item{\textit{prvalue}表达式根据其所在上下文，求值初始化对象或位域，或计算运算
+      符操作数的值。}
+    \item{\textit{xvalue}是一个指代对象或位域的glvalue，其资源可被重用（通常因为
+      快接近其生命期终点）。「例：某些涉及右值引用（11.3.2）的表达式产生xvalue，
+      如返回类型为右值引用的函数调用或右值引用类型的转换。」}
+    \item{\textit{lvalue}指不是xvalue的glvalue。}
+    \item{\textit{rvalue}指prvalue或xvalue。}
+\end{enumerate}
+「注：历史上lvalue和rvalue之所以如此称呼是因为它们出现于赋值的左侧和右侧（尽管这
+一般不再成立）；glvalues指``广义''（generalized）lvalue（泛左值），prvalue指
+``纯''（pure）rvalue（纯右值），xvalue指``期满''（eXpirinig）的lvalue（亡值）。
+尽管名字里都有``值''，这些术语实际上是对表达式而不是值的分类。」每个表达式恰好
+属于该分类中的一个基本类别：lvalue、xvalue或prvalue。表达式的这一属性称作其
+\textit{值范畴}（\textit{value category}）。「注：第8章中对每个内置运算符的讨论
+指明运算符产生的值范畴和其操作数的值范畴。例如，内置赋值运算符期望左操作数是
+lvalue而右操作数是prvalue，产生结果为lvalue。用户定义运算符是函数，其所期望和产
+生的值范畴由其参数和返回类型确定。」
+
+\paragraph{}
+prvalue的\textit{结果}为表达式向其环境所存的值。结果为\textit{V}的prvalue有时说
+成具有值\textit{V}或命名值\textit{V}。prvalue的结果对象为prvalue所初始化的对象；
+用于计算运算符操作数或类型为\textit{cv} \texttt{T}的prvalue无结果对象。「注：除
+了作为\textit{decltype-specifier}的操作数，类或数组类型的prvalue总是有结果对象。
+对于丢弃的prvalue会物化一个临时对象；见第8章。」glvalue的\textit{结果}为表达式所
+指代的实体。
+
+\paragraph{}
+「注：当期望prvalue的环境中出现glvalue时，该glvalue被转换成prvalue；见7.1，7.2和
+7.3。尝试绑定右值引用到lvalue不属于这种情形；见11.6.3。」「注：不存在prvalue的位
+域；如果位域被转换成prvalue（7.1）会创建位域类型的prvalue，可能随后被提升
+（7.6）。」
+
+\paragraph{}
+「注：当prvalue出现于期望glvalue的上下文中时，该prvalue被转换成xvalue；见7.4。」
+
+\paragraph{}
+第11.6.3节关于引用初始化和第15.2节关于临时对象的讨论说明lvalue和rvalue在其他有效
+上下文中的行为。
+
+\paragraph{}
+除非另有说明（8.2.2），prvalue应该总是具有完整类型或\texttt{void}类型。glvalue不
+应该有\textit{cv} \texttt{void}类型。「注：glvalue可能有完整或不完整非
+\texttt{void}类型。类和数组prvalue可以有cv-限定类型；其他prvalue总是有cv-未限定
+类型。见第8章。」
+
+\paragraph{}
+除非是const-限定或函数类型，lvalue是可修改的。「注：尝试通过不可修改lvalue表达式
+或rvalue表达式修改对象的程序为病态的（8.18，8.2.6，8.3.2）。」
+
+\paragraph{}
+如程序尝试通过除以下类型的glvalue访问对象所存值则行为未定义：\footnote{该列表的
+目的是说明对象可以或不可以使用别名的情形。}
+\begin{enumerate}
+  \item{对象的动态类型，}
+  \item{对象动态类型的cv-限定版本，}
+  \item{类似于（第7.5节中定义）对象动态类型的类型，}
+  \item{对应于对象动态类型的有符号或无符号类型，}
+  \item{对应于对象动态类型cv-限定版本的有符号或无符号类型，}
+  \item{包含以上所提到类型作为其元素或非静态数据成员的聚合或联合类型（递归地包括
+    子聚合或被包含联合的元素或非静态数据成员），}
+  \item{对象动态类型的基类类型（可能cv-限定），}
+  \item{\texttt{char}、\texttt{unsigned char}或\texttt{std::byte}之一。}
+\end{enumerate}
 
 %11
 \section{对齐}
+\paragraph{}
+对象类型有\textit{对齐要求}（\textit{alignment requirements}（6.9.1，6.9.2），即
+对该类型可能分配的对象所在地址的限制。\textit{对齐}指实现的整型值，表示可以分配
+给定对象的连续地址之间的字节数。对象类型对每个该类型对象都有对齐要求；更严格的
+对齐要求可以使用对齐说明符（10.6.2）指定。
+
+\paragraph{}
+\textit{基本对齐}不超过实现所支持的最大对齐，即
+\texttt{alignof(std::max\_align\_t)}（21.2）。类型对齐要求可能与其用作完整对象或
+子对象时的对齐要求不一样。「例：
+\begin{lstlisting}
+  struct B { long double d; };
+  struct D : virtual B { char c; };
+\end{lstlisting}
+当\texttt{D}为完整对象的类型时，其有子对象类型\texttt{B}，因此必须按
+\texttt{long double}对齐。如\texttt{D}为另一同时有B作为虚基类的对象的子对象时，
+\texttt{B}子对象可能是不同子对象的一部分，削减了D子对象上的对齐要求。」
+\texttt{alignof}运算符的结果反映了完整对象类型上的对齐要求。
+
+\paragraph{}
+\textit{扩展对齐}由大于\texttt{alignof(std::max\_align\_t)}的整数表示。由实现定
+义是否支持扩展对齐以及支持的上下文（10.6.2）。有扩展对齐要求的类型为
+\textit{超对齐类型}（\textit{over-aligned type}）。「注：每一个超对齐类型是或包
+含一个扩展对齐适用的类类型（可能通过非静态数据成员）。」一个
+\textit{new-extended alignment}由大于
+\texttt{\_\_STDCPP\_DEFAULT\_NEW\_ALIGNMENT\_\_}（19.8）的对齐表示。
+
+\paragraph{}
+对齐由\texttt{std::size\_t}类型的值表示。有效对齐仅包括基本类型\texttt{alignof}
+运算符返回的值加上额外的实现定义值集（可能为空）。每一个对齐值应该是二的非负整数
+次幂。
+
+\paragraph{}
+对齐有从弱到强（严）的顺序。更严格的对齐有更大的对齐值。满足对齐要求的地址同时也
+满足任何有效的更弱的对齐要求。
+
+\paragraph{}
+完整类型的对齐要求可通过\texttt{alignof}表达式求得（8.3.6）。更进一步，窄字符类
+型（6.9.1）应该有最弱的对齐要求。「注：这使得窄字符类型可以作为对齐内存区
+（10.6.2）的底层类型。」
+
+\paragraph{}
+比较对齐是意义且提供以下明显结果：
+\begin{enumerate}
+  \item{当对齐数值相等时两个对齐相等。}
+  \item{当对齐数值不相等时两个对齐不相等。}
+  \item{更大的对齐数值表示更严格的对齐。}
+\end{enumerate}
+
+\paragraph{}
+「注：运行时指针对齐函数（23.10.5）可用于获取缓存内对齐指针；标准库（23.15.7.6）
+内的对齐存储模板可用于获取对齐存储。」
+
+\paragraph{}
+如特定上下文要求特定扩展对齐而实现不支持则程序为病态的。

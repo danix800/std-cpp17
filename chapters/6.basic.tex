@@ -1276,9 +1276,223 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
 
 %9
 \section{类型}
+
+\paragraph{}
+「注：第6.9节及其中子条款对实现的类型表示提出要求。存在两种类型：基本类型和复合
+类型。类型描述对象（4.5）、引用（11.3.2）或函数（11.3.5）。」
+
+\paragraph{}
+对可拷贝类型\texttt{T}的任何对象（除基类子对象），无论其是否包含类型\texttt{T}的
+有效值，构成对象的底层字节（4.4）可以拷贝到\texttt{char}、\texttt{unsigned char}
+或\texttt{std::byte}类型数组（21.2.1）中。\footnote{如通过使用库函数
+\texttt{std::memcpy}或\texttt{std::memmove}。} 如该数组内容拷回到对象中，该对象
+应该仍保留原值。「例：
+\begin{lstlisting}
+  #define N sizeof(T)
+  char buf[N];
+  T obj;                     // obj initialized to its original value
+  std::memcpy(buf, &obj, N); // between these two calls to std::memcpy, obj
+                             // might be modified
+  std::memcpy(&obj, buf, N); // at this point, each subobject of obj of scalar
+                             // type holds its original value
+\end{lstlisting}」
+
+\paragraph{}
+对任何平凡可拷贝类型\texttt{T}，如两个\texttt{T}的指针指向不同的\texttt{T}对象
+\texttt{obj1}和\texttt{obj2}，二者都不是基类子对象，如果构成\texttt{obj1}的底层
+字节（4.4）拷贝到\texttt{obj2}中，\footnote{如通过使用库函数\texttt{std::memcpy}
+或\texttt{std::memmove}。} 之后\texttt{obj2}应存有和\texttt{obj1}相同的值。
+「例：
+\begin{lstlisting}
+  T* t1p;
+  T* t2p;
+  // provided that t2p points to an initialized object ...
+  std::memcpy(t1p, t2p, sizeof(T));
+  // at this point, every subobject of trivially copyable type in *t1p contains
+  // the same value as the corresponding subobject in *t2p
+\end{lstlisting}
+
+\paragraph{}
+\texttt{T}类型对象的\textit{对象表示}（\textit{object representation}）为该对象
+所占的\textit{N}个\texttt{unsigned char}对象序列，这里\textit{N}等于
+\texttt{sizeof(T)}。对象的\textit{值表示}（\textit{value representation}）指组成
+对象值的位集合。对平凡可拷贝类型，值表示指确定一个值的对象表示的位集合，该值为
+实现现定义值集的一个元素。\footnote{目的是使得C++内存模型与ISO/IEC 9899 C编程语
+言兼容。}
+
+\paragraph{}
+已声明未定义的类，某些上下文中的枚举类型（10.2），未知大小或不完整元素类型的数组
+，是\textit{不完整定义对象类型}（\textit{incompletely-defined object type}）。
+\footnote{不完整定义对象类型的实例大小和布局均未知。} 不完整定义对象类型和
+\textit{cv} \texttt{void}为\textit{不完整类型}（\textit{incomplete type}）
+（6.9.1）。对象不应该定义成具有不完整类型。
+
+\paragraph{}
+类类型（如``\texttt{class X}''）可能在翻译单元中的某个点处不完整而在后面补充；类
+型``\texttt{class X}''在两点处为同一类型。数组对象所声明类型可能是不完整类类型数
+型，因此也是不完整的；如类类型随后在翻译单元内补充完整，该数组类型成为完整类型；
+这两个点上的数组类型为同一类型。数组类型对象所声明类型可能是未知大小数组，因此在
+翻译单元中的某个点处不完整而随后补充完整；这两点上的数组类型（``\texttt{T}的未知
+大小数组''和``\texttt{N}个\texttt{T}的数组''）是不同类型。指向未知大小数组的指针
+类型，或指向由\texttt{typedef}声明定义成未知大小数组类型的指针，不能补充完整。
+「例：
+\begin{lstlisting}
+  class X;                // X is an incomplete type
+  extern X* xp;           // xp is a pointer to an incomplete type
+  extern int arr[];       // the type of arr is incomplete
+  typedef int UNKA[];     // UNKA is an incomplete type
+  UNKA* arrp;             // arrp is a pointer to an incomplete type
+  UNKA** arrpp;
+
+  void foo() {
+    xp++;                 // ill-formed: X is incomplete
+    arrp++;               // ill-formed: incomplete type
+    arrpp++;              // OK: sizeof UNKA* is known
+  }
+
+  struct X { int i; }     // now X is a complete type
+  int arr[10];            // now the type of arr is complete
+
+  X x;
+  void bar() {
+    xp = &x;              // OK: type is ``pointer to X''
+    arrp = &arr;          // ill-formed: different types
+    xpp++;                // OK: X is complete
+    arrp++;               // ill-formed: UNKA can't be completed
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：声明和表达式规则描述什么情况下禁用不完整类型。」
+
+\paragraph{}
+\textit{对象类型}（\textit{object type}）指不是函数类型、不是引用类型且不是
+\textit{cv} \texttt{void}的类型（可能有cv-限定）。
+
+\paragraph{}
+算术类型（6.9.1）、枚举类型、指针类型、成员指针类型（6.9.2）、
+\texttt{std::nullptr\_t}和这些类型的cv限定（6.9.3）版本统称\textit{标量类型}（
+\textit{scalar types}）。标量类型，POD类（第12章），这些类型的数组和这些类型的
+cv限定版本统称\textit{POD-类型}。CV限定标量类型，平凡可拷贝类类型（第12章），这
+些类型的数组及这些类型的cv限定版本统称\textit{平凡可拷贝类型}
+（\textit{trivially copyable types}）。标量类型，平凡类类型（第12章），这些类型
+的数组和这些类型的cv限定版本统称\textit{平凡类型}（\textit{trivial types}）。标
+量类型，标准布局类类型（第12章），这些类型的数组和这些类型的cv限定版本统称
+\textit{标准布局类型}（\textit{standard-layout types}）。
+
+\paragraph{}
+如果是以下类型则该类型是\textit{字面类型}（\textit{literal type}）：
+\begin{enumerate}
+  \item{可能有cv限定的\texttt{void}；或}
+  \item{标量类型；或}
+  \item{引用类型；或}
+  \item{字面类型数组；或}
+  \item{具有以下所有属性，可能cv限定的类类型（第12章）:
+      \begin{enumerate}
+        \item{有平凡析构函数，}
+        \item{是一个闭包类型（8.1.5.1）或聚合类型（11.6.1），或有至少一个常量
+          表达式构造函数或非拷贝移动构造函数的构造函数模板
+        （可能派生自基类（10.3.3）），}
+        \item{如果是一个联合，至少一个非静态数据成员具有非volatile字面类型，且}
+        \item{如果不是联合类型，其所有非静态数据成员和基类是非volatile字面类型。}
+      \end{enumerate}
+    }
+\end{enumerate}
+「注：字面类型是一种可能可以在常量表达式内创建其对象的类型。但是即不保证可以创建
+也不保证在常量表达式内任何该类型对象可用。」
+
+\paragraph{}
+两个类型\textit{cv1} \texttt{T1}和\textit{cv2} \texttt{T2}如果是同一类型、布局兼
+容枚举（10.2）或布局兼容标准布局类类型（12.2），则它们是\textit{布局兼容}类型。
+
 \subsection{基本类型}
+\paragraph{}
+声明为字符（\texttt{char}）的对象应该足够存储实现的基本字符集的任何成员。如该集
+合内的字符存于字符对象中，该字符对象的整数值等于该字符的单个字符字面形式的值。
+\texttt{char}对象是否可以存放负值由实现定义。字符可以显式声明为\texttt{unsigned}
+或\texttt{signed}。普通\texttt{char}、\texttt{signed char}和
+\texttt{unsigned char}是三个不同类型，统称为\textit{窄字符类型}（\textit{narrow
+character types}）。\texttt{char}、\texttt{signed char}和\texttt{unsigned char}
+占据等量存储且有相同对齐要求（6.11）；即有相同的对象表示。对窄字符类型，对象表示
+的所有位都参与值表示。「注：窄字符类型的位字段，其长度大于该类型的对象表示中的位
+数，具有填充位；见12.2.4。」对无符号窄字符类型，值表示的每一个位模式代表不同的
+数字。这些要求对其他类型不成立。在任何特定实现中，普通\texttt{char}对象可具有与
+\texttt{signed char}或\texttt{unsigned char}相同的值；具体哪个由实现定义。对
+在0到255（含）范围内的\texttt{unsigned char}的每一个值\textit{i}，存在
+\texttt{char}类型值\textit{j}使得\textit{i}整型转换（7.8）成\texttt{char}的结果
+为\textit{j}，\textit{j}整型转换为\texttt{unsigned char}的结果为\textit{i}。
+
 \subsection{复合类型}
-\subsection{CV限定}
+\paragraph{}
+复合类型可按如下方式构建：
+\begin{enumerate}
+  \item{给定类型对象的\textit{数组}，11.3.4；}
+  \item{\textit{函数}，拥有给定类型的参数，并返回\texttt{void}或给定类型的对象或
+    引用，11.3.5；}
+  \item{指向\textit{cv} \texttt{void}或给定类型对象或函数（包括类静态数据成员）
+    的指针，11.3.1；}
+  \item{给定类型对象或函数的\textit{引用}，11.3.2。存在两种类型引用：
+      \begin{enumerate}
+        \item{\textit{lvalue reference}}
+        \item{\textit{rvalue reference}}
+    \end{enumerate}}
+  \item{包含不同类型对象序列的\textit{类}（第12章），用于操作这些对象的一组类型
+    、枚举和函数（12.2.1），以及一组访问这些实体的限制（第14章）；}
+  \item{\textit{联合}，即可以在不同时候包含不同类型对象的类，（12.3）；}
+  \item{\textit{枚举}，包含一组命名常量值。不同枚举构成不同的枚举类型，10.2；}
+  \item{\textit{非静态类成员指针}，\footnote{静态类成员指对象或函数，指向它们的
+    指针为普通对象或函数指针。} 标识给定类对象内给定类型的成员，13.3.3。}
+\end{enumerate}
+
+\paragraph{}
+这些构建类型的方法可以递归应用；第11.3.1节、11.3.4节、11.3.5节和11.3.2节提到应用
+的限制。构建一个类型使得其对象表示的字节数超过类型\texttt{std::size\_t}（21.2）
+最大可表示值是病态的。
+
+\paragraph{}
+指向\textit{cv} \texttt{void}或对象类型的指针的类型称为\textit{对象指针类型}
+（\textit{object pointer type}）。「注：然而指向\texttt{void}的指针没有指向对象
+的指针类型，因为\texttt{void}不是对象类型。」指代函数的指针的类型称为
+\textit{函数指针类型}（\textit{function pointer type}）。指向类型\texttt{T}的
+对象的指针称为``\texttt{T}型指针''。「例：\texttt{int}类型的对象的指针称为
+``\texttt{int}型指针''，类\texttt{X}的对象的指针称为``\texttt{X}的指针''。」除了
+静态成员指针，文本``指针''不适用于成员指针。不完整类型指针是允许的，尽管在其上能
+做什么是有限制的（6.11）。每一个指针类型值为如下之一：
+\begin{enumerate}
+  \item{对象或函数\textit{指针}（指针被说成是\textit{指向}对象或函数），或}
+  \item{超过对象结尾的指针（\textit{pointer past the end of}）（8.7），或}
+  \item{该类型的\textit{零指针值}（\textit{null pointer value}）（7.11），或}
+  \item{\textit{无效指针值}。}
+\end{enumerate}
+指向对象或越过对象结尾的指针其指针类型的值表示对象所占\footnote{对不在生命期的对
+象，指对象将要或曾经占用的内存第一个字节。}内存（4.4）或对象所占存储结尾后的第一
+个字节。「注：越过对象结尾的指针（8.7）不认为是指向可能处于该位置的不相关对象。
+指针在其所指代存储存储期结束后失效；见第6.7节。」为指针算术（8.7）和比较（8.9，
+8.10）的目的，越过\textit{n}个元素数组最后一个元素的指针等价于指向假想的元素
+\texttt{x[n]}。指针类型的值表示是实现定义的。布局兼容类型的指针应该有相同的值表
+和对齐要求（6.11）。「注：超对齐类型（6.11）指针没有特别表示，但其有效值范围受扩
+展对齐要求限制。」
+
+\paragraph{}
+两个对象\textit{a}和\textit{b}\textit{可指针互转}
+（\textit{pointer-interconvertible}），如果：
+\begin{enumerate}
+  \item{它们是相同对象，或}
+  \item{一个是标准布局联合对象，另一个是该对象的非静态数据成员（12.3），或}
+  \item{一个是标准布局类对象，另一个该对象的第一个非静态数据成员，或如果该对象
+    没有非静态数据成员，该对象的第一个基类子对象（12.2），或}
+  \item{存在对象\textit{c}使得\textit{a}和\textit{c}可指针互转且\textit{c}和
+    \textit{b}可指针互转。}
+\end{enumerate}
+如果两个对象可指针互转则它们具有相同地址，且可通过\texttt{reinterpret\_cast}
+（8.2.10）从一个对象的指针获取另一个对象的指针。「注：数据对象与其第一个元素不可
+指针互转，即使它们有相同地址。」
+
+\paragraph{}
+\textit{cv}限定或\textit{cv}未限定\texttt{void}指针可用于指向未知类型对象。这样
+的指针应该能够存放任何对象指针。\textit{cv} \texttt{void*}型对象应该与
+\textit{cv} \texttt{char*}对象有相同的表示和对齐要求。
+\subsection{CV限定符}
 \paragraph{}
 第6.9.1节和第6.9.2节所提到的类型为\textit{cv-限定类型}。每个cv-限定完整或不完整
 对象类型或\texttt{void}（6.9），有其类型的三个对应cv-限定版本：
@@ -1471,7 +1685,7 @@ prvalue的\textit{结果}为表达式向其环境所存的值。结果为\textit
 （10.6.2）的底层类型。」
 
 \paragraph{}
-比较对齐是意义且提供以下明显结果：
+比较对齐有意义且提供以下明显结果：
 \begin{enumerate}
   \item{当对齐数值相等时两个对齐相等。}
   \item{当对齐数值不相等时两个对齐不相等。}

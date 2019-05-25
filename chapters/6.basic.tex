@@ -1260,19 +1260,331 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
 
 %7
 \section{存储期}
+
+\paragraph{}
+\textit{存储期}指对象的一种定义包含该对象的存储的最小潜在生命期的属性。存储期由
+用于创建对象的结构所确定，为以下之一：
+\begin{enumerate}
+  \item{静态存储期}
+  \item{线程存储期}
+  \item{自动存储期}
+  \item{动态存储期}
+\end{enumerate}
+
+\paragraph{}
+静态、线程和自动存储期关联于声明所引入的对象（6.1）且由实现隐式创建（15.2）。动
+态存储期关联于\textit{new-expression}所创建对象（8.3.4）。
+
+\paragraph{}
+存储期分类对引用也适用。
+
+\paragraph{}
+当存储区域的存储期结束时，所有代表该存储任何区域的指针值都将变成无效值（6.9.2）
+。无效指针取值（indirection）或向回收函数传入无效指针值具有未定义行为。任何其他
+对无效指针值的使用为实现定义行为。\footnote{某些实现可能将拷贝无效指针值定义为
+系统运行时错。}
+
 \subsection{静态存储期}
+
+\paragraph{}
+所有非动态存储期、非线程存储期且非局部的变量具有\textit{静态存储期}。这些实体的
+存储将持续程序的持续期（6.6.2，6.6.4）。
+
+\paragraph{}
+如果一个静态存储期变量有初始化或带副作用的析构函数，那么即使该变量看起来是未使
+用的也不能消除它，除非是类对象且其拷贝/移动如第15.8节所述可能被消除。
+
+\paragraph{}
+关键字\texttt{static}可用于声明静态存储局部变量。「注：第9.7节描述局部静态变量
+的初始化；第6.6.4节描述局部静态变量的销毁。」
+
+\paragraph{}
+关键字\texttt{static}在类定义中用于类数据成员赋予该数据成员静态存储期。
+
 \subsection{线程存储期}
+\paragraph{}
+使用\texttt{thread\_local}声明的变量具有\textit{线程存储期}。这些实体的存储应该
+持续创建它们的线程的持续时间。每个线程都有不同的对象或引用，且使用这此声明的名
+字指代的是当前线程中关联的实体。
+
+\paragraph{}
+线程存储期变量应该在其第一次odr-use（6.2）之前初始化，且如果创建则应该在线程结
+束前销毁。
+
 \subsection{自动存储期}
+\paragraph{}
+未显式声明为\texttt{static}、\texttt{thread\_local}或\texttt{extern}的块作用域
+变量具有\textit{自动存储期}。这些实体的存储应该持续直到创建它们的块退出时。
+
+\paragraph{}
+「注：这些变量按第9.7节所述初始化和销毁。」
+
+\paragraph{}
+如果一个自动存储期变量有初始化或带副作用的析构函数，那么即使该变量看起来是未使
+用的，实现也不应该在块结束前销毁它或作为优化消除它，除非是类对象且其拷贝/移动如
+第15.8节所述可能被消除。
 
 \subsection{动态存储期}
+\paragraph{}
+对象可以在程序执行期间（4.6）使用\textit{new-expression}（8.3.4）动态创建，或
+使用\textit{delete-expression}（8.3.5）销毁。C++实现通过全局\textit{分配函数}
+\texttt{operator new}和\textit{operator new[]}以及全局\textit{回收函数}
+\texttt{operator delete}和\texttt{operator delete[]}提供动态存储的访问及管理。
+「注：第21.6.2.3节所描述的非分配形式不进行分配和回收。」
+
+\paragraph{}
+标准库提供全局分配和回收函数的缺省定义。某些全局分配和回收函数可替换（21.6.2）
+。C++程序应该提供可替换分配和回收函数的至多一个定义。任何该函数的定义替换标准库
+所提供的缺省版本（20.5.4.6）。以下分配和回收函数（21.6）在程序的每一个翻译单元
+全局作用域内隐式定义。
+\begin{lstlisting}
+  void* operator new(std::size_t);
+  void* operator new(std::size_t, std::align_val_t);
+
+  void operator delete(void*) noexcept;
+  void operator delete(void*, std::size_t) noexcept;
+  void operator delete(void*, std::align_val_t) noexcept;
+  void operator delete(void*, std::size_t, std::align_val_t) noexcept;
+
+  void* operator new[](std::size_t);
+  void* operator new[](std::size_t, std::align_val_t);
+
+  void operator delete[](void*) noexcept;
+  void operator delete[](void*, std::size_t) noexcept;
+  void operator delete[](void*, std::align_val_t) noexcept;
+  void operator delete[](void*, std::size_t, std::align_val_t) noexcept;
+\end{lstlisting}
+这些隐式声明仅引入函数名\texttt{operator new}、\texttt{operator new[]}、
+\texttt{operator delete}和\texttt{operator delete[]}。「注：这些隐式声明不引入
+名字\texttt{std}、\texttt{std::size\_t}、\texttt{std::align\_val\_t}或标准库中
+任何其他用于声明这些名字的名字。因此，不包含头\texttt{<new>}的情况下引用这些
+函数的\textit{new-expression}、\textit{delete-expression}或函数调用是格式良好的
+。但是除非通过包含合适的头以引入声明，引用\texttt{std}、\texttt{std::size\_t}或
+\texttt{std::align\_val\_t}是病态的。」分配和/或回收函数也可以为任何类声明和定
+义（15.5）。
+
+\paragraph{}
+C++程序内定义的任何分配和/或回收函数，包括标准库中的缺省版本，应该遵循第6.7.4.1
+节和第6.7.4.2节所指明的语义。
+
 \subsubsection{分配函数}
+\paragraph{}
+分配函数应该是类成员或全局函数；如果分配函数在非全局作用域的命名空间中声明或在
+全局作用域中声明为静态的则程序为病态的。其返回类型应该为\texttt{void*}。第一个
+参数应该为\texttt{std::size\_t}类型（21.2）。第一个参数不应该有关联缺省参数
+（11.3.6）。第一个参数的值应该理解为请求分配的大小。分配函数可以是一个函数模板
+。这样的模板应该按以上要求声明其返回类型和第一个参数（即模板参数类型不应该用作
+返回类型和第一个参数类型）。模板分配函数应该有两个或更多的参数。
+
+\paragraph{}
+分配函数尝试分配所请求大小的存储。如果分配成功，函数应该返回存储块起始地址，其
+以字节表示的长度应至少与所请求大小一样。分配函数所返回的分配存储内容无限制。
+连续调用分配函数所分配存储的顺序，连续性及初始化值未指定。所返回指针应该合适对
+齐，使得它能够转换成任何合适的完整对象类型（21.6.2.1），随后用于访问所分配存储
+中的对象或数组（直到存储通过调用对应的回收函数被显式回收）。即使所请求空间大小
+为零，请求仍可能失败。如果请求成功，所返回值应该是非零指针（7.11）\texttt{p0}，
+不同于之前的返回值\texttt{p1}，除非\texttt{p1}被传递给一个
+\texttt{operator delete}。更进一步，对第21.6.2.1节和第21.6.2.2节的标准库分配
+函数，\texttt{p0}应该表示一个不交于调用者可访问对象存储的块存储地址。对请求大小
+为零所返回的指针取值的效果未定义。\footnote{目的是让\texttt{operator new()}可以
+通过调用\texttt{std::malloc()}或\texttt{std::calloc()}实现，因此这些规则本质上
+相同。与C不同的是C++要求大小为零的请求返回一个零指针。}
+
+\paragraph{}
+未能分配存储的分配函数可以调用当前的new-处理函数（如有）（21.6.3.3）。「注：程
+序提供的分配函数可以通过使用\texttt{std::get\_new\_handler}函数（21.6.3.4）获取
+当前的\texttt{new\_handler}。」如果一个有禁抛异常规范的分配函数未能分配存储，它
+应该返回零指针。任何其他未能分配存储的分配函数应该仅通过抛出异常（18.1）来表示
+失败，该异常应该能匹配\texttt{std::bad\_alloc}（21.6.3.1）类型的处理程序
+（18.3）。
+
+\paragraph{}
+全局分配函数应该只因new表达式（8.3.4）而调用，或通过函数调用语法（8.2.2）直接
+调用，或通过调用C++标准库函数而间接调用。「注：特别的，不通过调用全局分配函数来
+分配静态存储期对象（6.7.1），线程存储期对象或引用（6.7.2），
+\texttt{std::type\_info}类型（8.2.8）的对象或者是一个异常对象（18.1）。」
+
 \subsubsection{回收函数}
 \subsubsection{安全派生指针}
 
 \subsection{子对象存储期}
+\paragraph{}
+子对象和引用成员存储期为其完整对象的存储期（4.5）。
 
 %8
 \section{对象生命期}
+\paragraph{}
+对象或引用的\textit{生命期}是对象或引用的一种运行时属性。如果对象为类类型或聚合
+类型且它自身或它的子对象由非平凡缺省构建函数初始化，则该对象被说成是有
+\textit{非空初始化}（\textit{non-vacuous initialization}）。「注：平凡拷贝/移动
+初始化不是非空初始化。」当以下情况发生时，类型为\texttt{T}的对象生命期开始：
+\begin{enumerate}
+  \item{取得适合类型\texttt{T}的对齐和大小的存储时，且}
+  \item{如对象有非空初始化，其初始化已完成，}
+\end{enumerate}
+除了对象是联合成员或其子对象，它的生命期只在该联合成员是联合的初始化成员
+（11.6.1，15.6.2）开始，或如第12.3节中所述。\texttt{T}类型对象\textit{o}的生命
+期在以下情形下结束：
+\begin{enumerate}
+  \item{如果\texttt{T}是带非平凡析构函数的类类型，该析构函数调用开始时，或}
+  \item{对象所占存储被释放，或被不是嵌套于\textit{o}内的对象重用（4.5）。}
+\end{enumerate}
+
+\paragraph{}
+引用的生命期始于其初始化完成时。引用的生成期终点同标量对象。
+
+\paragraph{}
+「注：第15.6.2节描述基类和成员子对象的生命期。」
+
+\paragraph{}
+本文档中归属于对象和引用的属性只在给定对象或引用的生命期内适用。「注：特别是，
+如第15.6.2节和第15.7节中所述，在对象生命期开始前和生命期结束后其使用存在重大
+限制。而且正在创建和销毁的对象行为与生命期已开始未结束的对象行为可能不一样。
+第15.6.2节和第15.7节描述对象创建和销毁期的行为。」
+
+\paragraph{}
+程序可能通过重用对象所占存储或显式调用类类型对象的非平凡析构函数以结束任何对象
+的生命期。对一个带非平凡析构函数的类类型对象，其所占存储被重用或释放前，不要求
+程序显式调用析构函数；然而，如果不存在显式调用析构函数或没有使用
+\textit{delete-expression}（8.3.5）释放存储，析构函数不应该被隐式调用，且任何依
+赖于析构函数副作用的程序有未定义行为。
+
+\paragraph{}
+在对象生命期开始前但对象将要占用的存储已分配\footnote{比如，非POD类类型（15.7）
+全局对象构建前。}后，或对象生命期已结束但对象所占存储被重用或释放之前，代表对象
+将在或曾在的存储位置的指针可以但只能以受限方式被使用。对正在构造或析构的对象，
+见第15.7节。否则，这样的指针指向所分配的存储（6.7.4.2），且将指针当成
+\texttt{void*}类型使用有明确定义。指针取值（indirection，\texttt{*}运算符）是允
+许的，但是结果左值只能通过以下描述的受限方式使用。如有以下情形则程序有未定义行
+为：
+\begin{enumerate}
+  \item{对象将是或曾经是带非平凡析构函数的类类型且指针用作
+    \textit{delete-expression}的操作数，}
+  \item{指针用于访问对象的非静态数据成员或调用非静态成员函数，}
+  \item{指针被隐式转换（7.11）成指向虚基类的指针，或}
+  \item{指针用于\texttt{static\_cast}（8.2.9）的操作数，除转换成\textit{cv}
+    \texttt{void}型指针或先转换成\textit{cv} \texttt{void}再转换成\textit{cv}
+    \texttt{char}，\textit{cv} \texttt{unsigned char}或\textit{cv}
+    \texttt{std::byte}（21.2.1），或}
+  \item{指针用作\texttt{dynamic\_cast}的操作数（8.2.7）。}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  #include <cstdlib>
+
+  struct B {
+    virtual void f();
+    void mutate();
+    virtual ~B();
+  };
+
+  struct D1 : B { void f(); };
+  struct D2 : B { void f(); };
+
+  void B::mutate() {
+    new (this) D2;      // reuses storage -- ends the lifetime of *this
+    f();                // undefined behavior
+    ... = this;      // OK, this points to valid memory
+  }
+
+  void g() {
+    void* p = std::malloc(sizeof(D1) + sizeof(D2));
+    B* pb = new (p) D1;
+    pb->mutate();
+    *pb;                // OK: pb points to valid memory
+    void* q = pb;       // OK: pb points to valid memory
+    pb->f();            // undefined behavior, lifetime of *pb has ended
+  }
+\end{lstlisting}」
+
+\paragraph{}
+类似的，在对象生命期开始前但对象将要占用的存储已分配后，或对象生命期已结束但对
+象所占存储被重用或释放之前，任何指向原对象的泛左传可以但只能以受限方式被使用。
+对正在构造或析构的对象，见第15.7节。否则，这样的泛左值指向所分配存储
+（6.7.4.2），且使用不依赖于值的泛左值属性有明确定义。如有以下情形则程序有
+未定义行为：
+\begin{enumerate}
+  \item{该泛左值用于访问对象，}
+  \item{该泛左值用于调用该对象的非静态成员函数，或}
+  \item{该泛左值被绑定到虚基类引用（11.6.3），或}
+  \item{该泛左值用作\texttt{dynamic\_cast}（8.2.7）或\texttt{typeid}的操作数。}
+\end{enumerate}
+
+\paragraph{}
+如果对象生命期已结束但对象所占存储被重用或释放之前，在原对象所占存储处创建新对
+象，指向原对象的指针，引用原对象的引用或原对象的名字将自动指向新对象且一旦新对
+象生命期开始后即可用于操作新对象，如果：
+\begin{enumerate}
+  \item{新对象存储与原对象所占存储完全重合，且}
+  \item{新对象与原对象类型相同（忽略顶层cv限定符），且}
+  \item{原对象类型不是const限定的且如果是类类型，不包含任何const限定或引用类型
+    的非静态数据成员，且}
+  \item{原对象为\texttt{T}类型的最终派生对象（4.5）且新对象为类型\texttt{T}的
+    最终派生对象（即他们不是基类子对象）。}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  struct C {
+    int i;
+    void f();
+    const C& operator=(const C&);
+  };
+
+  const C& C::operator=(const C& other) {
+    if(this != &other) {
+      this->~C();             // lifetime of *this ends
+      new (this) C(other);    // new object of type C created
+      f();                    // well-defined
+    }
+    return *this;
+  }
+
+  C c1;
+  C c2;
+  c1 = c2;                // well-defined
+  c1.f();                 // well-defined; c1 refers to a new object of type C
+\end{lstlisting}」
+「注：如果不满足这些条件，可以通过调用\texttt{std::launder}（21.6）从指向其存储
+地址的指针来获取新对象指针。」
+
+\paragraph{}
+如果程序终止了\texttt{T}类型静态（6.7.1）、线程（6.7.2）或自动（6.7.3）存储期对
+象且如果\texttt{T}有非平凡析构函数，\footnote{即自动存储期对象所在块结束时，线
+程存储期对象所在线程结束时或静态存储期对象所在程序结束时，该对象的析构函数会被
+隐式调用。}程序必须确保析构函数调用时原类型对象占据同一存储；否则程序行为未定义
+。即使块以异常方式结束也成立。「例：
+\begin{lstlisting}
+  class T {};
+  struct B {
+    ~B();
+  };
+
+  void h() {
+    B b;
+    new (&b) T;
+  }                   // undefined behavior at block exit
+\end{lstlisting}」
+
+\paragraph{}
+在静态、线程或自动存储期\texttt{const}限定完整对象所占存储内，或在这样的
+\texttt{const}对象生命期结束前曾占据的存储内创建新对象的行为是未定义的。「例：
+\begin{lstlisting}
+  struct B {
+    B();
+    ~B();
+  };
+
+  const B b;
+
+  void h() {
+    b.~B();
+    new (const_cast<B*>(&b)) const B; // undefined behavior
+  }
+\end{lstlisting}」
+
+\paragraph{}
+本节中的``之前''和``之后''指``发生于之前''关系（4.7）。「注：因此，如果未同步的
+情况下从另一个线程引用一个正在创建的对象会导致未定义行为。」
 
 %9
 \section{类型}

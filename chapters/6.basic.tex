@@ -1422,6 +1422,83 @@ character types}）。\texttt{char}、\texttt{signed char}和\texttt{unsigned ch
 \texttt{char}类型值\textit{j}使得\textit{i}整型转换（7.8）成\texttt{char}的结果
 为\textit{j}，\textit{j}整型转换为\texttt{unsigned char}的结果为\textit{i}。
 
+\paragraph{}
+存在5个\textit{标准有符号整型}：``\texttt{signed char}''，``\texttt{short int}''
+，``\texttt{int}''，``\texttt{long int}''和``\texttt{long long int}''。该列表中
+每种类型至少提供与列表中前面的存储一样多的存储空间。可能存在实例定义的
+\textit{扩展有符号整型}。标准和扩展有符号整型统称\textit{有符号整型}。普通的
+\textit{int}有执行环境架构推荐的自然大小\footnote{\texttt{int}必须能存储标准头
+<climits>中定义的范围\texttt{[INT\_MIN, INT\_MAX]}中的任何值。}；其他有符号整型
+供以满足特殊目的。
+
+\paragraph{}
+每一个标准有符号整型存在对应（但不同）的\textit{标准无符号整型}：
+``\texttt{unsigned char}''，``\texttt{unsigned short int}''，
+``\texttt{unsigned int}''，``\texttt{unsigned long int}''和
+``\texttt{unsigned long long int}''，每一个都与对应有符号整型
+\footnote{见第10.1.7.2节关于类型间和指代它们的\textit{类型说明符}序列间的对
+应关系。}占有相同的大小和对齐要求（6.11）；即每一个有符号整型与对应无符号整型有
+相同的对象表示。同样，每一个扩展有符号整型对应存在相同存储和对齐要求的
+\textit{扩展无符号整型}。标准与扩展无符号整型统称\textit{无符号整型}。有符号整型
+非负值范围是对应无符号整型的子范围，两类型的相同值的表示相同，每一个对应有/无符
+号整型的值表示应相同。标准有符号整型与标准无符号整型统称\textit{标准整型}，扩展
+无符号整型和扩展无符号整型统称\textit{扩展整形}。有符号和无符号整型应满足C标准第
+5.2.4.2.1节的约束。
+
+\paragraph{}
+无符号整数应该遵循算术模$2^n$定律，这里$n$为该特定大小整数值表示的位数。
+\footnote{这意味着无符号算术不会溢出，因为不能用无符号整型表示的结果会对该结果无
+符号整型所能表示的最大值加一后取模。}
+
+\paragraph{}
+类型\texttt{wchar\_t}为不同类型，其值可表示所支持语言环境（locale）中指定的最大
+扩展字符集所有成员的不同编码（25.3.1）。类型\texttt{wchar\_t}应该与其他整型之一
+的类型具有相同大小、符号和对齐要求（6.11），称为其\textit{底层类型}
+（\textit{underlying type}。
+
+\paragraph{}
+类型\texttt{bool}的值为\texttt{true}和\texttt{false}。\footnote{以本文档所述的
+``未定义''方式使用\texttt{bool}值，比如检查未初始化自动对象，可能导致其即不是
+\texttt{true}也不是\texttt{false}的行为。} 「注：不存在\texttt{signed}、
+\texttt{unsigned}、\texttt{short}或\texttt{long} \texttt{bool}类型或值。」
+\texttt{bool}类型的值参与整型提升（7.6）。
+
+\paragraph{}
+\texttt{bool}、\texttt{char}、\texttt{char16\_t}、\textit{char32\_t}、
+\texttt{wchar\_t}和有符号、无符号整型统称\textit{整}（\textit{integral}，完整的）
+型。\footnote{因此，枚举（10.2）不是整型；然后如第7.6节所述，枚举可以被提升成
+整型。} 整型的一个同义词是\textit{整数类型}（\textit{integer type}）。整型表示应
+该通过纯二进制数值系统定义值。\footnote{使用二进制数字0和1的整数的位置表示，其中
+由连续位表示的值是加法的，以1开始，并且乘以2的连续整次幂，除可能的最高位。（摘自
+\textit{American National Dictionary for Information Processing Systems}。）}
+「例：本文档允许整型的二补码、一补码和符号量值表示。」
+
+\paragraph{}
+存在三个\textit{符点}类型：\texttt{float}、\texttt{double}和\texttt{long double}
+。\texttt{double}应该至少有\texttt{float}的精度，\texttt{long double}应该至少有
+\texttt{double}的精度。\texttt{float}类型的值为\texttt{double}类型值的子集；
+\texttt{double}类型的值为\texttt{long double}类型值的子集。符点类型值表示由实现
+定义。「注：本文档不对符点类型操作的准确性作要求；见第21.3节。」整型与符点型统称
+\textit{算术类型}。标准库模板\texttt{std::numeric\_limits}（21.3）指明实现的每一
+个算术类型最大及最小值。
+
+\paragraph{}
+\textit{cv} \texttt{void}类型为不完整类型，且不能完整；该类型值集为空。它被用作
+不返回值函数的返回类型。任何表达式可被显式转换成\textit{cv} \texttt{void}类型
+（8.4）。\textit{cv} \texttt{void}类型表达式只能用作表达式语句（9.2），逗号
+表达式的一个操作数（8.19），作为\texttt{?:}的第二或第三操作数（8.16），
+\texttt{typeid}、\texttt{noexcept}或\texttt{decltype}的操作数，返回类型为
+\textit{cv} \texttt{void}的函数的返回语句中的表达式（9.6.3），或用作目标类型为
+\textit{cv} \texttt{void}的显式转换的操作数。
+
+\paragraph{}
+\texttt{std::nullptr\_t}类型的值为零指针常量（7.11）。这样的值参与指针和指针成员
+转换（7.11，7.12）。\texttt{sizeof(std::nullptr\_t)}应该等于
+\texttt{sizeof(void*)}。
+
+\paragraph{}
+「注：即使实现定义了两个或多个基本类型拥有相同的值表示，它们也表示不同的类型。」
+
 \subsection{复合类型}
 \paragraph{}
 复合类型可按如下方式构建：

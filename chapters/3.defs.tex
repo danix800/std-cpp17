@@ -5,19 +5,128 @@
 
 \paragraph{}
 ISO和IEC于以下地址维护标准化术语数据库:
-\begin{itemize}
-  \item ...
-\end{itemize}
+\begin{enumerate}
+  \item{ISO Online browsing platform: available at http://www.iso.org/obp}
+  \item{IEC Electropedia: available at http://www.electropedia.org/}
+\end{enumerate}
 
 \paragraph{}
 第20.3节定义了仅在从第20章到第33章和附录D中使用的额外术语。
 
 \paragraph{}
-仅在本文档内一部分使用的术语在它们出现的地方定义并以斜体表示。\\
+仅在本文档内一部分使用的术语在它们出现的地方定义并以斜体表示。
 
-术语列表：
+\addtocontents{toc}{\protect\setcounter{tocdepth}{0}}
 
-\begin{enumerate}
-  \item 访问（access）：<执行时行为>读或写对象的值
-  \item 参数（argument)：<函数调用表达式>以括号括起来的逗号分隔列表中的表达式
-\end{enumerate}
+\section{访问}
+\noindent access，「执行时行为」读或写对象的值
+
+\section{参数}
+\noindent argument，「函数调用表达式」以括号括起来的逗号分隔列表中的表达式（8.2.2）
+
+\section{参数}
+\noindent argument，「函数式宏」以括号括起来的逗号分隔预处理标记（19.3）
+
+\section{参数}
+\noindent argument，「\texttt{throw}表达式」\texttt{throw}操作数（8.17）
+
+\section{参数}
+\noindent argument，「模板实例化」角括号括起来的逗号分隔列表中的\textit{常表达式}、
+\textit{type-id}或\textit{id-expression}（17.3）
+
+\section{阻塞}
+\noindent block，继续执行前等待某些条件（除实现执行执行线程的执行步骤）满足以通
+过阻塞操作
+
+\section{条件支持}
+\noindent conditionally-supported，不要求实现支持的程序结构 \\
+「注：实现应对所有其不支持的结构加以文档说明。」
+
+\section{诊断消息}
+\noindent diagnostic message，由实现定义的实现输出消息子集
+
+\section{动态类型}
+\noindent dynamic type，「泛左值」泛左值所引用的最终派生对象（4.5）的类型 \\
+「例：静态类型为``指向类\texttt{B}的指针''的指针（11.3.1）\texttt{p}指向派生自
+\texttt{B}（第13章）的类\texttt{D}的对象，表达式\texttt{*p}的动态类型为
+``\texttt{D}''。引用（11.3.2）也类似。」
+
+\section{动态类型}
+\noindent dynamic type，「纯右值」纯右值表达式的静态类型
+
+\section{病态程序}
+\noindent ill-formed program，非良态程序（3.29）
+
+\section{实现定义行为}
+\noindent implementation-defined behavior，对于良态程序构造和正确的数据，取决于
+实现和每个实现文档的行为
+
+\section{实现限制}
+\noindent implementation limits，实现对程序所作出的限制
+
+\section{语言环境特定的行为}
+\noindent locale-specific behavior，实现加以文档化的依赖于国家、文化和语言等当地
+习惯的行为
+
+\section{多字节字符}
+\noindent multibyte character，源或执行环境中表示一个或多个扩展执行字符集成员序列
+「注：扩展字符集是基本字符集的超集（5.3）。」
+
+\section{参数}
+\noindent parameter，「函数或catch子句」函数声明或定义中声明或异常处理的catch子
+句中的对象或引用，在进入函数或处理程序时需要提供一个值
+
+\section{参数}
+\noindent parameter，「函数式宏」直接跟在宏名后括号包含的逗号分隔列表中的标识符
+
+\section{参数}
+\noindent parameter，「模板」\textit{template-parameter-list}成员
+
+\section{签名}
+\noindent signature，「函数」名字、参数类型列表（11.3.5）和包含命名空间（如有）\\
+「注：签名用途名字粉碎与链接的基础。」
+
+\section{签名}
+\noindent signature，「函数模板」名字，参数类型列表（11.3.5），包含命名空间
+（如有），返回类型和模板参数列表
+
+\section{签名}
+\noindent signature，「函数模板特例化」特例化模板与参数签名（无论显式指定或推导）
+
+\section{签名}
+\noindent signature，「类成员函数」名字、参数列表（11.3.5），函数作为其成员的类，
+\textit{cv}限定（如有）和\textit{ref-qualifier}（如有）
+
+\section{签名}
+\noindent signature，「类成员函数模板」名字、参数列表（11.3.5），函数作为其成员
+的类，\textit{cv}限定（如有），\textit{ref-qualifier}（如有），返回类型（如有）
+和模板参数列表
+
+\section{签名}
+\noindent signature，「类成员函数模板特例化」作为特例化的成员函数模板签名和其模
+板参数（无论显式指定或推导）
+
+\section{静态类型}
+\noindent static type，不考虑执行语义的情况下程序分析后的表达式类型（6.9） \\
+「注：表达式静态类型仅依赖于表达式所出现的程序形式，且在程序执行时不会改变。」
+
+\section{去阻塞}
+\noindent unblock，满足一个或多个被阻塞线程等待的条件
+
+\section{未定义行为}
+\noindent undefined behavior，本文档不作要求的行为 \\
+「注：未定义行为可能来自本文档没有显式定义的行为，或当程序使用错误的结构、错误的
+数据时。允许的未定义行为从完全忽略不可预测结果，到文档化的环境特性中的翻译或程序
+执行中的行为（无论是否有诊断消息），到终止翻译或执行（发出诊断消息）。许多错误的
+程序结构不产生未定义行为；它们要求有诊断。常表达式求值从不表现出明确指定为未定义
+的行为（8.20）。」
+
+\section{未指定行为}
+\noindent unspecified behavior，对良态程序和正确的数据，依赖于实现的行为 \\
+「注：不要求实现文档化会出现哪种行为。可能的行为通常在本文档中描述。」
+
+\section{良态程序}
+\noindent well-formed program，根据语法规则、可诊断语义规则和单一定义原则（6.2）
+所构成的C++程序
+
+\addtocontents{toc}{\protect\setcounter{tocdepth}{2}}

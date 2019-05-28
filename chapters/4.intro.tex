@@ -465,4 +465,348 @@ volatile泛左值计算时认为副作用完成，即使由调用（如I/O本身
 号时，其执行通常无序于程序其他部分。」
 
 \section{多线程执行与数据竞争}
+\paragraph{}
+一个\textit{执行线程}（\textit{thread of execution}）（也称\textit{线程}）指程序
+内的单个控制流，包括一个特定顶层函数的调用，并递归包含后续由线程所执行的每一个函
+数调用。「注：当一个线程创建另一个线程时，新线程顶层函数的初始调用由新线程而不是
+创建线程执行。」程序中每一个线程可以潜在访问程序中的每一个对象和函数。
+\footnote{自动与线程存储期对象（6.7）关联于一个特定线程，且仅能通过指针或引用被
+不同线程间接访问（6.9.2）。} 在宿主式实现中，C++程序可以有多个线程并发运行。每一
+个线程按以下所定义方式进行。整个程序的执行包括其所有线程的执行。「注：通常执行可
+以看成其所有线程的交织进行。然后，例如某些原子操作允许如下所述的简单交织不一样的
+执行行为。」在自由式实现中，程序是否可以有多于一个线程由实现定义。
+
+\paragraph{}
+对于不是由调用\texttt{std::raise}引起的信号处理程序，哪个执行线程包含该信号处理
+程序调用未指定。
+
+\subsection{数据竞争}
+\paragraph{}
+根据以下规则，某一个特定点上，线程\textit{T}可见的对象的值为对象的初始值，由
+\textit{T}赋给该对象的值或由其他线程赋给该对象的值。「注：某些情况下可能存在未定
+义行为。本节大部分出于支持具有明确且细化的可见性约束的原子操作的想法。但是也隐含
+地支持更受限制的程序的简单视图。」
+
+\paragraph{}
+两个表达式求值\FIT{冲突}，如果其中一个修改一个内存位置（4.4）而另一个读或修改该
+相同的内存位置。
+
+\paragraph{}
+标准库定义一系列的原子操作（第32章）和互斥操作（第33章），特别地称这些操作为同步
+操作。这些操作在进行对另一个线程可见的赋值中起特殊作用。一个或多个内存位置上的同
+步操作指一个消费操作、获取操作、释放操作或获取和释放操作两者。没有关联内存位置的
+同步操作是一个围栏，可以是获取围栏、释放围栏、也可以是获取和释放围栏。此外，存在
+放宽的原子操作，指原子的读-修改-写操作，但不是同步操作，有其特殊特征。「注：比如
+获取互斥的调用会在包含互斥的位置上进行获取操作。对应的，释放同一互斥的调用会在相
+同的位置上进行释放操作。非形式的，对A执行释放操作，会强制其他内存位置上的先前的
+副作用，变得对其他线程可见，这些线程随后对A执行消耗或获取操作。即使和同步操作一
+样，``放宽''的原子操作却不是同步操作，它们不会造成数据竞争。」
+
+\paragraph{}
+特定原子对象\textit{M}的所有修改按特定的全序进行，称为\textit{M}的
+\textit{修改序}（\textit{modification order}）。「注：每一个原子对象存在不同修改
+序。不要求这些可以组合成所有对象的单个全序。一般而言这是不可能的，因为不同线程可
+能会以不一致的顺序观察到不同对象的修改。」
+
+\paragraph{}
+由原子对象\textit{M}上的释放操作\textit{A}引导的\textit{释放序列}
+（\textit{release  sequence}）是\textit{M}的修改顺序的副作用的最大连续子序列，其
+中第一操作是\textit{A}，并且每个后续操作
+\begin{enumerate}
+  \item{由执行\textit{A}操作的同一线程进行，或}
+  \item{是一个原子读-修改-写操作。}
+\end{enumerate}
+
+\paragraph{}
+某些库调用\textit{同步于}另外的线程进行的其他库调用。比如，一个原子存储-释放与
+从该存储取值的加载-获取同步（32.4）。「注：除指明的情况外，如下所述，读取稍后的
+值不一定确保可见性。 这样的要求有时会干扰有效的实现。」「注：同步操作规范定义了
+何时读另一个所写的值。对原子对象，定义是清晰的。给定互斥上的所有操作按单个全序进
+行。每一个互斥获取``读取''上一个互斥释放``所写的值''。」
+
+\paragraph{}
+求值\textit{A}\textit{带有}求值\textit{B}的\textit{依赖}
+（\textit{carry a dependency} to），如果
+\begin{enumerate}
+  \item{\textit{A}的值用作\textit{B}的操作数，除非
+      \begin{enumerate}
+        \item{\textit{B}是\texttt{std::kill\_dependency}（32.4）的任何特例化的调
+          用，或}
+        \item{\textit{A}是内置逻辑\texttt{AND}（\&\&，见8.14）或逻辑\texttt{OR}
+          （||，见8.15）运算符的左操作数，或}
+        \item{\textit{A}是条件运算符（\texttt{?:}，见8.16）的左操作数，或}
+        \item{\textit{A}是内置逗号运算符（\texttt{,}）（8.19）的左操作数；}
+      \end{enumerate}
+      或}
+  \item{\textit{A}写入标量对象或位域\textit{M}，\textit{B}从\textit{M}中读
+    \textit{A}所写值，且\textit{A}前序于\textit{B}，或}
+  \item{存在求值\textit{X}，\textit{A}带有\textit{X}的依赖，\textit{X}带有
+    \textit{B}的依赖。}
+\end{enumerate}
+「注：``带有依赖''是``前序''的子集，且类似的是严格线程内的。」
+
+\paragraph{}
+求值\textit{A}\textit{依赖前序}（\textit{dependency-ordered before}）于求值
+\textit{B}，如果
+\begin{enumerate}
+  \item{\textit{A}在原子对象\textit{M}进行释放操作，另一个线程中，\textit{B}在
+    \textit{M}上进行消费操作并读取\textit{A}所引导的释放序列中的任何副作用所写的
+    值，或}
+  \item{对某些求值\textit{X}，\textit{A}依赖前序于\textit{X}，\textit{X}带有
+    \textit{B}的依赖。}
+\end{enumerate}
+「注：``依赖前序''关系类似于``同步于''关系，但使用释放/消费代替释放/获取。」
+
+\paragraph{}
+求值\textit{A}\textit{线程间先发生于}（\textit{inter-thread happens before}）
+\textit{B}，如果
+\begin{enumerate}
+  \item{\textit{A}同步于\textit{B}，或}
+  \item{\textit{A}依赖前序于\textit{B}，或}
+  \item{对某些求值\textit{X}
+      \begin{enumerate}
+        \item{\textit{A}同步于\textit{X}且\textit{X}前序于\textit{B}，或}
+        \item{\textit{A}前序于\textit{X}且\textit{X}线程间先发生于\textit{B}，}
+        \item{\textit{A}线程间先发生于\textit{X}且\textit{X}线程间先发生于
+          \textit{B}。}
+      \end{enumerate}
+    }
+\end{enumerate}
+「注：``线程间先发生于''关系描述``前序''、``同步于''和``依赖前序''关系的任意
+连接，除两个例外。第一个例外为连接不能以``依赖前序''加上``前序''结束。原因是
+``依赖前序''关系中的一个消费操作仅对该消费操作带有依赖的那些操作提供有序性。该限
+制只对其这种连接结尾适用的原因是任何后序的释放操作将会为先前的消费操作提供所需有
+序性。第二个例外是连接不允许仅包含``前序''。原因是（1）允许``线程间先发生于''关
+系是传递封闭的，（2）``先发生于''关系，以下将定义，提供仅包含``前序''的关系。」
+
+\paragraph{}
+求值\textit{A}\textit{先发生于}（\textit{happens before}）求值\textit{B}（或等
+价的，\textit{B}\textit{后发生于}\textit{A}），如果
+\begin{enumerate}
+  \item{\textit{A}前序于\textit{B}，或}
+  \item{\textit{A}线程间先发生于\textit{B}。}
+\end{enumerate}
+实现应该确保程序不会出现``先发生于''关系的环。「注：反之环应仅通过消费操作的
+使用才可能。」
+
+\paragraph{}
+求值\textit{A}\textit{严格先发生于}求值\textit{B}，如果以下任一成立
+\begin{enumerate}
+  \item{\textit{A}前序于\textit{B}，或}
+  \item{\textit{A}同步于\textit{B}，或}
+  \item{\textit{A}严格先发生于\textit{X}且\textit{X}严格先发生于\textit{B}。}
+\end{enumerate}
+「注：不存在消费操作时，先发生于和严格先发生于关系是等价的。严格先发生于本质上排
+除了消费操作。」
+
+\paragraph{}
+标量对象或位域\textit{M}上相对于\textit{M}的值计算\textit{B}的
+\textit{可见副作用}（\textit{visible side effect}）\textit{A}满足条件：
+\begin{enumerate}
+  \item{\textit{A}先发生于\textit{B}且}
+  \item{没有其他副作用\textit{X}于\textit{M}使得\textit{A}先发生于\textit{X}且
+    \textit{X}先发生于\textit{B}。}
+\end{enumerate}
+由求值\textit{B}所确定，非原子的对象或位域\textit{M}的值，应该是可见副作用
+\textit{A}所存的值。「注：如果关于哪个副作用于非原子的对象或位域是可见的存在歧义
+则该行为要么未指定要么未定义。」「注：这说明了普通对象上的操作不是可见重排序的。
+无数据竞争的话这实际上不可检测，但如同以下定义，连同对原子使用上的合适限制，这
+对确保数据竞争对应于单个交织（序列一致性）执行中的数据竞争是必要的。」
+
+\paragraph{}
+由求值\textit{B}所确定，原子对象\textit{M}的值应该是修改\textit{M}的某些副作用
+\textit{A}所存的值，这里\textit{B}不先发生于\textit{A}。「注：该副作用的集合也
+受此处描述的剩下的规则，特别是以下的一致性要求所限制。」
+
+\paragraph{}
+如果修改原子对象\textit{M}的操作\textit{A}先发生于修改\textit{M}的操作\textit{B}
+则在\textit{M}的修改序中\textit{A}应该早于\textit{B}。「注：该要求称为写-写一致
+性。」
+
+\paragraph{}
+如果原子对象\textit{M}的值计算\textit{A}先发生于\textit{M}的值计算\textit{B}，且
+\textit{A}从\textit{M}的一个副作用\textit{X}取值，则\textit{B}所计算的值应该要么
+是\textit{X}所存的值或\textit{M}上的副作用\textit{Y}所存的值，这里\textit{Y}在
+\textit{M}的修改序中跟在\textit{X}的后面。「注：该要求称为读-读一致性。」
+
+\paragraph{}
+如果原子对象\textit{M}的值计算\textit{A}发生在修改\textit{M}的操作\textit{B}之
+前，则\textit{A}应从\textit{M}的副作用\textit{X}中取其值，其中\textit{X}在
+\textit{M}的修改序中位于\textit{B}之前。「注：该要求称为读-写一致性。」
+
+\paragraph{}
+如果原子对象\textit{M}上的副作用\textit{X}发生在\textit{M}的值计算\textit{B}之
+前，那么求值\textit{B}应从\textit{X}或\textit{M}的修改序中\textit{X}之后的副作
+用\textit{Y}中取其值。「注：该要求被称为写-读一致性。」
+
+\paragraph{}
+「注：前面的四个一致性要求实际上不允许编译器将原子操作重新排序到单个对象，即使这
+两个操作都是放宽松的载入。这有效地保证了C++原子操作可用的大部分硬件所提供的缓存
+一致性。」
+
+\paragraph{}
+「注：原子载入所观察到的值取决于``先发生于''关系，而这取决于原子载入所观察到的
+值。预期的读是必须存在原子载入与他们观察到的修改的关联，连同适当选择的修改顺序
+和如上所述的``先发生于''关系，满足此处要求的结果约束。」
+
+\paragraph{}
+两个操作是\textit{潜在并发}（\textit{potentially concurrent}）的，如果
+\begin{enumerate}
+  \item{它们由不同线程执行，或}
+  \item{它们无序，至少一个由信号处理程序执行，且不同时由同一个信号处理程序执行。}
+\end{enumerate}
+如果包括两个潜在并发的冲突操作，至少一个非原子，且均不先发生于彼此，除以下讨论的
+信号处理程序的特殊情形外，则程序的执行包含\textit{数据竞争}
+（\textit{data race}）。任何这样数据竞争都会产生未定义行为。「注：可以证明，正确
+使用互斥和\texttt{memory\_order\_seq\_cst}以防止所有数据竞争且不使用其他同步操作
+的程序行为就好像其组成线程的执行操作只是交错的，对象的每个值计算都取自交错执行中
+该对象的最后一个副作用。这通常称为``顺序一致性''。然而这仅对无数据竞争程序成立，
+且无数据竞争程序不能观察到不改变单线程程序语义的大部分程序变换。事实上，大部分单
+线程程序变换仍然允许，因为任何行为不同的程序必定进行了未定义操作。」
+
+\paragraph{}
+如果两个对\texttt{volatile std::sig\_atomic\_t}类型的同一对象访问出现在同一线程
+中则不产生数据竞争，即使一个或多个出现在信号处理程序中。对每一个信号处理程序调用
+由线程进行的调用信号处理程序的求值可以分成\textit{A}和\textit{B}两组，使得
+\textit{B}中没有求值先发生于\中没有求值先发生于textit{A}中求值，且这种
+\texttt{volatile std::sig\_atomic\_t}对象求值的值取自如同\textit{A}中求值先发生
+于信号处理程序的执行并且信号处理程序的执行先发生于\textit{B}中所有求值。
+
+\paragraph{}
+「注：引入对不由抽象机修改的潜在共享内存赋值的编译器变换通常被本文档所排除，因这
+种赋值在抽象机执行未遇到数据竞争的情况下可能覆盖不同线程中另一个赋值。包括覆盖不
+同内存位置的相邻数据成员的赋值的实现。有问题的原子可能有别名的情况下原子载入的重
+排序通常也被排除，因为这可能违反一致性规则。」
+
+\paragraph{}
+「注：引入潜在共享内存猜测性读的变换可能不能保留本文档中定义的C++程序语义，因为
+他们潜在地引入了数据竞争。然而在数据竞争定义清晰的机器作为目标的优化编译器环境中
+它们通常是有效的。对不允许竞争或不提供硬件竞争检测的假想机器它们是无效的。」
+
+\subsection{继续执行（Forward progress）}
+\paragraph{}
+实现可能假定任何线程最终都会执行以下之一：
+\begin{enumerate}
+  \item{终止，}
+  \item{调用库I/O函数，}
+  \item{访问volatile泛左值，}
+  \item{进行同步或原子操作。}
+\end{enumerate}
+「注：其目的是允许编译器变换，比如空循环消除，即使不能证明循环终止。」
+
+\paragraph{}
+定义为无锁（32.8）或指明无锁（32.5）的原子函数执行是\textit{无锁执行}。
+\begin{enumerate}
+  \item{如果标准库函数中仅有一个未被阻塞，则无锁执行应该完成。「注：并发执行线程
+    可能阻止无锁执行进行下去。比如，该情形会在锁定载入（load-locked），条件存储
+    （store-conditional）实现中出现。该属性有时称为无障碍执行。」}
+  \item{当一个或多个无锁执行并发运行时，至少一个应该完成。「注：对某些实现来说提
+    供该效果的绝对保证是困难的，因为来自其他线程不断的特别是不合时宜的干涉可能阻
+    止线程继续执行，如在锁定载入和条件存储指令间因不相关的目的而不断偷取缓存线。
+    实现应该确保在期望的操作条件下这种效果不会无限延迟程序执行，而这样的异常行为
+    可以安全地被程序员所忽略。本文档外该属性有时称为无锁执行。」}
+\end{enumerate}
+
+\paragraph{}
+在线程执行过程中，以下每一条被称作\textit{执行步骤}：
+\begin{enumerate}
+  \item{执行线程的终止，}
+  \item{访问volatile泛左值，或}
+  \item{调用库I/O函数、同步操作或原子操作的完成。}
+\end{enumerate}
+
+\paragraph{}
+带阻塞（3.6）标准库函数调用在等待阻塞条件满足的过程中被认为是连续执行其执行步骤
+的。「例：一个阻塞直到I/O操作完成的库I/O函数被认为是在连续地检测操作是否完成。每
+一次这样的检测可能包括一个或多个执行步骤，比如使用抽象机的可观察行为。」
+
+\paragraph{}
+「注：由于这一点以及关于执行线程最终必须执行的前述要求，因此没有执行步骤发生，任
+何执行线程都不能永久执行。」
+
+\paragraph{}
+当执行步骤发生或无锁执行未完成时，执行线程会进行，因为在标准库函数中没有其他被阻
+塞的并发线程（见上文）。
+
+\paragraph{}
+对于提供\textit{并发进行保证}（\textit{concurrent forword progress guarantees}）
+的执行线程，实现应该确保线程最终会在未终止时继续进行。「注：无论其他执行线程
+（如果有）是否已经或正在取得进展，这都是必需的。 最终满足此要求意味着这将在未指
+定但有限的时间内发生。」
+
+\paragraph{}
+由实现创建用于执行\texttt{main}（6.6.1）的执行线程以及由\texttt{std::threads}
+（33.3.2）所创建的执行线程是否提供并发进行保证是由实现定义的。「注：通用目的实现
+应该提供这些保证。」
+
+\paragraph{}
+对于提供\textit{并行进行保证}（\textit{parallel forward progress guarantees}）的
+执行线程，如果其尚未执行任何执行步骤，实现不要求确保线程最终将取得进展；一旦线程
+执行了一个步骤，实现应该提供并发进行保证。
+
+\paragraph{}
+「注：这并不指明要求何时开始线程执行，而这通常是由创建该执行线程的实体所指定的。
+比如，提供并发进行保证且依次以任意顺序执行一组任务中的任务的执行线程对这些任务满
+足并行进行保证要求。」
+
+\paragraph{}
+对提供\textit{弱并行进行保证}的执行线程，实现不确保线程最终取得进展。
+
+\paragraph{}
+「注：无论其他线程是否取得进展，不能期望提供弱并行进行保证的执行线程取得进展；然
+而使用如下定义的进展保证代理的阻塞可用于确保此类执行线程最终取得进展。」
+
+\paragraph{}
+并发进行保证比并行进行保证更强，并行进行保证比弱并行进行保证更强。「注：比如，某
+些执行线程间同步可能仅当执行线程提供并行进行保证时才能取得进展，但在弱并行进行保
+证下却不能取得进展。」
+
+\paragraph{}
+当执行线程\textit{P}指定被一组执行线程\textit{S}的完成
+\textit{使用进展保证代理阻塞}，那么在\textit{P}被\textit{S}阻塞的整个时间段中，
+实现应该确保\textit{S}的至少一个执行线程所提供的进展保证至少和\textit{P}的进展保
+证一样强。「注：具体是\textit{S}中的哪个线程或有多少执行步骤未指定。该加强不是永
+久性的，并且不一定适用于受影响的执行线程的剩余生命周期。只要\textit{P}被阻塞，实
+现必须最终从\textit{S}中选择并潜在加强一个执行线程。」\textit{S}中执行线程一旦终
+止即从\textit{S}中移除。一旦\textit{S}为空，则\textit{P}不再阻塞。
+
+\paragraph{}
+「注：因此，执行线程\textit{B}可以暂时提供一段时间有效更强的进展保证，这是由于第
+二个执行线程\textit{A}被其使用进展保证代理阻塞。 反过来，如果\textit{B}随后被
+\textit{C}进展保证代理阻止，这可能也会暂时为\textit{C}提供更强的进展保证。」
+
+\paragraph{}
+「注：如果\textit{S}中的所有执行线程都完成执行（例如，终止且没有错误地使用阻塞同
+步），那么P使用进展保证代理的阻塞操作的执行将不会导致P的进展保证被有效削弱。」
+
+\paragraph{}
+「注：这并没有消除线程执行的关于提供并行或弱并行进展保证的阻塞同步约束，因为实现
+不要求强化特定的执行线程，其过于薄弱的进展保证阻止了整体进度。」
+
+\paragraph{}
+实现应该确保原子或同步操作所赋的最后一个值（按修改顺序）在有限的时间内对所有其他
+线程可见。
+
 \section{致谢}
+\paragraph{}
+本文档所描述的C++编程语言基于Stroustrup: \textit{The C++ Programming Language}
+(second edition, Addition-Wesley Publishing Company, ISBN 0-201-53992-6,
+copyright \copyright 1991 AT\&T)中第R章（参考手册）中所描述的语言。该语言基于C编
+程语言，在Kernighan and Ritchie: \textit{The C Programming Language}
+(Prentice-Hall, 1978, ISBN 0-13-110163-3, copyright \copyright 1978 AT\&T)附录A
+中所述。
+
+\paragraph{}
+本文档中标准库章节部分基于P.J. Plauger的工作，发表于\textit{The Draft Standard
+C++ Library} (Prentice-Hall, ISBN 0-13-117003-1, copyright \copyright 1995 P.J.
+Plauger)。
+
+\paragraph{}
+POSIX\textregistered 是Institute of Electrical and Electronic Engineers, Inc的注
+册商标。
+
+\paragraph{}
+ECMAScript\textregistered 是Ecma International的注册商标。
+
+\paragraph{}
+保留这些原件的所有权利。

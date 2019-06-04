@@ -8,15 +8,1100 @@
 \texttt{\#include}包含（19.2）的所有头（20.5.1.2）和其他源文件，除掉条件包含
 （19.2）指令跳过的行，称为\textit{翻译单元}。「注：一个C++程序不需要同时翻译。」
 
+\paragraph{}
+「注：先翻译的翻译单元和实例化单元可以单独保留或保留在库中。程序的独立单元通过
+（比如）调用标识符具有外部链接的函数、操作标识符具有外部链接的对象或操作数据文件
+等方式通信（6.5）。翻译单元可以独立翻译然后链接到一起产生可执行程序（6.5）。」
+
 \section{翻译阶段}
+
+\paragraph{}
+翻译的语法规则间优先顺序由以下阶段指定。\footnote{实现必须表现地如同这些独立阶段
+都有，尽管实际上不同的阶段可能合并到一起去。}
+\begin{enumerate}[label={\arabic*}]
+  \item{如果必要，物理源文件字符以实现定义的方式映射到基本源字符集（为行结尾符号
+    引入新行字符）。可接受的源文件字符集由实现定义。任何不在基本源文件字符集
+   （5.3）中的字符被替换成指代该字符的\textit{通用字符名}。实现可能使用内部编码
+    ，只要源文件中所遇到的实际扩展字符和该源文件中表示为\textit{通用字符名}
+    （如使用\texttt{\bslh uXXXX}记法）的同一扩展字符被等价处理，除原始字符串中
+    该替换被恢复原状（5.4）。}
+  \item{每一个反斜杠字符（\bslh）直接跟上新行字符的实例被删除，粘连物理源行形成
+    逻辑源行。任何一个物理源行中只有最后一个反斜杠可以是这种粘连的部分。除了原始
+    字符串的的粘连被恢复原状，如果粘连产生匹配\textit{通用字符名}语法的字符序列
+    ，则行为未定义。非空及不以新行字符结尾或在任何粘连发生前以反斜杠直接跟上新行
+    结尾的源文件，应该如同有一个额外的新行字符被扩展到该文件中一样进行处理。}
+  \item{源文件被分解成预处理标记（5.4）和空白字符序列（包括注释）。源文件不应该
+    以不完整的预处理标记或注释\footnote{不完整预处理标记可能来源于以多字符标记
+    起始部分作为结尾的源文件，该标记需要终止字符序列，比如缺少结尾”或>的
+    \textit{header-name}。不完整注释可能来源于以未收尾的\texttt{/*}注释作为结尾
+    的源文件。}结束。注释被替换成空白字符。保留新行字符。除新行以外的非空空白字
+    符序列是否保留或替换成一个空白字符未指定。分割源文件字符成预处理标记的过程
+    是上下文相关的。「例：参见\texttt{\#include}预处理指令中的\texttt{<}的处
+    理。」}
+  \item{执行预处理指令，展开宏调用并执行\texttt{\_Pragma}一元运算符表达式。如果
+    匹配\textit{通用字符名}语法的字符序列由标记连接产生（19.3.3），则行为
+    未定义。\texttt{\#include}指令使得所命名的头或源文件从阶段1到阶段4递归的进行
+    处理。所有预处理指令随后被删除。}
+  \item{字符或字符串字面值中的每一个源字符集成员，以及每一个转义序列和
+    \textit{通用字符名}或非原始字符串被转换成对应执行字符集（5.13.3，5.13.5）成
+    员；如果没有对应成员，则被转换成除零（宽）字符以外的实现定义成员。
+    \footnote{实现不需要将所有非对应源字符转换成相同执行字符。}}
+  \item{连接相邻的字符串字面值。}
+  \item{分隔相邻标记的空白字符不再有意义。每一个预处理标记被转换成标记（5.6）。
+    产生的标记作为翻译单元进行语法和语义分析。「注：分析与翻译标记的过程可能偶尔
+    会有一个标记被替换成其他标记序列的情况（17.2）。」「注：源文件，翻译单元和翻
+    译后的翻译单元不一定存成文件，这些实体与外部表示间也不一定存在一一对应关系。
+    描述只是概念上的，且不指定某一特定实现。」}
+  \item{翻译后的翻译单元和实例化单元按如下组合起来：「注：某些或全部来自库。」检
+    查每个翻译单元以产生必要的实例化列表。「注：可能包括显式要求的实例化
+    （17.7.2）。」定位必要的模板定义。包含这些定义的翻译单元源码是否要求可见由实
+    现定义。「注：实现可能将足够的信息编码到翻译后的翻译单元中来确保此处不需
+    要源码。」进行所有必要的实例化以产生\textit{实例化单元}
+    （\textit{instantiation units}）。「注：类似于翻译后的翻译单元，但不含未实例
+    化的模板引用和模板定义。」如任何实例化失败则程序为病态。}
+  \item{解析所有外部实体。链接所有库组件以满足当前翻译中未定义的实体引用。收集所
+    有这样的翻译器输出组成程序镜像，该镜像包含在其执行环境中执行所需的信息。}
+\end{enumerate}
+
 \section{字符集}
+\paragraph{}
+\textit{基本源字符集}（\textit{basic source character set}）包括$96$个字符：空白
+字符，表示水平制表符、垂直制表符、换页符和新行的控制字符，加上$91$个图形字符：
+\footnote{基本源字符集成员字形用于标识ISO/IEC 10646的子集中的字符，其对应于ASCII
+字符集。然而由于源文件字符集到源字集的映射（翻译阶段1）是实现定义的，要求实现对
+源文件中的基本源字符如何表示加以文件说明。}                                   \\
+\mbox{\qquad \texttt{a b c d e f g h i j k l m n o p q r s t u v w x y z}}    \\
+\mbox{\qquad \texttt{A B C D E F G H I J K L M N O P Q R S T U V W X Y Z}}    \\
+\mbox{\qquad \texttt{0 1 2 3 4 5 6 7 8 9}}                                    \\
+% _ { } [ ] # ( ) < > % : ; . ? * + - / ^ & | ~ ! = , \ " '
+\mbox{\qquad \texttt{\_ \{ \} [ ] \# ( ) \textless{} \textgreater{} \% :\ ; .\
+?\ \textasteriskcentered{} + - / \textasciicircum{} \& \textbar{}
+\textasciitilde{} !\ = , \bslh{} \qdbl{} \qsgl}}
+
+\paragraph{}
+\textit{通用字符名}结构提供命名其他字符的方法。                               \\
+\mbox{\qquad \textit{hex-quad:}}                                              \\
+\mbox{\qquad \qquad \textit{hexadecimal-digit hexadecimal-digit
+    hexadecimal-digit hexadecimal-digit}}                                     \\
+\mbox{\qquad \textit{universal-character-name:}}                              \\
+\mbox{\qquad \qquad \texttt{\bslh{}u} \textit{hex-quad}}                      \\
+\mbox{\qquad \qquad \texttt{\bslh{}U} \textit{hex-quad}
+    \textit{hex-quad}}                                                        \\
+由\textit{通用字符名}\texttt{\bslh UNNNNNNNN}所表示的是ISO/IEC 10646中
+短名为\texttt{NNNNNNNN}的字符；由\texttt{\bslh uNNNN}所表示的是ISO/IEC
+10646中短名为\texttt{0000NNNN}的字符。如\textit{通用字符名}的十六进制值对应于
+一个代理码点（范围0xD800-0xDFFF，含），同程序为病态。此外，如果除字符字面值或
+字符串字面值的\textit{c-char-sequence}、\textit{s-char-sequence}或
+\textit{r-char-sequence} 以外的\textit{通用字符名}的十六进制值对应于控制
+（范围为0x00-0x1F或0x7F-0x9F，含）字符或对应于基本字符集字符，则程序为病态。
+\footnote{类似于\textit{r-char-sequence}（5.13.5）中的\textit{通用字符名}的
+字符序列不形成\textit{通用字符名}。}
+
+\paragraph{}
+\textit{基本执行字符集}和\textit{基本执行宽字符集}应该包含所有基本源字符集成员，
+加上表示警报、删格和回车的控制字符，以及\textit{零字符}（对应的
+\textit{零宽字符}），其值为0。对每一个基本执行字符集，成员的值应该为非负且彼此不
+同。在基本源和执行字符集中，以上数字列表中每个\texttt{0}以后的字符值应该以前一个
+的值大。\textit{执行字符集}和\textit{执行宽字符集}为对应的基本执行字符集和基本
+执行宽字符集的实现定义超集。执行字符集和额外成员集的成员值为语言环境特定的。
+
 \section{预处理标记}
+\noindent \mbox{\qquad \textit{preprocessing-token:}}                         \\
+\mbox{\qquad \qquad \textit{header-name}}                                     \\
+\mbox{\qquad \qquad \textit{identifier}}                                      \\
+\mbox{\qquad \qquad \textit{pp-number}}                                       \\
+\mbox{\qquad \qquad \textit{character-literal}}                               \\
+\mbox{\qquad \qquad \textit{user-defined-character-literal}}                  \\
+\mbox{\qquad \qquad \textit{string-literal}}                                  \\
+\mbox{\qquad \qquad \textit{user-defined-string-literal}}                     \\
+\mbox{\qquad \qquad \textit{preprocessing-op-or-punc}}                        \\
+\mbox{\qquad \qquad 未在上面列出的每一个非空白字符}
+
+\paragraph{}
+每一个被转换成标记（5.6）的预处理标记其词法形式应该是关键字、标识符、字面值、
+运算符或标点之一。
+
+\paragraph{}
+预处理标记是翻译阶段3到6中语言的最小词法元素。预处理标记类别包括头名称、标识符、
+预处理数字、字符字面值（含用户定义字符字面值）、字符串字面值（含用户定义字符串
+字面值）、预处理运算符和标点，以及不匹配其他预处理标记类别的单个非空白字符。如果
+一个\texttt{\qsgl{}}和\texttt{\qdbl{}}字符匹配最后一个类型，
+则行为未定义。预处理标记可由空白分隔；包括注释（5.7）或空白字符（空格、水平制表
+符、空行、垂直制表符和分页），或二者均可。如第19章所述，翻译阶段4的某些情况下，
+空白（或不存在空白）不止具有分隔预处理标记的作用。空白只能作为头名称的一部分或字
+符或字符串字面值的引号字符间的一部分出现在预处理标记中。
+
+\paragraph{}
+如果输入流在某给定字符已经被分析成预处理标记，则：
+\begin{enumerate}
+  \item{如果下一个字符开启一个可能是原始字符串字面值的前缀和起始双引号的字符
+    序列，则下一个标记应该是原始字符串序列。在原始字符串的起始与结束双引号之间，
+    任何第1阶段和第2阶段（\textit{通用字符名}和行粘连）所做变换都被恢复原样；该
+    反转应该在\textit{d-char}、\textit{r-char}或分隔括号识别前进行。原始字符串字
+    面值定义为匹配原始字符串模式的最短字符序列 \\
+    \mbox{\qquad \textit{encoding-prefix}$_{opt}$ \texttt{R}
+    \textit{raw-string}}}
+  \item{否则，如果接下来的三个字符为\texttt{<::}且后续字符即不是\texttt{:}也不是
+    \texttt{>}，则\texttt{<}被当成是预处理标记本身，而不是可选标记\texttt{<:}的
+    第一个字符。}
+  \item{否则，下一个预处理标记为可构成预处理标记的最长序列，即使这可能使进一步词
+    法分析失败，除非是一个头名称（5.8）仅在\texttt{\#include}指令（19.2）中
+    形成。}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  #define R "x"
+  const char* s = R"y"; // ill-formed raw string, not "x" "y"
+\end{lstlisting}」
+
+\paragraph{}
+「例：程序片段\texttt{0xe+foo}被分析成预处理标记（不是有效符点或整形字面标记），
+即便分析成三个预处理标记\texttt{0xe}、\texttt{+}和\texttt{foo}可能产生有效表达式
+（如\texttt{foo}被宏定义为\texttt{1}）。类似的，程序段\texttt{1E1}分析成预处理
+数字（有效符点字面标记），无论\texttt{E}是否为宏名。」
+
+\paragraph{}
+「例：程序段\texttt{x+++++y}分析成\texttt{x ++ ++ + y}，即如果\texttt{x}和
+\texttt{y}为整型，该片段违反了增量运算符的限制，即使分析成\texttt{x ++ + ++ y}可
+能产生正确表达式。」
+
 \section{可选标记}
+\paragraph{}
+某些运算符和标点具有可选标记表示。\footnote{包括``双字序列''和额外保留字。术语
+``双字序列''（双字符标记）并不是最佳描述，因为其中一个可选预处理标记是
+\texttt{\%:\%:}，并且有多个主要标记是由两个字符组成的。尽管如此，这些不是词法
+关键字的可选标记俗称为``双字序列''。}
+
+\paragraph{}
+在语言的各个方面，每一个可选标记与之对应的主标记行为一致，除了它们的拼写不一样。
+\footnote{因此``字符化''的\texttt{$[$}和\texttt{<:}是不一样的，保留其源拼写，否则
+这两个标记可以自由互换。} 可选标记在表\ref{tab:alttokens}中定义。
+
+\begin{table}[h!]
+  \centering
+  \caption{可选标记}
+  \begin{tabular}{|cc|cc|cc|}
+    \hline
+    \texttt{Alternative} & \texttt{Primary}     & \texttt{Alternative}         &
+      \texttt{Primary}   & \texttt{Alternative} & \texttt{Primary}            \\
+    \hline
+    \texttt{<\%}         & \texttt{\{}        & \texttt{and}                   &
+      \texttt{\&\&}      & \texttt{and\_eq}   & \texttt{\&=}                  \\
+    \hline
+    \texttt{\%>}         & \texttt{\}}        & \texttt{bitor}                 &
+      \texttt{|}         & \texttt{or\_eq}    & \texttt{|=}                   \\
+    \hline
+    \texttt{<:}          & \texttt{[}         & \texttt{or}                    &
+      \texttt{||}        & \texttt{xor\_eq}   & \texttt{\textasciicircum{}=}  \\
+    \hline
+    \texttt{:>}                   & \texttt{]}   & \texttt{xor}                &
+      \texttt{\textasciicircum{}} & \texttt{not} & \texttt{!}                 \\
+    \hline
+    \texttt{\%:}                  & \texttt{\#}      & \texttt{compl}          &
+      \texttt{\textasciitilde{}}  & \texttt{not\_eq} & \texttt{!=}            \\
+    \hline
+    \texttt{\%:\%:}      & \texttt{\#\#}      & \texttt{bitand}                &
+      \texttt{\&}        &                    &                               \\
+    \hline
+  \end{tabular}
+  \label{tab:alttokens}
+\end{table}
+
 \section{标记}
+
+\noindent \mbox{\qquad \textit{token}}                                        \\
+\mbox{\qquad \qquad \textit{identifier}}                                      \\
+\mbox{\qquad \qquad \textit{keyword}}                                         \\
+\mbox{\qquad \qquad \textit{literal}}                                         \\
+\mbox{\qquad \qquad \textit{operator}}                                        \\
+\mbox{\qquad \qquad \textit{punctuator}}
+
+\paragraph{}
+存在五种标记：标识符、关键字、字面值、\footnote{字面值包括字符串，字符和数值字
+面值。} 运算符和其他分隔符。如下所述的空白、水平和垂直制表符、新行、换页符和
+注释（统称``空白''）被忽略，其作用仅仅为分隔标记。「注：某些分隔相邻标识符、关键
+字、数值字面值和含字母字符的可选标记是必须的。」
+
 \section{注释}
+\paragraph{}
+字符\texttt{/*}开始一个注释，使用\texttt{*/}结束。这些注释不能嵌套。字符
+\texttt{//}开始一个注释，在下一个新行字符前结束。如果这种注释中存在分页符或垂直
+制表符，则只有空白字符才能出现在这些字符和结束该注释的新行之间；无需诊断。「注：
+注释字符\texttt{//}、\texttt{/*}和\texttt{*/}在一个\texttt{//}注释中时被当成其他
+字符处理无特殊意义。类似的，注释字符\texttt{//}和\texttt{/*}在一个\texttt{/*}中
+时无特殊意义。」
+
 \section{头名称}
+
+\noindent \mbox{\qquad \textit{header-name:}}                                 \\
+\mbox{\qquad \qquad \texttt{<} \textit{h-char-sequence} \texttt{>}}           \\
+\mbox{\qquad \qquad \texttt{\qdbl} \textit{h-char-sequence} \texttt{\qdbl}}   \\
+\noindent \mbox{\qquad \textit{h-char-sequence:}}                             \\
+\mbox{\qquad \qquad \textit{h-char}}                                          \\
+\mbox{\qquad \qquad \textit{h-char-sequence} \textit{h-char}}                 \\
+\noindent \mbox{\qquad \textit{h-char:}}                                      \\
+\mbox{\qquad \qquad 除新行和\texttt{>}以外的任何源字符集成员}                 \\
+\noindent \mbox{\qquad \textit{q-char-sequence:}}                             \\
+\mbox{\qquad \qquad \textit{q-char}}                                          \\
+\mbox{\qquad \qquad \textit{q-char-sequence} \textit{q-char}}                 \\
+\noindent \mbox{\qquad \textit{q-char:}}                                      \\
+\mbox{\qquad \qquad 除新行和\texttt{\qdbl}以外的任何源字符集成员}
+
+\paragraph{}
+「注：头名称预处理标记只出现在\texttt{\#include}预处理指令中（见5.4）。」两种形
+式的头名称中的序列以实现定义方式映射到第19.2节中的头或者源文件名。
+
+\paragraph{}
+\textit{q-char-sequence}和\textit{h-char-sequence}中出现的字符
+\texttt{\qsgl}或\texttt{\qdbl}，或字符序列\texttt{/*}或
+\texttt{//}由实现定义的语义条件支持，如同\textit{h-char-sequence}中出现的字符
+\texttt{\qdbl}。\footnote{因此，依赖于实现，类似于转义序列的字符序列可能
+产生错误，被解释成对应于转义序列的字符，或有完全不同的意义。}
+
 \section{预处理数字}
+\noindent \mbox{\qquad \textit{pp-number:}}                                   \\
+\mbox{\qquad \qquad \textit{digit}}                                           \\
+\mbox{\qquad \qquad \textit{. digit}}                                         \\
+\mbox{\qquad \qquad \textit{pp-number digit}}                                 \\
+\mbox{\qquad \qquad \textit{pp-number identifier-nondigit}}                   \\
+\mbox{\qquad \qquad \textit{pp-number} \texttt{\qsgl}
+                    \textit{digit}}                                           \\
+\mbox{\qquad \qquad \textit{pp-number} \texttt{\qsgl}
+                    \textit{nondigit}}                                        \\
+\mbox{\qquad \qquad \textit{pp-number} \texttt{e} \textit{sign}}              \\
+\mbox{\qquad \qquad \textit{pp-number} \texttt{E} \textit{sign}}              \\
+\mbox{\qquad \qquad \textit{pp-number} \texttt{p} \textit{sign}}              \\
+\mbox{\qquad \qquad \textit{pp-number} \texttt{P} \textit{sign}}              \\
+\mbox{\qquad \qquad \textit{pp-number} \texttt{.}} \\
+
+\paragraph{}
+预处理数字标记词法上包括所有整数字面值标记（5.13.2）和所有符点字面值标记
+（5.13.4）。
+
+\paragraph{}
+预处理数字无类型或值；二者均在成功转换成整型字面值或符点字面值后获得。
+
 \section{标识符}
+\noindent \mbox{\qquad \textit{identifier:}}                                  \\
+\mbox{\qquad \qquad \textit{identifier-nondigit}}                             \\
+\mbox{\qquad \qquad \textit{identifier identifier-nondigit}}                  \\
+\mbox{\qquad \qquad \textit{identifier digit}}                                \\
+\noindent \mbox{\qquad \textit{identifier-nondigit:}}                         \\
+\mbox{\qquad \qquad \textit{nondigit}}                                        \\
+\mbox{\qquad \qquad \textit{universal-character-name}}                        \\
+\noindent \mbox{\qquad \textit{nondigit:} one of}                             \\
+\mbox{\qquad \qquad \texttt{a b c d e f g h i j k l m}}                       \\
+\mbox{\qquad \qquad \texttt{n o p q r s t u v w x y z}}                       \\
+\mbox{\qquad \qquad \texttt{A B C D E F G H I J K L M}}                       \\
+\mbox{\qquad \qquad \texttt{N O P Q R S T U V W X Y Z \_}}                    \\
+\noindent \mbox{\qquad \textit{digit:} one of}                                \\
+\mbox{\qquad \qquad \texttt{0 1 2 3 4 5 6 7 8 9}}
+
+\paragraph{}
+标识符指任意长字母和数字序列。标识符中的每一个\textit{通用字符名}应该指代编码在
+ISO 10646中，表\ref{tab:iso10646allowed}中所示范围内的字符。起始元素不能是编码在
+表\ref{tab:iso10646disallowed}中所示范围内的\textit{通用字符名}。大小写字符不同
+。所有字符均有意义。\footnote{在链接器不能接受扩展字符的系统上，
+\textit{通用字符名}的编码可能用来形成有效外部字符。比如，某些未用字符或序列可能
+用来编码\textit{通用字符名}中的\texttt{\bslh u}。扩展字符可能产生长外部
+标识符，但是C++不对外部标识符有效字母数作翻译限制。在C++中，大小写字母在所有
+标识符都不同，包括外部标识符。}
+
+\begin{table}[h!]
+  \centering
+  \caption{允许的字符范围}
+  \begin{tabular}{|lllll|}
+    \hline
+    \texttt{00A8}          & \texttt{00AA}        & \texttt{00AD}        &
+      \texttt{00AF}        & \texttt{00B2-00B5}                               \\
+    \texttt{00B7-00BA}     & \texttt{00BC-00BE}   & \texttt{00C0-00D6}   &
+      \texttt{00D8-00F6}   & \texttt{00F8-00FF}                               \\
+    \texttt{0100-167F}     & \texttt{1681-180D}   & \texttt{180F-1FFF}   &
+                           &                                                  \\
+    \texttt{200B-200D}     & \texttt{202A-202E}   & \texttt{203F-2040}   &
+      \texttt{2054}        & \texttt{2060-206F}                               \\
+    \texttt{2070-218F}     & \texttt{2460-24FF}   & \texttt{2776-2793}   &
+      \texttt{2C00-2DFF}   & \texttt{2E80-2FFF}                               \\
+    \texttt{3004-3007}     & \texttt{3021-302F}   & \texttt{3031-D7FF}   &
+                           &                                                  \\
+    \texttt{F900-FD3D}     & \texttt{FD40-FDCF}   & \texttt{FDF0-FE44}   &
+      \texttt{FE47-FFFD}   &                                                  \\
+    \texttt{10000-1FFFD}   & \texttt{20000-2FFFD} & \texttt{30000-3FFFD} &
+      \texttt{40000-4FFFD} & \texttt{50000-5FFFD}                             \\
+    \texttt{60000-6FFFD}   & \texttt{70000-7FFFD} & \texttt{80000-8FFFD} &
+      \texttt{90000-9FFFD} & \texttt{A0000-AFFFD}                             \\
+    \texttt{B0000-BFFFD}   & \texttt{C0000-CFFFD} & \texttt{D0000-DFFFD} &
+      \texttt{E0000-EFFFD} &                                                  \\
+    \hline
+  \end{tabular}
+  \label{tab:iso10646allowed}
+\end{table}
+
+\begin{table}[h!]
+  \centering
+  \caption{初始不允许的字符序列（组合字符）}
+  \begin{tabular}{|llll|}
+    \hline
+    \texttt{0300-036F} & \texttt{1DC0-1DFF} & \texttt{20D0-20FF} &
+      \texttt{FE20-FE2F}                                                      \\
+    \hline
+  \end{tabular}
+  \label{tab:iso10646disallowed}
+\end{table}
+
+\paragraph{}
+表\ref{tab:special-ids}中的标识符在某些上下文中具有特殊意义。当在语法中引用时，
+这些标识符是显式使用的，而不是使用\textit{标识符}语法产生式。除非另有说明，否则
+对于给定\textit{标识符}是否具有特殊含义的任何歧义都将标记解释为常规
+\textit{标识符}。
+
+\begin{table}[h!]
+  \centering
+  \caption{具特殊意义的标识符}
+  \begin{tabular}{|ll|}
+    \hline
+    \texttt{override} & \texttt{final} \\
+    \hline
+  \end{tabular}
+  \label{tab:special-ids}
+\end{table}
+
+\paragraph{}
+此外，某些标识符保留给C++实现使用，不应再作他用；无需诊断。
+\begin{enumerate}
+  \item{含双下划线\ \texttt{\_\_}或以下划线开始跟上大写字母的标识符保留，实现
+    可以作任何用途。}
+  \item{以下划线开始的标识符保留给实现用作全局命名空间名字。}
+\end{enumerate}
+
 \section{关键字}
-\section{运行符与标点}
+\paragraph{}
+表\ref{tab:keywords}中的标识符保留用作关键字（即第7阶段中无条件当作关键字），除
+非出现在\textit{attribute-token}中（10.6.1）：
+
+\begin{table}[h!]
+  \centering
+  \caption{关键字}
+  \begin{tabular}{|lllll|}
+    \hline
+    \texttt{alignas}             & \texttt{continue}      & \texttt{friend}    &
+      \texttt{register}          & \texttt{true}                              \\
+    \texttt{alignof}             & \texttt{decltype}      & \texttt{goto}      &
+      \texttt{reinterpret\_cast} & \texttt{try}                               \\
+    \texttt{asm}                 & \texttt{default}       & \texttt{if}        &
+      \texttt{return}            & \texttt{typedef}                           \\
+    \texttt{auto}                & \texttt{delete}        & \texttt{inline}    &
+      \texttt{short}             & \texttt{typeid}                            \\
+    \texttt{bool}                & \texttt{do}            & \texttt{int}       &
+      \texttt{signed}            & \texttt{typename}                          \\
+    \texttt{break}               & \texttt{double}        & \texttt{long}      &
+      \texttt{sizeof}            & \texttt{union}                             \\
+    \texttt{case}                & \texttt{dynamic\_cast} & \texttt{mutable}   &
+      \texttt{static}            & \texttt{unsigned}                          \\
+    \texttt{catch}               & \texttt{else}          & \texttt{namespace} &
+      \texttt{static\_assert}    & \texttt{using}                             \\
+    \texttt{char}                & \texttt{enum}          & \texttt{new}       &
+      \texttt{static\_cast}      & \texttt{virtual}                           \\
+    \texttt{char16\_t}           & \texttt{explicit}      & \texttt{noexcept}  &
+      \texttt{struct}            & \texttt{void}                              \\
+    \texttt{char32\_t}           & \texttt{export}        & \texttt{nullptr}   &
+      \texttt{switch}            & \texttt{volatile}                          \\
+    \texttt{class}               & \texttt{extern}        & \texttt{operator}  &
+      \texttt{template}          & \texttt{wchar\_t}                          \\
+    \texttt{const}               & \texttt{false}         & \texttt{private}   &
+      \texttt{this}              & \texttt{while}                             \\
+    \texttt{constexpr}           & \texttt{float}         & \texttt{protected} &
+      \texttt{thread\_local}     &                                            \\
+    \texttt{const\_cast}         & \texttt{for}           & \texttt{public}    &
+      \texttt{throw}             &                                            \\
+    \hline
+  \end{tabular}
+  \label{tab:keywords}
+\end{table}
+「注：关键字\texttt{export}和\texttt{register}仅保留作未来使用。」
+
+\paragraph{}
+此外，表\ref{tab:alt-rep-op-punc}中所示的某些运算符和标点（5.5）的可选表示保留，
+不应作他用：
+
+\begin{table}[h!]
+  \centering
+  \caption{可选表示}
+  \begin{tabular}{|llllll|}
+    \hline
+    \texttt{and}       & \texttt{and\_eq} & \texttt{bitand} & \texttt{bitor}   &
+      \texttt{compl}   & \texttt{not}                                         \\
+    \texttt{not\_eq}   & \texttt{or}      & \texttt{or\_eq} & \texttt{xor}     &
+      \texttt{xor\_eq} &                                                      \\
+    \hline
+  \end{tabular}
+  \label{tab:alt-rep-op-punc}
+\end{table}
+
+\section{运算符与标点}
+\paragraph{}
+C++程序的词法表示包括多个预处理标记，它们在预处理器的语法中使用，或者被转换成
+运算符和标点的标记：                                                          \\
+\noindent \mbox{\qquad \textit{preprocessing-op-or-punc:} one of}             \\
+\begin{table}[h!]
+  \vspace*{-2em}\hspace*{0.5em}
+  \makebox[\textwidth]{
+    \begin{tabular}{lllllllll}
+      \texttt{\{} & \texttt{\}} & \texttt{[} & \texttt{]} & \texttt{\#} &
+        \texttt{\#\#} & \texttt{(} & \texttt{)} &                             \\
+      \texttt{<:} & \texttt{:>} & \texttt{<\%} & \texttt{\%>} & \texttt{\%:} &
+        \texttt{\%:\%:} & \texttt{;} & \texttt{:} & \texttt{\ldots}           \\
+      \texttt{new} & \texttt{delete} & \texttt{?} & \texttt{::} & \texttt{.} &
+        \texttt{.*} & & &                                                     \\
+      \texttt{+} & \texttt{-} & \texttt{*} & \texttt{/} & \texttt{\%} &
+        \texttt{\textasciicircum} & \texttt{\&} & \texttt{|} &
+        \texttt{\textasciitilde}                                              \\
+      \texttt{!} & \texttt{=} & \texttt{<} & \texttt{>} & \texttt{+=} &
+        \texttt{-=} & \texttt{*=} & \texttt{/=} & \texttt{\%=}                \\
+      \texttt{\textasciitilde{}=} & \texttt{\&=} & \texttt{|=} &
+        \texttt{\textless{}\textless{}} & \texttt{\textgreater{}\textgreater}  &
+        \texttt{\textgreater{}\textgreater{}=} &
+        \texttt{\textless{}\textless{}=} & \texttt{==} & \texttt{!=}          \\
+      \texttt{<=} & \texttt{>=} & \texttt{\&\&} & \texttt{||} & \texttt{++}    &
+        \texttt{--} & \texttt{,} & \texttt{->*} & \texttt{->}                 \\
+      \texttt{and} & \texttt{and\_eq} & \texttt{bitand} & \texttt{bitor} &
+        \texttt{compl} & \texttt{not} & \texttt{not\_eq} & &                  \\
+      \texttt{or} & \texttt{or\_eq} & \texttt{xor} & \texttt{xor\_eq} &
+         & & & &                                                              \\
+    \end{tabular}
+  }
+\end{table}
+
+\noindent 每一个\textit{preprocessing-op-or-punc}在翻译阶段7（5.2）中被转换成单
+个标记。
+
 \section{字面值}
+\subsection{字面值类型}
+\paragraph{}
+存在多种字面值类型。\footnote{本文档中术语``字面值''一般指ISO C中称为``常量''的
+标记。}                                                                       \\
+\noindent \mbox{\qquad \textit{literal:}}                                     \\
+\mbox{\qquad \qquad \textit{integer-literal}}                                 \\
+\mbox{\qquad \qquad \textit{character-literal}}                               \\
+\mbox{\qquad \qquad \textit{floating-literal}}                                \\
+\mbox{\qquad \qquad \textit{string-literal}}                                  \\
+\mbox{\qquad \qquad \textit{boolean-literal}}                                 \\
+\mbox{\qquad \qquad \textit{pointer-literal}}                                 \\
+\mbox{\qquad \qquad \textit{user-defined-literal}}                            \\
+
+\subsection{整数字面值}
+\noindent \mbox{\qquad \textit{integer-literal:}}                             \\
+\mbox{\qquad \qquad \textit{binary-literal integer-suffix$_{opt}$}}           \\
+\mbox{\qquad \qquad \textit{octal-literal integer-suffix$_{opt}$}}            \\
+\mbox{\qquad \qquad \textit{decimal-literal integer-suffix$_{opt}$}}          \\
+\mbox{\qquad \qquad \textit{hexdecimal-literal integer-suffix$_{opt}$}}       \\
+\noindent \mbox{\qquad \textit{binary-literal:}}                              \\
+\mbox{\qquad \qquad \texttt{0b} \textit{binary-digit}}                        \\
+\mbox{\qquad \qquad \texttt{0B} \textit{binary-digit}}                        \\
+\mbox{\qquad \qquad \textit{binary-literal \qsgl$_{opt}$
+                            binary-digit}}                                    \\
+\noindent \mbox{\qquad \textit{octal-literal:}}                               \\
+\mbox{\qquad \qquad \texttt{0}}                                               \\
+\mbox{\qquad \qquad \textit{octal-literal \qsgl$_{opt}$
+                            octal-digit}}                                     \\
+\noindent \mbox{\qquad \textit{decimal-literal:}}                             \\
+\mbox{\qquad \qquad \textit{nonzero-digit}}                                   \\
+\mbox{\qquad \qquad \textit{decimal-literal \qsgl$_{opt}$
+                            digit}}                                           \\
+\noindent \mbox{\qquad \textit{hexdecimal-literal:}}                          \\
+\mbox{\qquad \qquad \textit{hexdecimal-prefix hexdecimal-digit-sequence}}     \\
+\noindent \mbox{\qquad \textit{binary-digit:}}                                \\
+\mbox{\qquad \qquad \texttt{0}}                                               \\
+\mbox{\qquad \qquad \texttt{1}}                                               \\
+\noindent \mbox{\qquad \textit{octal-digit:} one of}                          \\
+\mbox{\qquad \qquad \texttt{0 1 2 3 4 5 6 7}}                                 \\
+\noindent \mbox{\qquad \textit{nonzero-digit:} one of}                        \\
+\mbox{\qquad \qquad \texttt{1 2 3 4 5 6 7}}                                   \\
+\noindent \mbox{\qquad \textit{hexdecimal-prefix:} one of}                    \\
+\mbox{\qquad \qquad \texttt{0x 0X}}                                           \\
+\noindent \mbox{\qquad \textit{hexdecimal-digit-sequence:}}                   \\
+\mbox{\qquad \qquad \textit{hexdecimal-digit}}                                \\
+\mbox{\qquad \qquad \textit{hexdecimal-digit-sequence \qsgl$_{opt}$
+                            hexdecimal-digit}}                                \\
+\noindent \mbox{\qquad \textit{hexdecimal-digit:} one of}                     \\
+\mbox{\qquad \qquad \texttt{0 1 2 3 4 5 6 7 8 9}}                             \\
+\mbox{\qquad \qquad \texttt{a b c d e f}}                                     \\
+\mbox{\qquad \qquad \texttt{A B C D E F}}                                     \\
+\noindent \mbox{\qquad \textit{integer-suffix}}                               \\
+\mbox{\qquad \qquad \textit{unsigned-suffix long-suffix$_{opt}$}}             \\
+\mbox{\qquad \qquad \textit{unsigned-suffix long-long-suffix$_{opt}$}}        \\
+\mbox{\qquad \qquad \textit{long-suffix unsigned-suffix$_{opt}$}}             \\
+\mbox{\qquad \qquad \textit{long-long-suffix unsigned-suffix$_{opt}$}}        \\
+\noindent \mbox{\qquad \textit{unsigned-prefix:} one of}                      \\
+\mbox{\qquad \qquad \texttt{u U}}                                             \\
+\noindent \mbox{\qquad \textit{long-prefix:} one of}                          \\
+\mbox{\qquad \qquad \texttt{l L}}                                             \\
+\noindent \mbox{\qquad \textit{long-long-prefix:} one of}                     \\
+\mbox{\qquad \qquad \texttt{ll LL}}                                           \\
+
+\paragraph{}
+\textit{整数字面值}指数字序列，不含小数点和指数，带有可选的单引号，在确定其值时
+会忽略掉。整数字面值可能使用前缀来指明基，使用后缀来指明类型。数字序列词法上第一
+个数字具有最高有效位。\textit{二进制整数字面值}（基为2）以\texttt{0b}或
+\texttt{0B}开始，包含二进制数字序列。\textit{八进制整数字面值}（基为8）以数字0开
+始，包含八进制数字序列。\footnote{数字\texttt{8}和\texttt{9}不是八进制数字。}
+\textit{十进制数字字面值}（基为10）以除\texttt{0}以外的数字开始，包含十进制数字。
+\textit{十六进制数字字面值}（基为16）以\texttt{0x}或\texttt{0X}开始，包含十六进
+制数字，即十进制数字和字母\texttt{a}到\texttt{f}和\texttt{A}到\texttt{F}，对应值
+为十进制10到15。「例：数字12可以写成\texttt{12}、\texttt{014}、\texttt{0XC}或
+\texttt{0b1100}。整数字面值\texttt{1048576}，\texttt{1'048'576}，
+\texttt{0X100000}和\texttt{0'004'000'000}都表示同一个值。」
+
+\paragraph{}
+整数字面值的类型为表\ref{tab:int-lit-types}中第一个可表示其值的对应列表中的类型。
+
+\begin{table}[h!]
+  \centering
+  \caption{整数字面值类型}
+  \begin{tabular}{|l|l|l|}
+    \hline
+    \textbf{Suffix} & \textbf{Decimal literal} &
+      \textbf{Binary, octal, or hexadecimal literal}                          \\
+    \hline
+    none & \texttt{int}           & \texttt{int}                              \\
+         & \texttt{long int}      & \texttt{unsigned int}                     \\
+         & \texttt{long long int} & \texttt{long int}                         \\
+         &                        & \texttt{unsigned long int}                \\
+         &                        & \texttt{long long int}                    \\
+         &                        & \texttt{unsigned long long int}           \\
+    \hline
+    \texttt{u} or \texttt{U} & \texttt{unsigned int} & \texttt{unsigned int}  \\
+      & \texttt{unsigned long int}      & \texttt{unsigned long int}          \\
+      & \texttt{unsigned long long int} & \texttt{unsigned long long int}     \\
+    \hline
+    \texttt{l} or \texttt{L}   & \texttt{long int} & \texttt{long int}        \\
+      & \texttt{long long int} & \texttt{unsigned long int}                   \\
+      & & \texttt{long long int}                                              \\
+      & & \texttt{unsigned long long int}                                     \\
+    \hline
+    Both \texttt{u} or \texttt{U} & \texttt{unsigned long int}      &
+      \texttt{unsigned long int}                                              \\
+    and \texttt{l} or \texttt{L}  & \texttt{unsigned long long int} &
+      \texttt{unsigned long long int}                                         \\
+    \hline
+    \texttt{ll} or \texttt{LL} & \texttt{long long int} &
+      \texttt{long lont int}                                                  \\
+      &  & \texttt{unsigned long long int}                                    \\
+    \hline
+    Both \texttt{u} or \texttt{U} & \texttt{unsigned long long int} &
+      \texttt{unsigned long long int}                                         \\
+    and \texttt{ll} or \texttt{LL} & &                                        \\
+    \hline
+  \end{tabular}
+  \label{tab:int-lit-types}
+\end{table}
+
+\paragraph{}
+如果整数字面值不能使用其列表中的类型表示，但可以用扩展类型（6.9.1）表示，它可能
+具有扩展整型。如果整数字面值列表中的所有类型均为有符号，扩展整型应该为有符号。如
+果整数字面值列表中的所有类型均为无符号，则扩展整型应该为无符号。如果列表即包括有
+符号也包括无符号，则扩展整型可能是有符号或无符号。如一个翻译单元包括不能用任何允
+许的类型表示的字面值则程序为病态的。
+
+\subsection{字符字面值}
+\noindent \mbox{\qquad \textit{character-literal:}}                           \\
+\mbox{\qquad \qquad \textit{encoding-prefix$_{opt}$
+  \qsgl \textit{c-char-sequence}\qsgl}}                                       \\
+\noindent \mbox{\qquad \textit{encoding-prefix:} one of}                      \\
+\mbox{\qquad \qquad \texttt{u8 u U L}}                                        \\
+\noindent \mbox{\qquad \textit{c-char-sequence:}}                             \\
+\mbox{\qquad \qquad \textit{c-char}}                                          \\
+\mbox{\qquad \qquad \textit{c-char-sequence} \textit{c-char}}                 \\
+\noindent \mbox{\qquad \textit{c-char:}}                                      \\
+\mbox{\qquad \qquad 除单引号\texttt{\qsgl}、反斜杠\texttt{\bslh}和新行字符以外
+  的源字符集成员}                                                             \\
+\mbox{\qquad \qquad \textit{escape-sequence}}                                 \\
+\mbox{\qquad \qquad \textit{universal-character-name}}                        \\
+\noindent \mbox{\qquad \textit{escape-sequence:}}                             \\
+\mbox{\qquad \qquad \textit{simple-escape-sequence}}                          \\
+\mbox{\qquad \qquad \textit{octal-escape-sequence}}                           \\
+\mbox{\qquad \qquad \textit{hexadecimal-escape-sequence}}                     \\
+\noindent \mbox{\qquad \textit{simple-escape-sequence:} one of}               \\
+\mbox{\qquad \qquad \texttt{\bslh\qsgl\ \bslh\qdbl\ \bslh?\ \bslh\bslh}}      \\
+\mbox{\qquad \qquad \texttt{\bslh a \bslh b \bslh f \bslh n \bslh r \bslh t
+  \bslh v}}                                                                   \\
+\noindent \mbox{\qquad \textit{octal-escape-sequence:}}                       \\
+\mbox{\qquad \qquad \texttt{\bslh} \textit{octal-digit}}                      \\
+\mbox{\qquad \qquad \texttt{\bslh} \textit{octal-digit octal-digit}}          \\
+\mbox{\qquad \qquad \texttt{\bslh} \textit{octal-digit octal-digit
+  octal-digit}}                                                               \\
+\noindent \mbox{\qquad \textit{hexadecimal-escape-sequence:}}                 \\
+\mbox{\qquad \qquad \texttt{\bslh x} \textit{hexadecimal-digit}}              \\
+\mbox{\qquad \qquad \textit{hexadecimal-escape-sequence}
+  \textit{hexadecimal-digit}}                                                 \\
+
+\paragraph{}
+字符字面值指单引号括起来的一个或多个字符，如
+\texttt{\qsgl x\qsgl}，前面为可选的\texttt{u8}、
+\texttt{u}、\texttt{U}或\texttt{L}，如
+\texttt{u8\qsgl w\qsgl}、\texttt{u\qsgl x\
+\qsgl}、\texttt{U\qsgl y\qsgl}或
+\texttt{L\qsgl z\qsgl}。
+
+\paragraph{}
+不以\texttt{u8}、\texttt{u}、\texttt{U}或\texttt{L}开头的字符字面值为
+\textit{普通字符字面值}。包含单个执行字符集可表示的\textit{c-char}的普通字符字面
+值的类型为\texttt{char}，其值等于执行字符集中的\textit{c-char}的数值。包含多个
+\textit{c-char}的普通字符字面值为\textit{多字符字面值}。多字符字面值或含单个
+\textit{c-char}但在执行字符集中不可表示的普通字符字面值为条件支持，其类型为
+\texttt{int}，且有实现定义值。
+
+\paragraph{}
+以\texttt{u8}开头的字符字面值，如\texttt{u8\qsgl{}w\qsgl}，
+其类型为\texttt{char}，即\textit{UTF-8字符字面值}。UTF-8字符字面值的值等于ISO
+10646中的码点值，如果该码点值可以使用单个UTF-8编码单元表示的话（即如果该字符在
+C0控制和基本拉丁Unicode块中）。如果值不能使用单个UTF-8编码单元表示，则程序为病态
+的。包含多个\textit{c-char}的UTF-8字符字面值为病态的。
+
+\paragraph{}
+以字母\texttt{u}开头的字符字面值，如
+\texttt{u\qsgl{}x\qsgl}，
+其类型为\texttt{char16\_t}。包含单个\textit{c-char}的\texttt{char16\_t}字符
+字面值的值等于其ISO 10646码点值，如果说该码点可以使用单个16位码点单元表示的话。
+（即是一个基本多语言平面码点。）如果该值在16位内不可表示，则程序为病态的。
+包含多个\textit{c-char}的\texttt{char16\_t}字符字面值为病态的。
+
+\paragraph{}
+以字母\texttt{u}开头的字符字面值，如
+\texttt{u\qsgl{}y\qsgl}，
+其类型为\texttt{char32\_t}。包含单个\textit{c-char}的\texttt{char32\_t}字符字面
+值的值等于其ISO 10646码点值。包含多个\textit{c-char}的\texttt{char32\_t}字符
+字面值为病态的。
+
+\paragraph{}
+以字母\texttt{L}开头的字符字面值为\textit{宽字符字面值}，比如
+\texttt{L\qsgl
+z\qsgl}。宽字符字面值类型为\texttt{wchar\_t}。\footnote{适用于字符不
+能用单个字节表示的字符集。} 包含单个\textit{c-char}的宽字符字面值的值等于执行宽
+字符集中\textit{c-char}编码的数值，除非\textit{c-char}不能用执行宽字符集表示，
+在这种情况下，该值是实现定义的。「注：类型\texttt{wchar\_t}可以表示执行宽字符集
+所有成员（见6.9.1）。」包含多个\textit{c-char}的宽字符字面值的值是实现定义的。
+
+\paragraph{}
+某些非图形字符、单引号\texttt{\qsgl}、双引号\texttt{\qdbl}、
+问号\texttt{?}\footnote{为问号使用转义是为了兼容ISO 2014和ISO C。}和反斜杠
+\texttt{\bslh}可以根据表\ref{tab:escape-seq}表示。双引号\texttt{\qdbl}和问号
+\texttt{?}，可以表示为其自身，也可以表示为转义序列\texttt{\bslh\qdbl}和
+\texttt{\bslh ?}。但单引号\texttt{\qsgl}和反斜杠\texttt{\bslh}应分别由转义序列
+\texttt{\bslh\qsgl}和\texttt{\bslh\bslh}表示。表\ref{tab:escape-seq}中没有列出
+反斜杠后跟字符的转义序列是条件支持的，具有实现定义的语义。转义序列指定单个字符。
+
+\begin{table}[h!]
+  \centering
+  \caption{转义序列}
+  \begin{tabular}{|lll|}
+    \hline
+    new-line        & \texttt{NL(LF)} & \texttt{\bslh n}                      \\
+    horizontal tab  & \texttt{HT}     & \texttt{\bslh t}                      \\
+    vertical tab    & \texttt{VT}     & \texttt{\bslh v}                      \\
+    backspace       & \texttt{BS}     & \texttt{\bslh b}                      \\
+    carriage return & \texttt{CR}     & \texttt{\bslh r}                      \\
+    form feed       & \texttt{FF}     & \texttt{\bslh f}                      \\
+    alert           & \texttt{BEL}    & \texttt{\bslh a}                      \\
+    backslash       & \texttt{\bslh}  & \texttt{\bslh\bslh}                   \\
+    question mark   & \texttt{?}      & \texttt{\bslh ?}                      \\
+    single quote    & \texttt{\qsgl}  & \texttt{\bslh\qsgl}                   \\
+    double quote    & \texttt{\qdbl}  & \texttt{\bslh\qdbl}                   \\
+    octal number    & \textit{ooo}    & \texttt{\bslh}\textit{ooo}            \\
+    hex number      & \textit{hhh}    & \texttt{\bslh x}\textit{hhh}          \\
+    \hline
+  \end{tabular}
+  \label{tab:escape-seq}
+\end{table}
+
+\paragraph{}
+转义\texttt{\bslh}\textit{ooo}包含反斜杠，后跟一个、两个或三个八进制数字，用于
+指定所需字符的值。转义\texttt{\bslh}\textit{hhh}由反斜杠和x后跟一个或多个十六
+进制数字组成，用于指定所需字符的值。十六进制序列中的位数没有限制。八进制或十六进
+制数字的序列分别以非八进制数字或非十六进制数字的第一个字符结束。如果字符字面值的
+值不在实现定义的\texttt{char}（对无前缀字符字面值）或\texttt{wchar\_t}（对前缀为
+\texttt{L}的字符字面值）范围内，则其值由实现定义。「注：如果前缀为\texttt{u}、
+\texttt{u8}或\texttt{U}的字符字面值超出其类型定义的范围，则程序为病态的。」
+
+\paragraph{}
+\textit{通用字符名}在适当的执行字符集中转换为指定字符的编码。如果没有这样的编码，
+\textit{通用字符名}将转换为实现定义的编码。「注：在翻译阶段1，当源文本中遇到实际
+扩展字符时将引入\textit{通用字符名}。因此，所有扩展字符都用\textit{通用字符名}来
+描述。但是，只要能获得相同结果，实际编译器实现就可以使用自己的本机字符集。」
+
+\subsection{符点字面值}
+\noindent \mbox{\qquad \textit{floating-literal:}}                            \\
+\mbox{\qquad \qquad \textit{decimal-floating-literal}}                        \\
+\mbox{\qquad \qquad \textit{hexadecimal-floating-literal}}                    \\
+\noindent \mbox{\qquad \textit{decimal-floating-literal:}}                    \\
+\mbox{\qquad \qquad \textit{fractional-constant exponent-part$_{opt}$
+                              floating-suffix$_{opt}$}}                       \\
+\mbox{\qquad \qquad \textit{digit-sequence exponent-part
+                              floating-suffix$_{opt}$}}                       \\
+\noindent \mbox{\qquad \textit{hexadecimal-floating-literal:}}                \\
+\mbox{\qquad \qquad \textit{hexadecimal-prefix hexadecimal-fract-constant
+                              binary-exponent-part floating-suffix$_{opt}$}}  \\
+\mbox{\qquad \qquad \textit{hexadecimal-prefix hexadecimal-digit-sequence
+                              binary-exponent-part floating-suffix$_{opt}$}}  \\
+\noindent \mbox{\qquad \textit{fractional-constant:}}                         \\
+\mbox{\qquad \qquad \textit{digit-sequence} \texttt{.}
+                    \textit{digit-sequence}}                                  \\
+\mbox{\qquad \qquad \textit{digit-sequence} \texttt{.}}                       \\
+\noindent \mbox{\qquad \textit{hexadecimal-fract-constant:}}                  \\
+\mbox{\qquad \qquad \textit{hexadecimal-digit-sequence} \texttt{.}
+                    \textit{hexadecimal-digit-sequence}}                      \\
+\mbox{\qquad \qquad \textit{hexadecimal-digit-sequence} \texttt{.}}           \\
+\noindent \mbox{\qquad \textit{exponent-part:}}                               \\
+\mbox{\qquad \qquad \texttt{e} \textit{sign$_{opt}$} \textit{digit-sequence}} \\
+\mbox{\qquad \qquad \texttt{E} \textit{sign$_{opt}$} \textit{digit-sequence}} \\
+\noindent \mbox{\qquad \textit{sign:} one of}                                 \\
+\mbox{\qquad \qquad \texttt{+ -}}                                             \\
+\noindent \mbox{\qquad \textit{digit-sequence:}}                              \\
+\mbox{\qquad \qquad \textit{digit}}                                           \\
+\mbox{\qquad \qquad \textit{digit-sequence}
+                    \texttt{\qsgl}\textit{$_{opt}$ digit}}                    \\
+\noindent \mbox{\qquad \textit{floating-suffix:} one of}                      \\
+\mbox{\qquad \qquad \texttt{f l F L}}                                         \\
+
+\paragraph{}
+符点字面值包含指定基的前缀，整数部分，小数点，小数部分，一个\texttt{e}、
+\texttt{E}、\texttt{p}或\texttt{P}，一个可选的有符号整型指数，以及一个可选的类型
+后缀。如果没有前缀，整数和小数部分都由十进制（基为10）数字序列组成，或者前缀是
+\texttt{0x}或\texttt{0X}，由十六进制（基为16）数字序列组成。浮点字面值在前一种情
+况下是\textit{十进制符点字面值}，在后一种情况下是\textit{十六进制浮点字面值}。在
+确定其值时，\textit{digit-sequence}或\textit{hexadecimal-digit-sequence}中忽略可
+选的分隔单引号。「例：符点字面值\texttt{1.602'176'565e-19}和
+\texttt{1.602176565e-19}具有相同值。」整数部分或小数部分（不能同时）可以省略。
+小数点或字母\texttt{e}或\texttt{E}以及指数（不能同时）可以从十进制浮点字面值中省
+略。小数点（而不是指数）可以从十六进制浮点字面值中省略。整数部分、可选的小数点和
+可选的小数部分构成了浮点字面值的有效位。在十进制浮点字面值中，指数（如果存在）表
+示有效位按10的幂进行缩放。在十六进制浮点字面值中指数表示2的幂，用以缩放有效位。
+「例：符点字面值\texttt{49.625}和\texttt{0xC.68p+2}具有相同值。」如果缩放值在其
+类型的可表示值范围内，则结果是可表示的缩放值，否则是以实现定义的方式选择的最接近
+缩放值的较大或较小的可表示值。除显式指定后缀，符点字面值类型为\texttt{double}。
+后缀\texttt{f}和\texttt{F}指定\texttt{float}，\texttt{l}和\texttt{L}指定
+\texttt{double}。如果缩放值不在其类型可表示值范围内，则程序为病态的。
+
+\subsection{字符串字面值}
+\noindent \mbox{\qquad \textit{string-literal:}}                              \\
+\mbox{\qquad \qquad \textit{encoding-prefix$_{opt}$}
+\texttt{\qdbl}\textit{s-char-sequence$_{opt}$}\texttt{\qdbl}}                 \\
+\mbox{\qquad \qquad \textit{encoding-prefix$_{opt}$} \texttt{R}
+  \textit{raw-string}}                                                        \\
+\noindent \mbox{\qquad \textit{s-char-sequence:}}                             \\
+\mbox{\qquad \qquad \textit{s-char}}                                          \\
+\mbox{\qquad \qquad \textit{s-char-sequence s-char}}                          \\
+\noindent \mbox{\qquad \textit{s-char:}}                                      \\
+\mbox{\qquad \qquad 除双引号\texttt{\qdbl}、反斜杠\texttt{\bslh}或新行字符以外
+  的源字符集成员}                                                             \\
+\mbox{\qquad \qquad \textit{escape-sequence}}                                 \\
+\mbox{\qquad \qquad \textit{universal-character-name}}                        \\
+\noindent \mbox{\qquad \textit{raw-string:}}                                  \\
+\mbox{\qquad \qquad \texttt{\qdbl} \textit{d-char-sequence$_{opt}$}
+  \texttt{(} \textit{r-char-sequence$_{opt}$} \texttt{)}
+  \textit{d-char-sequence$_{opt}$} \texttt{\qdbl}}                            \\
+\noindent \mbox{\qquad \textit{r-char-sequence:}}                             \\
+\mbox{\qquad \qquad \textit{r-char}}                                          \\
+\mbox{\qquad \qquad \textit{r-char-sequence r-char}}                          \\
+\noindent \mbox{\qquad \textit{r-char:}}                                      \\
+\mbox{\qquad \qquad 除右括号\texttt{)}后跟初始\textit{d-char-sequence}（可空）
+  再跟上双引号\texttt{\qdbl}的源字符集成员。}                                 \\
+\noindent \mbox{\qquad \textit{d-char-sequence:}}                             \\
+\mbox{\qquad \qquad \textit{d-char}}                                          \\
+\mbox{\qquad \qquad \textit{d-char-sequence d-char}}                          \\
+\noindent \mbox{\qquad \textit{d-char:}}                                      \\
+\mbox{\qquad \qquad 除空格、左括号\texttt{(}、右括号\texttt{)}、反斜杠
+  \texttt{\bslh}和表示水平制表、垂直制表、换页和新}                           \\
+\mbox{\qquad \qquad 行的控制字符以外的基本源字符集成员。}                     \\
+
+\paragraph{}
+\textit{字符串字面值}指双引号包围的字符序列（第5.13.3节定义），可选前缀
+\texttt{R}、\texttt{u8}、\texttt{u8R}、\texttt{u}、\texttt{uR}、\texttt{U}、
+\texttt{UR}、\texttt{L}或\texttt{LR}，比如
+\texttt{\qdbl{}\ldots\qdbl}、
+\texttt{R\qdbl{}(\ldots)\qdbl}、
+\texttt{u8\qdbl{}\ldots\qdbl}、
+\texttt{u8R\qdbl{}**(\ldots)**\qdbl}、
+\texttt{u\qdbl{}\ldots\qdbl}、
+\texttt{uR\qdbl{}*\textasciitilde(\ldots)*\textasciitilde\qdbl}、
+\texttt{U\qdbl{}\ldots\qdbl}、
+\texttt{UR\qdbl{}zzz(\ldots)zzz\qdbl}、
+\texttt{L\qdbl{}\ldots\qdbl}或
+\texttt{LR\qdbl{}(\ldots)\qdbl}。
+
+\paragraph{}
+前缀中有\texttt{R}的\textit{字符串字面值}为\textit{原始字符串字面值}。
+\textit{d-char-sequence}作为分隔符。\textit{原始字符串}的终止
+\textit{d-char-sequence}与其起始\textit{d-char-sequence}字符序列一样。
+\textit{d-char-sequence}应该包含至多16个字符。
+
+\paragraph{}
+「注：\textit{原始字符串}中字符\texttt{'('}和\texttt{')'}是允许的。因此
+\texttt{R\qdbl{}delimiter((a|b))delimiter\qdbl}等价于
+\texttt{\qdbl{}(a|b)\qdbl}。」
+
+\paragraph{}
+「注：源文件原始字符串中的新行会在执行字符串字面值中产生新行。假定以下例子中的行
+起始处无空白，则断言成立：
+\begin{lstlisting}
+  const char* p = R"(a\
+  b
+  c)";
+  assert(std::strcmp(p, "a(\\\nb\nc") == 0);
+\end{lstlisting}」
+
+\paragraph{}
+「例：原始字符串
+\begin{lstlisting}
+  R"a(
+  )\
+  a"
+  )a"
+\end{lstlisting}
+等价于\texttt{\qdbl\bslh n)\bslh\bslh\bslh na\bslh\qdbl\bslh n\qdbl}。
+原始字符串
+\begin{lstlisting}
+  R"(x = "\"y\"")"
+\end{lstlisting}
+等价于\texttt{\qdbl x = \bslh\qdbl\bslh\bslh\bslh\qdbl y\bslh\bslh\bslh\qdbl
+\bslh\qdbl\qdbl}。」
+
+\paragraph{}
+在第6阶段后，不以\textit{encoding-prefix}开头的\textit{原始字符串}为
+\textit{普通字符串字面值}，并以给定字符初始化。
+
+\paragraph{}
+以\texttt{u8}开头的\textit{字符串字面值}，如
+\texttt{u8\qdbl{}asdf\qdbl}，为\textit{UTF-8字符串字面值}。
+
+\paragraph{}
+普通字符串字面值和UTF-8字符串字面值也称为窄字符串字面值。窄字符串字面值具有类型
+``\textit{n}个\texttt{const char}的数组''，这里的\textit{n}为如下定义的字符串的
+大小，且有静态存储期（6.7）。
+
+\paragraph{}
+对UTF-8字符串字面值，其对象表示（6.9）的每一个元素具有该字符串的UTF-8编码的对应
+编码单元的值。
+
+\paragraph{}
+以\texttt{u}开头的\textit{字符串字面值}，如
+\texttt{u\qdbl{}asdf\qdbl}，指\texttt{char16\_t}字符串字面值。
+\texttt{char16\_t}字符串字面值具有类型``\textit{n}个\texttt{const char16\_t}的
+数组''，这里的\textit{n}为如下定义的字符串大小；该数组使用给定字符初始化。单个
+\textit{c-char}可能产生多于一个的代理对形式的\texttt{char16\_t}字符。
+
+\paragraph{}
+以\texttt{U}开头的\textit{字符串字面值}为\texttt{char32\_t}字符串字面值，
+比如\texttt{U\qdbl{}asdf\qdbl}。\texttt{char32\_t}字符串字面值
+具有类型``\texttt{n}个\texttt{const char32\_t}的数组''，这里的\textit{n}指如下
+定义的字符串的大小；该数组以给定字符初始化。
+
+\paragraph{}
+以\texttt{L}开头的\textit{字符串字面值}为\textit{宽字符串字面值}，比如
+\texttt{L\qdbl{}asdf\qdbl}。宽字符串字面值具有类型``\textit{n}个
+\texttt{const wchar\_t}的数组''，这里\textit{n}指如下定义的字符串的大小；该数组
+经给定字符初始化。
+
+\paragraph{}
+在翻译阶段6（5.2），相邻\textit{字符串字面值}被连接到一起。如果两个
+\textit{字符串字面值}均有相同的\textit{encoding-prefix}，产生的连接字符串字面值
+具有相同的\textit{encoding-prefix}。如果其中一个\textit{字符串字面值}无
+\textit{encoding-prefix}，则它被当成与另一个操作数具有相同
+\textit{encoding-prefix}的\textit{字符串字面值}。如果一个UTF-8字符串字面值标记与
+一个宽字符串字面值标记相邻则程序为病态的。任何其他连接为条件支持，具有实现定义行
+为。「注：该连接为一种解释而不是转换。因为解释发生在翻译阶段6（在字符串字面值中
+每个字符被翻译成合适字符集中的值之后），\textit{字符串字面值}的初始原始性对解释
+和连接的格式良态不再起作用。」表\ref{tab:str-lit-concat}列出一些有效连接的示例。
+\begin{table}[h!]
+  \centering
+  \caption{字符串字面值连接}
+  \begin{tabular}{|ccc|ccc|ccc|}
+    \hline
+    \multicolumn{2}{|c}{Source} & Means &
+    \multicolumn{2}{c}{Source} & Means &
+    \multicolumn{2}{c}{Source} & Means  \\
+    \texttt{u\qdbl a\qdbl} & \texttt{u\qdbl b\qdbl} & \texttt{u\qdbl ab\qdbl} &
+    \texttt{U\qdbl a\qdbl} & \texttt{U\qdbl b\qdbl} & \texttt{U\qdbl ab\qdbl} &
+    \texttt{L\qdbl a\qdbl} & \texttt{L\qdbl b\qdbl} & \texttt{L\qdbl ab\qdbl} \\
+    \texttt{u\qdbl a\qdbl} & \texttt{ \qdbl b\qdbl} & \texttt{u\qdbl ab\qdbl} &
+    \texttt{U\qdbl a\qdbl} & \texttt{ \qdbl b\qdbl} & \texttt{U\qdbl ab\qdbl} &
+    \texttt{L\qdbl a\qdbl} & \texttt{ \qdbl b\qdbl} & \texttt{L\qdbl ab\qdbl} \\
+    \texttt{ \qdbl a\qdbl} & \texttt{u\qdbl b\qdbl} & \texttt{u\qdbl ab\qdbl} &
+    \texttt{ \qdbl a\qdbl} & \texttt{U\qdbl b\qdbl} & \texttt{U\qdbl ab\qdbl} &
+    \texttt{ \qdbl a\qdbl} & \texttt{L\qdbl b\qdbl} & \texttt{L\qdbl ab\qdbl} \\
+    \hline
+  \end{tabular}
+  \label{tab:str-lit-concat}
+\end{table}
+
+\noindent 被连接字符串中的字符保持独立。                                      \\
+「例：
+\begin{lstlisting}
+	"\xA" "B"
+\end{lstlisting}
+在连接后包含两个字符\texttt{\qsgl\bslh xA\qsgl}和\texttt{\qsgl B\qsgl}（而不是单
+个十六进制字符\texttt{\qsgl\bslh xAB\qsgl}。」
+
+\paragraph{}
+翻译阶段7中，在必要的连接完成后，\texttt{\qsgl\bslh 0\qsgl}被填充到每一个字符串
+字面值，使得扫描字符串的程序能找到其结尾。
+
+\paragraph{}
+非原始字符串字面值中的转义序列和\textit{通用字符名}与字符字面值（5.13.3）中具有
+相同涵义，除了单引号\texttt{\qsgl}可由其自身或由转义\texttt{\bslh\qsgl}表示，双
+引号应该使用\textit{\bslh}转义，且\texttt{char16\_t}字符串字面值中的
+\textit{通用字符名}可能产生代理对。在窄字符字面值中，一个\textit{通用字符名}可能
+由于\textit{多字节编码}映射到多于一个\texttt{char}元素。\texttt{char32\_t}或宽字
+符字面值的大小为转义序列，\textit{通用字符名}和其他字符总数，加上结尾的
+\texttt{U\qsgl\bslh 0\qsgl}或\texttt{L\qsgl\bslh 0\qsgl}。\texttt{char16\_t}字符
+字面值的大小为转义序列，\textit{通用字符名}和其他字符总数，对每一个需要代理对加
+上一，再加上结尾的\texttt{u\qsgl\bslh 0\qsgl}。「注：\texttt{char16\_t}字符字面
+值的大小为代码单元总数，而不是字符总数。」在\texttt{char32\_t}和
+\texttt{char16\_t}字符串字面值里，任何\textit{通用字符名}应该在\texttt{0x0}到
+\texttt{0x10FFFF}的范围内。窄字符串字面值的大小为转义序列和其他字符总数，对每一
+个多字节编码的\textit{通用字符名}至少加一，再加上结尾的
+\texttt{\qsgl\bslh 0\qsgl}。
+
+\paragraph{}
+对\textit{字符串字面值}求值产生一个静态存储期字符串字面值对象，使用给定的字符初
+始化。所有字符串字面值是否不同（即存储于不重叠对象）或\textit{字符串字面值}后续
+求值是否产生相同或不同对象未指定。「注：尝试修改字符串字面值的效果未定义。」
+
+\subsection{布尔字面值}
+\noindent \mbox{\qquad \textit{boolean-literal:}}                             \\
+\mbox{\qquad \qquad \texttt{true}}                                            \\
+\mbox{\qquad \qquad \texttt{false}}
+
+\paragraph{}
+布尔字面值为关键字\texttt{false}和\texttt{true}。这些字面值为纯右值，其类型为
+\texttt{bool}。
+
+\subsection{指针字面值}
+\noindent \mbox{\qquad \textit{pointer-literal:}}                             \\
+\mbox{\qquad \qquad \texttt{nullptr}}
+
+\paragraph{}
+指针字面值为关键字\texttt{nullptr}。它是一个类型为\texttt{std::nullptr\_t}的纯右
+值。「注：\texttt{std::nullptr\_t}是一个不同的类型，即不是指针也不是成员类型的指
+针；该类型的纯右值是一个零指针常量，可以转换成零指针值或零成员指针值。见7.11和
+7.12。」
+
+\subsection{自定义字面值}
+\noindent \mbox{\qquad \textit{user-defined-literal:}}                        \\
+\mbox{\qquad \qquad \textit{user-defined-integer-literal}}                    \\
+\mbox{\qquad \qquad \textit{user-defined-floating-literal}}                   \\
+\mbox{\qquad \qquad \textit{user-defined-string-literal}}                     \\
+\mbox{\qquad \qquad \textit{user-defined-character-literal}}                  \\
+\noindent \mbox{\qquad \textit{user-defined-integer-literal:}}                \\
+\mbox{\qquad \qquad \textit{decimal-literal ud-suffix}}                       \\
+\mbox{\qquad \qquad \textit{octal-literal ud-suffix}}                         \\
+\mbox{\qquad \qquad \textit{hexadecimal-literal ud-suffix}}                   \\
+\mbox{\qquad \qquad \textit{binary-literal ud-suffix}}                        \\
+\noindent \mbox{\qquad \textit{user-defined-floating-literal:}}               \\
+\mbox{\qquad \qquad \textit{fractional-constant exponent-part$_{opt}$
+                            ud-suffix}}                                       \\
+\mbox{\qquad \qquad \textit{digit-sequence exponent-part ud-suffix}}          \\
+\mbox{\qquad \qquad \textit{hexadecimal-prefix hexadecimal-fract-constant
+                            binary-exponent-part ud-suffix}}                  \\
+\mbox{\qquad \qquad \textit{hexadecimal-prefix hexadecimal-digit-sequence
+                            binary-exponent-part ud-suffix}}                  \\
+\noindent \mbox{\qquad \textit{user-defined-string-literal:}}                 \\
+\mbox{\qquad \qquad \textit{string-literal ud-suffix}}                        \\
+\noindent \mbox{\qquad \textit{user-defined-character-literal:}}              \\
+\mbox{\qquad \qquad \textit{character-literal ud-suffix}}                     \\
+\noindent \mbox{\qquad \textit{ud-suffix:}}                                   \\
+\mbox{\qquad \qquad \textit{identifier}}                                      \\
+
+\paragraph{}
+如一个标记即可以匹配\textit{user-defined-literal}又可以匹配其他\textit{literal}i
+类型，则该标记被当作后者。「例：\texttt{123\_km}为\textit{user-defined-literal}，
+而\texttt{12LL}为\textit{整型字面值}。」\textit{user-defined-literal}中
+\textit{ud-prefix}之前的语法非结束符被当成可匹配该结束符的最长字符序列。
+
+\paragraph{}
+一个\textit{user-defined-literal}被当作调用字面值运算符或字面值运算符模板
+（16.5.8）。为确定给定带\textit{ud-suffix X}的\textit{user-defined-literal}的该
+调用形式，字面值后缀标识符为\textit{X}的\textit{literal-operator-id}在\textit{L}
+的上下文中使用未限定名查询规则（6.4.1）进行查询。设\textit{S}为该查询找到的声明
+集合。\textit{S}不应该为空。
+
+\paragraph{}
+如果\textit{L}为\textit{user-defined-integer-literal}，设\textit{n}为不带
+\textit{ud-suffix}的字面值。如果\textit{S}包含具有参数类型\texttt{unsigned long
+long}的字面值运算符，字面值\textit{L}被当成形如                               \\
+\mbox{\qquad \texttt{operator \qdbl\qdbl}\ \
+  \textit{X}\texttt{(}\textit{n}\texttt{ULL)}}                                \\
+的调用。否则，\textit{S}应该包含原始字面值运算符或字面值模板（16.5.8），但不是两
+者均有。如果\textit{S}包含原始字面值运算符，字面值\textit{L}被当成形如        \\
+\mbox{\qquad \texttt{operator \qdbl\qdbl}\ \
+  \textit{X}\texttt{(\qdbl}\textit{n}\texttt{\qdbl)}}                         \\
+的调用。否则（\textit{S}包含字面值运算符模板），\textit{L}被当成形如          \\
+\mbox{\qquad \texttt{operator \qdbl\qdbl}\ \ \textit{X}\texttt{<}
+  \textit{\qsgl c$_1$\qsgl}\texttt{,} \textit{\qsgl c$_2$\qsgl}\texttt{,} \ldots
+  \textit{\qsgl c$_k$\qsgl}\texttt{>()}}                                      \\
+的调用，这里的\textit{n}为源字符序列\textit{c$_1$c$_2$\ldots c$_k$}。「注：序列
+\textit{c$_1$c$_2$\ldots c$_k$}只能包含基本源字符集成员。」
+
+\paragraph{}
+如果\textit{L}是一个\textit{user-defined-floating-literal}，设\textit{f}为其不带
+\textit{ud-suffix}的字面值。如果\textit{S}包含参数类型为\texttt{long double}的字
+面值运算符，则字面值\textit{L}被当成形如                                      \\
+\mbox{\qquad \texttt{operator \qdbl\qdbl}\ \
+  \textit{X}\texttt{(}\textit{f}\texttt{L)}}                                  \\
+的调用。否则，\textit{S}应该包含原始字面值运算符或字面值运算符模板（16.5.8），但
+不能两者都有。如果\textit{S}包含原始字面值运算符，则\textit{字面值L}被当成形如\\
+\mbox{\qquad \texttt{operator \qdbl\qdbl}\ \
+  \textit{X}\texttt{(\qdbl}\textit{f}\texttt{\qdbl)}}                         \\
+的调用。否则（\textit{S}包含字面值运算符模板），\textit{L}被当成形如          \\
+\mbox{\qquad \texttt{operator \qdbl\qdbl}\ \ \textit{X}\texttt{<}
+  \textit{\qsgl c$_1$\qsgl}\texttt{,} \textit{\qsgl c$_2$\qsgl}\texttt{,} \ldots
+  \textit{\qsgl c$_k$\qsgl}\texttt{>()}}                                      \\
+的调用，这里的\textit{f}为源字符序列\textit{c$_1$c$_2$\ldots c$_k$}。「注：序列
+\textit{c$_1$c$_2$\ldots c$_k$}只能包含基本源字符集成员。」
+
+\paragraph{}
+如果\textit{L}是一个\textit{user-defined-string-literal}，设\textit{str}为它的没
+有\textit{ud-suffix}的字面值，且设\textit{len}为\textit{str}中代码单元的个数（即
+不含结尾零字符的长度）。字面值\textit{L}被当作形如                            \\
+\mbox{\qquad\texttt{operator \qdbl\qdbl}\
+  \textit{X}\texttt{(}\textit{str, len}\texttt{)}}                            \\
+的调用。
+
+\paragraph{}
+如果\textit{L}是一个\textit{user-defined-character-literal}，设\textit{ch}为它的
+没有\textit{ud-suffix}的字面值。\textit{S}应该包含一个字面值运算符，具有唯一的类
+型为\textit{ch}的参数且\textit{L}被当作形如                                   \\
+\mbox{\qquad\texttt{operator \qdbl\qdbl}\
+  \textit{X}\texttt{(}\textit{ch}\texttt{)}}                                  \\
+的调用。
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  long double operator "" _w(long double);
+  std::string operator "" _w(const char16_t*, std::size_t);
+  unsigned operator "" _w(const char*);
+  int main() {
+    1.2_w;      // calls operator "" _w(1.2L)
+    u"one"_w;   // calls operator "" _w(u"one", 3)
+    12_w;       // calls operator "" _w("12")
+    "two"_w;    // error: no applicable literal operator
+  }
+\end{lstlisting}」
+
+\paragraph{}
+在翻译阶段6（5.2），相邻字符串字面值被连接起来且
+\textit{user-defined-string-literal}被当成字符串字面值参与连接。连接时去除
+\textit{ud-suffix}，连接过程如第5.13.5节所述。在第6阶段结束时，如果一个字符串字
+面值由涉及至少一个\textit{user-defined-string-literal}的连接产生，则所有参与的
+\textit{user-defined-string-literal}应该具有相同的\textit{ud-suffix}，且该后缀被
+用于连接产生的结果。
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  int main() {
+    L"A" "B" "C"_x;  // OK: same as L"ABC"_x
+    "P"_x "Q" "R"_y; // error: two different ud-suffixes
+  }
+\end{lstlisting}」

@@ -1,17 +1,363 @@
 \chapter{标准转换}
 
+\paragraph{}
+标准转换指具有内置意义的隐式转换。第7章列举了全部这种转换。一个\textit{标准转换
+序列}（\textit{standard conversion sequence}）指以下顺序的标准转换：
+\begin{enumerate}
+  \item{以下集合中零个或一个转换：左值到右值转换，数组到指针转换以及函数到指针转
+    换。}
+  \item{以下集合中零个或一个转换：整型提升，符点提升，整型转换，符点转换，符点整
+    型转换，指针转换，指针到成员转换和布尔转换。}
+  \item{零个或一个函数指针转换。}
+  \item{零个或一个限定转换。}
+\end{enumerate}
+「注：标准转换序列可能为空，即可能不包括任何转换。」如一个表达式需要转换成目标类
+型，将应用标准转换序列于该表达式。
+
+\paragraph{}
+「注：多个上下文中给定类型的表达式会被隐式转换成其他类型：
+\begin{enumerate}
+  \item{作为运算符的操作数时。运算符操作数的类型要求表明目标类型（第8章）。}
+  \item{作为\texttt{if}语句或迭代语句的条件（9.4，9.5）。目标类型为
+    \texttt{bool}。}
+  \item{作为\texttt{switch}语句的表达式。目标类型为整型（9.4）。}
+  \item{作为初始化的源表达式（包括作为函数调用的参数和\texttt{return}语句的表达
+    式）。被初始化实体的类型（一般）为目标类型。}
+\end{enumerate}」
+
+\paragraph{}
+表达式\texttt{e}可以被\textit{隐式转换}到类型\texttt{T}，当且仅当存在某个假想的
+临时变量\texttt{t}（11.6）使得声明\texttt{T t=e;}是良态的。
+
+\paragraph{}
+某些语言结构需要表达式转换成布尔值。出现在这种上下文中的表达式\texttt{e}被说成是
+\textit{上下文转换成\texttt{bool}}类型，并且当且仅当存在某个临时变量\texttt{t}
+（11.6）使得声明\texttt{bool t(e);}是良态的，该转换才是良态的。
+
+\paragraph{}
+某些语言结构需要转换成具有适合该结构的一组类型之一的值。这种上下文中的类类型
+\texttt{E}的表达式\texttt{e}被说成\textit{上下文隐式转换}成指定类型\texttt{T}，
+且当仅且当\texttt{e}能被隐式转换成以下所确定的类型\texttt{T}才是良态的：在
+\texttt{E}中搜索非显式转换函数，其返回类型为\textit{cv} \texttt{T}或\textit{cv}
+\texttt{T}的引用，使得\texttt{T}是该上下文所允许的。应该仅有一个这样的
+\texttt{T}。
+
+\paragraph{}
+隐式转换的效果等同于进行对应的声明或初始化，然后使用临时变量作为转换的结果。如果
+\texttt{T}是左值引用类型或函数类型的右值引用（11.3.2）则结果为左值，如果
+\texttt{T}是对象类型的右值引用则结果为右值，否则为纯右值。表达式\texttt{e}用作泛
+左值当且仅当初始化将其用作泛左值。
+
+\paragraph{}
+「注：对于类类型，还需要考虑自定义转换；见第15.3节。一般而言，隐式转换序列
+（16.3.3.1）由标准转换序列跟上自定义转换，再跟上另一个标准转换序列组成。」
+
+\paragraph{}
+「注：某些上下文中一些转换被抑制了。比如，左值到右值转换不用于一元运算符
+\texttt{\&}。特定的例外情形在那些运算符和上下文的描述中给出。」
+
 \section{左值到右值转换}
+\paragraph{}
+非函数、非数组类型\texttt{T}的泛左值（6.10）可以转换成纯右值。\footnote{由于历史
+原因，该转换被称作``左值到右值''转换，即使该名称并不能准确反应第6.10节所描述的表
+达式分类。} 如果\texttt{T}为不完整类型，则使用该转换的程序是病态的。如果
+\texttt{T}是非类类型，纯右值的类型为\texttt{T}的cv-未限定版本。否则，纯右值的类
+型为\texttt{T}。\footnote{C++中类和数组可以有cv-限定类型。这和ISO C不同，其中非
+左值不能具有cv-限定类型。}
+
+\paragraph{}
+当左值到右值转换作用于表达式\texttt{e}时，且如下任一成立：
+\begin{enumerate}
+  \item{\texttt{e}没有潜在求值，或}
+  \item{\texttt{e}的求值导致一个其潜在结果集中成员\texttt{ex}的求值，而
+    \texttt{ex}命名了一个不被\texttt{ex} odr-used的变量\texttt{x}（6.2）。}
+\end{enumerate}
+则所引用对象中的值不被访问。「例：
+\begin{lstlisting}
+  struct S { int n; };
+  auto f() {
+    S x { 1 };
+    constexpr S y { 2 };
+    return [&](bool b) { return (b ? y : x).n; };
+  }
+  auto g = f();
+  int m = g(false);   // undefined behavior due to access of x.n outside its
+                      // lifetime
+  int n = g(true);    // OK, does not access y.n;
+\end{lstlisting}」
+
+\paragraph{}
+转换结果由以下规则确定：
+\begin{enumerate}
+  \item{如果\texttt{T}为\textit{cv} \texttt{std::nullptr\_t}，结果为零指针常量
+    （7.11）。「注： 既然不从内存取值，易失性访问（4.6）就没有副作用，且可以访问
+    联合的非活动成员（12.3）。」}
+  \item{否则，如果\texttt{T}具有类类型，转换拷贝初始化来自泛左值的结果对象。}
+  \item{否则，如果泛左值所引用对象包含无效指针值（6.7.4.2，6.7.4.3），则行为由实
+    现定义。}
+  \item{否则，泛左值所指代对象中的值为纯右值的结果。}
+\end{enumerate}
+
+\paragraph{}
+「注：见第6.10节。」
+
 \section{数组到指针转换}
+\paragraph{}
+类型``\texttt{N}个\texttt{T}的数组''或``\texttt{T}的未知大小的数组''的左值或右值
+可以转换成``\texttt{T}的指针''类型的纯右值。使用了临时物化转换（7.4）。结果是指
+向数组第一个元素的指针。
+
 \section{函数到指针转换}
+\paragraph{}
+函数类型\texttt{T}的左值可以转换成``\texttt{T}的指针''类型的纯右值。结果为指向函
+数的指针。\footnote{该转换不用于非静态成员函数，因为无法获取引用非静态成员函数的
+左值。}
+
+\paragraph{}
+「注：见第16.4节中函数重载时的额外规则。」
+
 \section{临时物化转换}
+\paragraph{}
+类型\texttt{T}的纯右值可以转换成类型\texttt{T}的失效值。该转换使用临时对象作为结
+果对象，通过纯右值的计算对临时对象（15.2）进行初始化，并产生指代该临时对象的失效
+值。\texttt{T}应该是完整类型。「注：如果\texttt{T}是类类型（或数组），它必须具有
+可访问未删除的析构函数；见第15.4节。」「例：
+\begin{lstlisting}
+  struct X { int n; }
+  int k = X().n;      // OK, X() prvalue is converted to xvalue
+\end{lstlisting}」
+
 \section{限定转换}
+\paragraph{}
+类型\texttt{T}的\textit{cv-分解}（\textit{cv-decomposition}）指$cv_i$和$P_i$的序
+列，使得\texttt{T}为                                                          \\
+\mbox{\qquad\qquad “$cv_0P_0cv_1P_1\cdots cv_{n-1}P_{n-1}cv_n$\texttt{U}”
+  对$n > 0$，}                                                                \\
+$cv_i$为一组cv-限定符（6.9.3），$P_i$为“指向\ldots 的指针”（11.3.1）、“指向
+类型为\ldots 的类$C_i$的成员的指针”（11.3.3）、“$N_i$个\ldots 的数组”或“\ldots
+的未知大小的数组”（11.3.4）。如果$P_i$指代数组，元素类型的cv-限定符$cv_{i+1}$也
+被当成数组的cv-限定符$cv_i$。「例：由\textit{type-id} \texttt{const int **}所代
+表的类型有两个cv-分解，将\texttt{U}当成``\textit{int}''和``\texttt{const int}的
+指针''。」 \texttt{T}的最长cv-分解第一个元素之后的cv限定符\textit{n}元组，即
+$cv_1, cv_2, \cdots, cv_n$被称作\texttt{T}的\textit{cv-限定签名}。
+
+\paragraph{}
+两个类型\texttt{T$_1$}和\texttt{T$_2$}是相似的，如果它们的cv分解有相同的
+\textit{n}，使得对应的$P_i$组件是相同的，且\texttt{T}所代表的类型是相同的。
+
+\paragraph{}
+类型\texttt{T$_1$}的纯右值表达式可以转换成类型\texttt{T$_2$}，如果满足以下条件，
+其中$cv_i^j$代表\texttt{T$_j$}的cv限定签名中的cv限定符：\footnote{这些规则确保转
+换保持const安全性（const-safety）。}
+\begin{enumerate}
+  \item{\texttt{T$_1$}和\texttt{T$_2$}是相似的。}
+  \item{对每一个$i > 0$，如果\texttt{const}在$cv_i^1$中，那么\texttt{const}也在
+    $cv_i^2$中，\texttt{volatile}也类似。}
+  \item{如果$cv_i^1$和$cv_i^2$不同，那么\texttt{const}在每一个$cv_k^2$中，
+    $0 < k < i$。}
+\end{enumerate}
+「注：如果程序可以将\texttt{T**}型指针赋给\texttt{const T**}型指针（即以下行
+\textit{\#1}允许），程序可能无意中修改一个\texttt{const}对象（如行\textit{\#2}中
+所示）。比如，
+\begin{lstlisting}
+  int main() {
+    const char c = 'c';
+    char* pc;
+    const char** pcc = &pc;     // #1: not allowed
+    *pcc = &c;
+    *pc = 'C';                  // #2: modifies a const object
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：类型``指向\textit{cv1} \texttt{T}的指针''的纯右值可以转换成类型``指向
+\textit{cv1} \texttt{T}的指针''的纯右值，如果``\textit{cv2} \texttt{T}''比
+``\textit{cv1} \texttt{T}''的cv限定更强（more cv-qualified than）。
+``指向\textit{cv1} \texttt{T}类型的\texttt{X}的成员指针''类型的纯右值可以转换成
+``指向\textit{cv2} \texttt{T}类型的\texttt{X}的成员指针''类型的纯右值，如果
+``\textit{cv2} \texttt{T}''比``\textit{cv1} \texttt{T}''的cv限定更强。」
+
+\paragraph{}
+「注：函数类型（包括用于指向成员函数类型的指针）不受cv限定（11.3.5）。」
+
 \section{整型提升}
-\section{符点指针转换}
+\paragraph{}
+除\texttt{bool}、\texttt{char16\_t}、\texttt{char32\_t}和\texttt{wchar\_t}以外，
+整数转换阶（7.15）小于\texttt{int}的整型纯右值可以转换成\texttt{int}类型的纯右值
+，如果\texttt{int}可以表示源类型的所有值；否则，源纯右值可以转换成
+\texttt{unsigned int}类型的纯右值。
+
+\paragraph{}
+类型\texttt{char16\_t}、\texttt{char32\_t}和\texttt{wchar\_t}（6.9.1）的纯右值可
+以转换成以下可表示其底层类型所有值的第一个类型的纯右值：\texttt{int}、
+\texttt{unsigned int}、\texttt{long int}、\texttt{unsigned long int}、
+\texttt{long long int}和\texttt{unsigned long long int}。如果该列表中的类型都不
+能表示其底层类型所有值，则\texttt{char16\_t}、\texttt{char32\_t}和
+\texttt{wchar\_t}类型的纯右值可以转换成其底层类型。
+
+\paragraph{}
+底层类型不固定的无作用域枚举类型纯右值（10.2）可以转换成以下可以表示枚举所有值的
+第一个类型的纯右值（如第10.2节所述的$b_{min}$到$b_{max}$范围内的值）：
+\texttt{int}、\texttt{unsigned int}、\texttt{long int}、
+\texttt{unsigned long int}、\texttt{long long int}和
+\texttt{unsigned long long int}。如果该列表中的类型都不能表示枚举的所有值，则无
+作用域枚举类型的纯右值可以转换成转换阶大于\texttt{long long}的最小转换阶（7.15）
+的扩展整型的纯右值，该扩展整型可以表示枚举类型所有值。如果存在两个扩展类型则选择
+有符号版类型。
+
+\paragraph{}
+底层类型固定的无作用域枚举类型纯右值（10.2）可以转换成其底层类型的纯右值。更进一
+步，如果整型提升可以应用于其底层类型，底层类型固定的无作用域枚举类型纯右值也可以
+转换成提升后的底层类型纯右值。
+
+\paragraph{}
+整型位域（12.2.4）纯右值可以转换成\texttt{int}型纯右值，如果\texttt{int}可以表示
+该位域的所有值；否则，如果\texttt{unsigned int}可以表示该位域的所有值则该位域可
+以转换成\texttt{unsigned int}。如果位域仍然更大则不应用整型提升。如果位域具有枚
+举类型则为提升的目的将其当成该类型的任何其他值。
+
+\paragraph{}
+类型\texttt{bool}的纯右值可以转换成\texttt{int}类型的纯右值，\texttt{false}转换
+成零，\texttt{true}转换成一。
+
+\paragraph{}
+这些转换称作\textit{整型提升}（\textit{integral promotions}）。
+
+\section{符点提升}
+\paragraph{}
+类型\texttt{float}的纯右值可以转换成\texttt{double}类型的纯右值。其值不变。
+
+\paragraph{}
+该转换称为\textit{符点提升}（\textit{floating-point promotion}）。
+
 \section{整型转换}
+\paragraph{}
+整型的纯右值可以转换成另一个整型的纯右值。无作用域枚举类型的纯右值可以转换成整型
+纯右值。
+
+\paragraph{}
+如果目标类型为无符号，结果值为同余于源整数的最小无符号整数（模$2^n$，$n$为表示该
+无符号类型的位数）。「注：在二补码表示下，该转换是概念上的，在位模式上无变化（如
+果无截断）。」
+
+\paragraph{}
+如果目标类型为有符号，且目标类型可表示该值，则值不变；否则值为实现定义的。
+
+\paragraph{}
+如果目标类型为\texttt{bool}，见第7.14节。如果源类型为\texttt{bool}，则
+\texttt{false}转换成零，\texttt{true}转换成一。
+
+\paragraph{}
+整型提升所允许的转换从整型转换集合中排除。
+
 \section{符点转换}
+\paragraph{}
+符点类型纯右值可以转换成另一符点类型纯右值。如果源值可由目标类型确切表示，则转换
+的结果为该确切表示。如果源值介于两个相邻目标类型之间，则转换结果为实现选择任意一
+个。否则行为未定义。
+
+\paragraph{}
+符点提升所允许的转换从符点转换集合中排除。
+
 \section{符点整型转换}
+\paragraph{}
+符点类型纯右值可以转换成整型纯右值。该转换截断，即丢弃小数部分。如果截断后的值不
+能由目标类型表示则行为未定义。「注：如果目标类型为\texttt{bool}，见第7.14节。」
+
+\paragraph{}
+整型纯右值或无作用域枚举类型可以转换成符点类型纯右值。如可能，则结果确切。如果被
+转换值在可表示值和不可确切表示值范围之间，则选择下一个更低或更高可表示值由实现定
+义。「注：如果整型值不能确切的表示符点类型值则会丢失精度。」如果被转换值在可表示
+值范围之外，则行为未定义。如果源类型为\texttt{bool}，则值\texttt{false}转换成
+零，值\texttt{true}转换成一。
+
 \section{指针转换}
+\paragraph{}
+\textit{零指针常量}（\textit{null pointer constant}）指值为零的整型字面值
+（5.13.2）或类型\texttt{std::nullptr\_t}的纯右值。零指针常量可以转换成指针类型；
+结果为该类型的\textit{零指针值}，且可以与对象指针或函数指针类型的任何其他值相区
+别。这样的转换称为\textit{零指针转换}。同类型的两个零指针值应该相等。零指针常量
+转换到cv限定类型指针是单个转换，而不是指针转换加上限定转换这样的序列（7.5）。整
+型零指针常量可以转换\texttt{std::nullptr\_t}类型的纯右值。「注：产生的纯右值不是
+一个零指针值。」
+
+\paragraph{}
+``指向\textit{cv} \texttt{T}的指针''型的纯右值，这里\texttt{T}为对象类型，可以转
+换成``指向\textit{cv} \texttt{void}的指针''型的纯右值。该转换不改变指针值
+（6.9.2）。
+
+\paragraph{}
+``指向\textit{cv} \texttt{D}的指针''型的纯右值，这里\texttt{T}为类类型，可以转换
+成``指向\textit{cv} \texttt{B}的指针''型的纯右值，这里\texttt{B}是\texttt{D}的基
+类（第13章）。如果\texttt{B}是\texttt{D}的不可访问或有歧义基类（13.2），则使用此
+转换的程序为病态的。转换结果为指向派生类对象的基类子对象的指针。零指针值转换成目
+标类型的零指针值。
+
 \section{指针到成员转换}
+\paragraph{}
+零指针常量（7.11）可以转换成成员类型指针；结果为该类型的\textit{零成员指针值}，
+且与非零指针常量创建的任何成员指针不同。这样的转换称为\textit{零成员指针转换}。
+同类型的两个零成员指针值应该相等。零指针常量到cv限定类型成员的转换为单个转换，不
+是成员指针转换加上限定转换的序列（7.5）。
+
+\paragraph{}
+``指向\texttt{B}的类型为\textit{cv} \texttt{T}的成员指针''型的纯右值，\texttt{B}
+为类类型，可以转换成``指向\texttt{D}的类型为\textit{cv} \texttt{T}的成员指针''型
+的纯右值，\texttt{D}为\texttt{B}的派生类（第13章）。如果\texttt{B}为\texttt{D}的
+不可访问（第14章），有歧义（13.2）或虚（13.1）基类，或是\texttt{D}的虚基类的基类
+则使用该转换的程序为病态的。转换结果引用转换前指针所指的同一成员，但它所指的是基
+类成员，如同是派生类成员一样。结果指向\texttt{D}的\texttt{B}实例中的成员。因为结
+果具有类型``指向\texttt{D}的类型为\textit{cv} \texttt{T}的成员指针''，通过一个
+\texttt{D}的对象使用该指针取值是允许的。结果与通过\texttt{D}的\texttt{B}子对象使
+用\texttt{B}的成员指针取值相同。零成员指针值转换成目标类型的零成员指针值。
+\footnote{成员指针转换规则（从基类成员指针转换到派生类成员指针）看起来与对象指针
+转换规则（从派生类指针转换到基类指针）相反（7.11，第13章）。该转换对类型安全是必
+要的。注意成员指针不是对象或函数指针，且这些指针的转换规则不适用于成员指针。特别
+是成员指针不能被转换成\texttt{void*}。}
+
 \section{函数指针转换}
+\paragraph{}
+``\texttt{noexcept}函数指针''类型的纯右值可以转换成``函数指针''类型的纯右值。结
+果为指向函数的指针。``\texttt{noexcept}函数类型成员指针''类型的纯右值可以转换成
+``函数类型成员指针''类型的纯右值。结果为成员函数。                            \\
+「例：
+\begin{lstlisting}
+  void (*p)();
+  void (**pp)() noexcept = &p;   // error: cannot convert to pointer to noexcept
+                                 // function
+
+  struct S { typedef void (*p)(); operator p(); };
+  void (*q)() noexcept = S();    // error: cannot convert to pointer to noexcept
+                                 // function
+\end{lstlisting}」
+
 \section{布尔转换}
-\section{整数转换阶}
+\paragraph{}
+算术类型、无作用域枚举类型、指针或成员指针类型纯右值可以转换成\texttt{bool}类型
+纯右值。值零，零指针或零成员指针值转换成\texttt{false}；任何其他值转换成
+\texttt{true}。对于直接初始化（11.6），\texttt{std::nullptr\_t}类型纯右值可以转
+换成\texttt{bool}型纯右值；结果值为\texttt{false}。
+
+\section{整型转换阶}
+\paragraph{}
+每一个整型具有如下定义的\textit{整型转换阶}（\textit{integer conversion rank}）：
+\begin{enumerate}
+  \item{除\texttt{char}和\texttt{signed char}（如果\texttt{char}为有符号）外的有
+    符号整型应两两不同，即使表示相同。}
+  \item{有符号整型转换阶应比更小的有符号整型大。}
+  \item{转换阶\texttt{long long int} > \texttt{long int} > \texttt{int} >
+    \texttt{short int} > \texttt{signed char}。}
+  \item{无符号整型转换阶与对应有符号整型相同。}
+  \item{标准整型转换阶大于同大小的扩展整型转换阶。}
+  \item{\texttt{char}的转换阶与\texttt{unsigned char}和\texttt{signed char}相
+    同。}
+  \item{\texttt{bool}的转换阶小于任何其他标准整型。}
+  \item{\texttt{char16\_t}、\texttt{char32\_t}和\texttt{wchar\_t}的转换阶应该等
+    于其底层类型的转换阶（6.9.1）。}
+  \item{扩展有符号整型转换阶相对于另一同大小扩展有符号整型由实现定义，但仍受限于
+    其他整型转换阶的确定规则。}
+  \item{对所有整型\texttt{T1}、\texttt{T2}和\texttt{T3}，如果\texttt{T1}转换阶大
+    于\texttt{T2}，\texttt{T2}转换阶大于\texttt{T3}，则\texttt{T1}转换阶大于
+    \texttt{T3}。
+\end{enumerate}
+「主：整型转换阶用于整型提升（7.6）和常规算术转换（第8章）的定义。」

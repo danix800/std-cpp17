@@ -22,17 +22,20 @@ ISO和IEC于以下地址维护标准化术语数据库:
 \noindent access，「执行时行为」读或写对象的值
 
 \sect{实参}{defns.argument}
-\noindent argument，「函数调用表达式」以括号括起来的逗号分隔列表中的表达式（8.2.2）
+\noindent argument，「函数调用表达式」以括号括起来的逗号分隔列表中的表达式
+（\ref{expr.call}）
 
 \sect{宏实参}{defns.argument.macro}
-\noindent argument，「函数式宏」以括号括起来的逗号分隔预处理标记（19.3）
+\noindent argument，「函数式宏」以括号括起来的逗号分隔预处理标记
+（\ref{cpp.replace}）
 
 \sect{throw参数}{defns.argument.throw}
-\noindent argument，「\texttt{throw}表达式」\texttt{throw}操作数（8.17）
+\noindent argument，「\texttt{throw}表达式」\texttt{throw}操作数
+（\ref{expr.throw}）
 
 \sect{模板实参}{defns.argument.templ}
 \noindent argument，「模板实例化」角括号括起来的逗号分隔列表中的\textit{常表达式}、
-\textit{type-id}或\textit{id-expression}（17.3）
+\textit{type-id}或\textit{id-expression}（\ref{temp.arg}）
 
 \sect{阻塞}{defns.block}
 \noindent block，继续执行前等待某些条件（除实现执行执行线程的执行步骤）满足以通
@@ -46,10 +49,11 @@ ISO和IEC于以下地址维护标准化术语数据库:
 \noindent diagnostic message，由实现定义的实现输出消息子集
 
 \sect{动态类型}{defns.dynamic.type}
-\noindent dynamic type，「泛左值」泛左值所引用的最终派生对象（4.5）的类型 \\
-「例：静态类型为``指向类\texttt{B}的指针''的指针（11.3.1）\texttt{p}指向派生自
-\texttt{B}（第13章）的类\texttt{D}的对象，表达式\texttt{*p}的动态类型为
-``\texttt{D}''。引用（11.3.2）也类似。」
+\noindent dynamic type，「泛左值」泛左值所引用的最终派生对象
+（\ref{intro.object}）的类型 \\
+「例：静态类型为``指向类\texttt{B}的指针''的指针（\ref{dcl.ptr}）\texttt{p}指向
+派生自\texttt{B}（第\ref{class.derived}章）的类\texttt{D}的对象，表达式
+\texttt{*p}的动态类型为``\texttt{D}''。引用（\ref{dcl.ref}）也类似。」
 
 \sect{动态类型}{defns.dynamic.type.prvalue}
 \noindent dynamic type，「纯右值」纯右值表达式的静态类型

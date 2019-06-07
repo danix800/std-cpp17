@@ -41,7 +41,24 @@
 
 \newcommand{\sect}[2]{\section[#1]{#1\hfill[#2\label{#2}]}}
 \newcommand{\ssect}[2]{\subsection[#1]{#1\hfill[#2\label{#2}]}}
-\newcommand{\sssect}[2]{\subsubsection[#1]{#1\hfill[#2\label{#2}]}}
+
+\newcounter{ssssectcntr} % create new counter for \subsubsubsection
+\newcommand{\sssect}[2]{
+  \subsubsection[#1]{#1\hfill[#2\label{#2}]}
+  \setcounter{ssssectcntr}{0} % start from 0
+}
+
+% use paragraph as the next level section
+\newcommand{\ssssect}[2]{{ % two level nesting
+  \titleformat{\paragraph}[hang]{\bfseries}
+    {\hspace{-2.45em}\bfseries\color{structurecolor}\theparagraph\enspace}
+    {1pt}{\color{structurecolor}\bfseries\filright}
+  % label = subsubsection + ssssectcntr
+  \renewcommand{\theparagraph}{\thesubsubsection.\thessssectcntr}
+  \stepcounter{ssssectcntr} % step \ssssectcntr
+  \paragraph{#1\hfill[#2\label{#2}]}  % the \subsubsubsection
+  \setcounter{paragraph}{0} % restart paragraph
+}}
 
 \begin{document}
 \maketitle

@@ -1,6 +1,5 @@
 \documentclass[cn,11pt,fancy,hide,normal]{elegantbook}
 
-
 \title{ISO/IEC 14882:2017(E) }
 \subtitle{编程语言：C++}
 
@@ -16,6 +15,8 @@
 
 \usepackage{enumitem}
 \setlist[enumerate,1]{label={(\arabic{paragraph}.\arabic*) \quad --}}
+\setlist[enumerate,2]{label={(\arabic{paragraph}.\arabic{enumi}.\arabic*) \quad
+  \ \ \quad --}}
 
 % footnote counter is interrupted by chapter (start over from 1 in new chapters)
 % remove this feature, so the counter increases throughout the whole document.
@@ -25,6 +26,23 @@
 % \lstset{basicstyle=\fontsize{11}{13}\selectfont\ttfamily}
 % \lstset{frame=none}
 
+\renewcommand{\theparagraph}{\arabic{paragraph}}
+\renewcommand{\thefigure}{\arabic{figure}}
+\renewcommand{\thetable}{\arabic{table}}
+
+\newcommand{\qdbl}{\textquotedbl}
+\newcommand{\qsgl}{\textquotesingle}
+\newcommand{\bslh}{\textbackslash}
+
+\newcommand{\synsym}[2][]{\parindent0pt\mbox{\qquad\textit{#2:} #1}\linebreak}
+\newcommand{\synprd}[2][\linebreak]{\mbox{\qquad\qquad #2}#1}
+
+\newcommand{\chptr}[2]{\chapter[#1]{#1\hfill[#2\label{#2}]}}
+
+\newcommand{\sect}[2]{\section[#1]{#1\hfill[#2\label{#2}]}}
+\newcommand{\ssect}[2]{\subsection[#1]{#1\hfill[#2\label{#2}]}}
+\newcommand{\sssect}[2]{\subsubsection[#1]{#1\hfill[#2\label{#2}]}}
+
 \begin{document}
 \maketitle
 \tableofcontents
@@ -33,13 +51,6 @@
 
 \mainmatter
 \hypersetup{pageanchor=true}
-
-\renewcommand{\theparagraph}{\arabic{paragraph}}
-\renewcommand{\thefigure}{\arabic{figure}}
-\renewcommand{\thetable}{\arabic{table}}
-\newcommand{\qdbl}{\textquotedbl}
-\newcommand{\qsgl}{\textquotesingle}
-\newcommand{\bslh}{\textbackslash}
 
 \include{chapters/foreword}
 \include{chapters/1.scope}

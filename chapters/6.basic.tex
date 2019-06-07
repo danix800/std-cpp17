@@ -1,4 +1,4 @@
-\chapter{基本概念}
+\chptr{基本概念}{basic}
 
 \paragraph{}
 「注：本章介绍C++语言的基本概念。解释了对象与名字间的区别，以及它们与表达式值类
@@ -48,7 +48,7 @@
 
 
 % s1
-\section{声明与定义}
+\sect{声明与定义}{basic.def}
 
 \paragraph{}
 声明（第10章）可以向翻译单元内引入一个或多个名字，或重声明之前的声明引入的名字。
@@ -157,7 +157,7 @@
 
 
 %s2
-\section{单一定义原则}
+\sect{单一定义原则}{basic.def.odr}
 
 \paragraph{}
 翻译单元不得包含任何变量、函数、类类型、枚举类型或模板的多个定义。
@@ -318,8 +318,8 @@
 
 
 %3
-\section{作用域}
-\subsection{声明性区域与作用域}
+\sect{作用域}{basic.scope}
+\ssect{声明性区域与作用域}{basic.scope.declarative}
 
 \paragraph{}
 每个名称都在程序文本的某一部分中引入，该部分\textit{称为声明性区域}，是程序中该
@@ -368,7 +368,7 @@
 \paragraph{}
 「注：第6.4节总结了名字查询。」
 
-\subsection{声明点}
+\ssect{声明点}{basic.scope.pdecl}
 
 \paragraph{}
 除以下说明，一个名字的声明点紧跟在其完整的声明子（第11章）之后，初始化（如有）之
@@ -464,7 +464,7 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
 \paragraph{}
 「注：模板实例化声明点见17.6.4.1。」
 
-\subsection{块作用域}
+\ssect{块作用域}{basic.scope.block}
 
 \paragraph{}
 块内声明（9.3）的名字局部于块内；它具有\textit{块作用域}。其潜在作用域始于声明点
@@ -488,17 +488,17 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
 \texttt{switch}语句（包括受控语句），且即不能在该语句的后续条件中重声明，也不能
 在受控条件的最外层块（或者对\texttt{if}语句，任何最外层块）内重声明；见9.4。
 
-\subsection{函数原型作用域}
+\ssect{函数原型作用域}{basic.scope.proto}
 \paragraph{}
 在函数声明或任何除函数定义声明子（11.4）外的声明子中的参数名（如有）有函数原型作
 用域，结束于最近包含的函数声明子结束处。
 
-\subsection{函数作用域}
+\ssect{函数作用域}{basic.funcscope}
 \paragraph{}
 标号（9.1）具有函数作用域，且可以在声明它的函数内任何地方使用。只有标号具有函数
 作用域。
 
-\subsection{命名空间作用域}
+\ssect{命名空间作用域}{basic.scope.namespace}
 \paragraph{}
 \textit{命名空间定义}（\textit{namespace-definition}）的声明区域为其
 \textit{namespace-body}。\textit{namespace-body}内声明的实体是命名空间
@@ -544,7 +544,7 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
 名字的潜在作用域始于其声明点（6.3.2），结束于其声明区即翻译单元结束处。具有全局
 命名空间作用域的名字为\textit{全局名字}。
 
-\subsection{类作用域}
+\ssect{类作用域}{basic.scope.class}
 \paragraph{}
 类内声明名的潜在作用域不仅包括跟在名字声明点后的声明区域，还包括类内的函数体，缺
 省参数，\textit{noexcept-specifiers}和非静态数据成员的
@@ -601,12 +601,12 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
   \item{跟在作用域解析运算符\texttt{::}（8.1）之后，作用于其类或该类派生类名。}
 \end{enumerate}
 
-\subsection{枚举作用域}
+\ssect{枚举作用域}{basic.scope.enum}
 \paragraph{}
 作用域枚举子的名字具有枚举作用域。其潜在作用域始于其声明点，终于
 \textit{enum-specifiers}结束处。
 
-\subsection{模板参数作用域}
+\ssect{模板参数作用域}{basic.scope.temp}
 \paragraph{}
 模板\textit{template-parameter}内的模板参数名声明区域为引入其名字的最小
 \textit{template-parameter-list}。
@@ -655,7 +655,7 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
 这里，\texttt{X}为\texttt{int}型的非类型模板参数，\texttt{Y}是与\texttt{A}的第二
 个模板参数同类型的非类型模板参数。」」
 
-\subsection{名字隐藏}
+\ssect{名字隐藏}{basic.scope.hiding}
 \paragraph{}
 名字可被在嵌套声明区域或派生类（13.2）内显式声明的同名声明所隐藏。
 
@@ -678,7 +678,7 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
 
 
 %4
-\section{名字查询}
+\sect{名字查询}{basic.lookup}
 \paragraph{}
 名字查询规则统一适用于所有名字（包括\textit{typedef-names}（10.1.3）、
 \textit{namespace-names}（10.3）和\textit{class-names}（12.1）），只要所讨论规则
@@ -697,7 +697,7 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
 \paragraph{}
 「注：第6.5节讨论链接问题。作用域、声明点和名字隐藏的概念在第6.3节讨论。」
 
-\subsection{未限定名查询}
+\ssect{未限定名查询}{basic.lookup.unqual}
 \paragraph{}
 第6.4.1节所列的所有情况中，声明在作用域内按每一个对应类别所列顺序进行搜索；名字查
 询在名字找到后立即停止。如找不到声明则程序为病态的。
@@ -915,7 +915,7 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
 \paragraph{}
 「注：模板定义内的名字查询在第17.6节中描述。」
 
-\subsection{参数依赖名查询}
+\ssect{参数依赖名查询}{basic.lookup.argdep}
 \paragraph{}
 当函数调用（8.2.2）中的\textit{postfix-expression}是一个
 \textit{unqualified-id}时，常规未限定名查询（6.4.1）时未考虑的其他命名空间可能被
@@ -1004,7 +1004,7 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
   \item{除函数（可能重载）和函数模板以外的名字被忽略。}
 \end{enumerate}
 
-\subsection{限定名查询}
+\ssect{限定名查询}{basic.lookup.qual}
 \paragraph{}
 类或命名空间成员或枚举子可通过应用\texttt{::}作用域解析运算符（8.1）于一个代表
 类、命名空间或枚举的\textit{nested-name-specifier}来引用。如果一个
@@ -1066,7 +1066,7 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
 \end{lstlisting}」「注：第6.4.5节描述\texttt{.}和\texttt{->}运算符后的名字查询
 如何进行。」
 
-\subsubsection{类名}
+\sssect{类名}{class.qual}
 \paragraph{}
 如果\textit{qualified-id}的\textit{nested-name-specifier}提名一个类，则
 \textit{nested-name-specifier}后指定的名字在该类的作用域（13.2）内查询，除了以下
@@ -1115,7 +1115,7 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
 被声明区域中的名字或派生类中的名字隐藏的类成员名仍可用该类名跟上\texttt{::}运算
 符限定来引用。
 
-\subsubsection{命名空间成员}
+\sssect{命名空间成员}{namespace.qual}
 \paragraph{}
 如果\textit{qualified-id}的\textit{nested-name-specifier}提名一个命名空间（包括
 \textit{nested-name-specifier}是\textit{::}的情形，即提名全局命名空间），则
@@ -1308,7 +1308,7 @@ $S(X, m)$恰有一个成员，或如果引用的上下文是一个\textit{using-
   void B::f1(int) {}      // OK, defines A::B::f1(int)
 \end{lstlisting}」
 
-\subsection{详尽类型说明符}
+\ssect{详尽类型说明符}{basic.lookup.elab}
 \paragraph{}
 一个\textit{elaborated-type-specifier}（10.1.7.3）可用来引用先前声明的
 \textit{class-name}或\textit{enum-name}，即使该名字被非类型声明（6.3.10）隐藏。
@@ -1363,7 +1363,7 @@ $S(X, m)$恰有一个成员，或如果引用的上下文是一个\textit{using-
   struct Base::Data* pBase; // OK: refers to nested Data
 \end{lstlisting}」
 
-\subsection{类成员访问}
+\ssect{类成员访问}{basic.lookup.classref}
 \paragraph{}
 在类成员访问表达式中（8.2.5），如果\texttt{.}或\texttt{->}标记直接跟上一个
 \textit{标识符}，再跟上\texttt{<}，则必须查询标识符以确定\texttt{<}是模板参数列
@@ -1437,19 +1437,20 @@ $S(X, m)$恰有一个成员，或如果引用的上下文是一个\textit{using-
   }
 \end{lstlisting}」
 
-\subsection{Using指令和命名空间别名}
+\ssect{Using指令和命名空间别名}{basic.lookup.udir}
 \paragraph{}
 在\textit{using-directive}或\textit{namespace-alias-definition}中，查询
 \textit{namespace-name}或查询\textit{nested-name-specifier}中的名字时只考虑命名
 空间名。
 
 %5
-\section{程序与链接}
+\sect{程序与链接}{basic.link}
 \paragraph{}
 程序由一个或多个\textit{翻译单元}（\textit{translation unit}）（第5章）链接起来。
-翻译单元由声明序列组成。 \\
-\mbox{ \qquad \qquad \textit{translation-unit:} }       \\
-\mbox{ \qquad \qquad \qquad \textit{declaration-seq$_{opt}$}}
+翻译单元由声明序列组成。
+
+\synsym{translation-unit}
+  \synprd[]{\textit{declaration-seq$_{opt}$}}
 
 \paragraph{}
 当一个名称可能表示相同对象、引用、函数、类型、模板、名称空间或值作为另一个作用域
@@ -1591,8 +1592,8 @@ $S(X, m)$恰有一个成员，或如果引用的上下文是一个\textit{using-
 「注：链接到非C++声明可以通过\textit{linkage-specification}（10.5）实现。」
 
 %6
-\section{程序启动与结束}
-\subsection{main函数}
+\sect{程序启动与结束}{basic.start}
+\ssect{main函数}{basic.start.main}
 \paragraph{}
 程序应该包含一个全局函数称为\texttt{main}。执行程序从启动主线程开始
 （4.7，33.3），并在其中调用\texttt{main}函数且静态存储期变量可能被初始化
@@ -1634,7 +1635,7 @@ $S(X, m)$恰有一个成员，或如果引用的上下文是一个\textit{using-
 变量）并使用其值作为参数调用\texttt{std::exit}的作用。如果控制流到达\texttt{main}
 的\textit{复合语句}结尾处，其效果等价于操作数为$0$的返回语句（见18.3）。
 
-\subsection{静态初始化}
+\ssect{静态初始化}{basic.start.static}
 \paragraph{}
 静态存储期变量随程序启动而初始化。线程存储期变量随线程执行而初始化。在启动的每一
 个阶段内，初始化按如下进行。
@@ -1674,7 +1675,7 @@ initialization}）。所有静态初始化严格发生于动态初始化之前�
   double d1 = fd();   // may be initialized statically or dynamically to 1.0
 \end{lstlisting}
 
-\subsection{非局部变量动态初始化}
+\ssect{非局部变量动态初始化}{basic.start.dynamic}
 \paragraph{}
 如果动态存储期非局部变量是隐式或显式实例化的特例，则其动态初始化是无序的，如果该
 变量是非隐式或显式实例化的特例内联变量则其初始化部分有序，否则是有序的。「注：显
@@ -1756,7 +1757,7 @@ initialization}）。所有静态初始化严格发生于动态初始化之前�
 如果静态存储期非局部变量的初始化因异常而结束，则调用\texttt{std::terminate}
 （18.5.1）。
 
-\subsection{终止}
+\ssect{终止}{basic.start.term}
 \paragraph{}
 已初始化静态存储期对象（即对象生命期（6.8）已开始）的析构函数，以及通过
 \texttt{std::atexit}函数注册的函数，作为调用\texttt{std::exit}（21.5）的一部分
@@ -1805,7 +1806,7 @@ initialization}）。所有静态初始化严格发生于动态初始化之前�
 数。
 
 %7
-\section{存储期}
+\sect{存储期}{basic.stc}
 
 \paragraph{}
 \textit{存储期}指对象的一种定义包含该对象的存储的最小潜在生命期的属性。存储期由
@@ -1830,7 +1831,7 @@ initialization}）。所有静态初始化严格发生于动态初始化之前�
 对无效指针值的使用为实现定义行为。\footnote{某些实现可能将拷贝无效指针值定义为
 系统运行时错。}
 
-\subsection{静态存储期}
+\ssect{静态存储期}{basic.stc.static}
 
 \paragraph{}
 所有非动态存储期、非线程存储期且非局部的变量具有\textit{静态存储期}。这些实体的
@@ -1847,7 +1848,7 @@ initialization}）。所有静态初始化严格发生于动态初始化之前�
 \paragraph{}
 关键字\texttt{static}在类定义中用于类数据成员赋予该数据成员静态存储期。
 
-\subsection{线程存储期}
+\ssect{线程存储期}{basic.stc.thread}
 \paragraph{}
 使用\texttt{thread\_local}声明的变量具有\textit{线程存储期}。这些实体的存储应该
 持续创建它们的线程的持续时间。每个线程都有不同的对象或引用，且使用这此声明的名
@@ -1857,7 +1858,7 @@ initialization}）。所有静态初始化严格发生于动态初始化之前�
 线程存储期变量应该在其第一次odr-use（6.2）之前初始化，且如果创建则应该在线程结
 束前销毁。
 
-\subsection{自动存储期}
+\ssect{自动存储期}{basic.stc.auto}
 \paragraph{}
 未显式声明为\texttt{static}、\texttt{thread\_local}或\texttt{extern}的块作用域
 变量具有\textit{自动存储期}。这些实体的存储应该持续直到创建它们的块退出时。
@@ -1870,7 +1871,7 @@ initialization}）。所有静态初始化严格发生于动态初始化之前�
 用的，实现也不应该在块结束前销毁它或作为优化消除它，除非是类对象且其拷贝/移动如
 第15.8节所述可能被消除。
 
-\subsection{动态存储期}
+\ssect{动态存储期}{basic.stc.dynamic}
 \paragraph{}
 对象可以在程序执行期间（4.6）使用\textit{new-expression}（8.3.4）动态创建，或
 使用\textit{delete-expression}（8.3.5）销毁。C++实现通过全局\textit{分配函数}
@@ -1913,7 +1914,7 @@ initialization}）。所有静态初始化严格发生于动态初始化之前�
 C++程序内定义的任何分配和/或回收函数，包括标准库中的缺省版本，应该遵循第6.7.4.1
 节和第6.7.4.2节所指明的语义。
 
-\subsubsection{分配函数}
+\sssect{分配函数}{basic.stc.dynamic.allocation}
 \paragraph{}
 分配函数应该是类成员或全局函数；如果分配函数在非全局作用域的命名空间中声明或在
 全局作用域中声明为静态的则程序为病态的。其返回类型应该为\texttt{void*}。第一个
@@ -1950,7 +1951,7 @@ C++程序内定义的任何分配和/或回收函数，包括标准库中的缺�
 分配静态存储期对象（6.7.1），线程存储期对象或引用（6.7.2），
 \texttt{std::type\_info}类型（8.2.8）的对象或者是一个异常对象（18.1）。」
 
-\subsubsection{回收函数}
+\sssect{回收函数}{basic.stc.dynamic.deallocation}
 \paragraph{}
 回收函数应该是类成员或全局函数；如果回收函数在非全局作用域的命名空间中声明或在
 全局作用域中声明为静态的则程序为病态的。
@@ -1982,7 +1983,7 @@ C++程序内定义的任何分配和/或回收函数，包括标准库中的缺�
 如果传递给标准库回收函数的实参是非零指针（7.11），回收函数应该回收该指针所指存
 储，结束该存储区域的存储期。
 
-\subsubsection{安全派生指针}
+\sssect{安全派生指针}{basic.stc.dynamic.safety}
 \paragraph{}
 可追踪指针对象指：
 \begin{enumerate}
@@ -2032,12 +2033,12 @@ C++程序内定义的任何分配和/或回收函数，包括标准库中的缺�
 函数）是未定义的，见第6.7节。即使不安全派生指针值与某些安全派生指针值相等也成
 立。」是否有放松或严格指针安全性由实现定义。
 
-\subsection{子对象存储期}
+\ssect{子对象存储期}{basic.stc.inherit}
 \paragraph{}
 子对象和引用成员存储期为其完整对象的存储期（4.5）。
 
 %8
-\section{对象生命期}
+\sect{对象生命期}{basic.life}
 \paragraph{}
 对象或引用的\textit{生命期}是对象或引用的一种运行时属性。如果对象为类类型或聚合
 类型且它自身或它的子对象由非平凡缺省构建函数初始化，则该对象被说成是有
@@ -2212,7 +2213,7 @@ C++程序内定义的任何分配和/或回收函数，包括标准库中的缺�
 情况下从另一个线程引用一个正在创建的对象会导致未定义行为。」
 
 %9
-\section{类型}
+\sect{类型}{basic.types}
 
 \paragraph{}
 「注：第6.9节及其中子条款对实现的类型表示提出要求。存在两种类型：基本类型和复合
@@ -2342,7 +2343,7 @@ cv限定版本统称\textit{POD-类型}。CV限定标量类型，平凡可拷贝
 两个类型\textit{cv1} \texttt{T1}和\textit{cv2} \texttt{T2}如果是同一类型、布局兼
 容枚举（10.2）或布局兼容标准布局类类型（12.2），则它们是\textit{布局兼容}类型。
 
-\subsection{基本类型}
+\ssect{基本类型}{basic.fundamental}
 \paragraph{}
 声明为字符（\texttt{char}）的对象应该足够存储实现的基本字符集的任何成员。如该集
 合内的字符存于字符对象中，该字符对象的整数值等于该字符的单个字符字面形式的值。
@@ -2379,7 +2380,7 @@ character types}）。\texttt{char}、\texttt{signed char}和\texttt{unsigned ch
 \textit{扩展无符号整型}。标准与扩展无符号整型统称\textit{无符号整型}。有符号整型
 非负值范围是对应无符号整型的子范围，两类型的相同值的表示相同，每一个对应有/无符
 号整型的值表示应相同。标准有符号整型与标准无符号整型统称\textit{标准整型}，扩展
-无符号整型和扩展无符号整型统称\textit{扩展整形}。有符号和无符号整型应满足C标准第
+无符号整型和扩展无符号整型统称\textit{扩展整型}。有符号和无符号整型应满足C标准第
 5.2.4.2.1节的约束。
 
 \paragraph{}
@@ -2411,11 +2412,11 @@ character types}）。\texttt{char}、\texttt{signed char}和\texttt{unsigned ch
 「例：本文档允许整型的二补码、一补码和符号量值表示。」
 
 \paragraph{}
-存在三个\textit{符点}类型：\texttt{float}、\texttt{double}和\texttt{long double}
+存在三个\textit{浮点}类型：\texttt{float}、\texttt{double}和\texttt{long double}
 。\texttt{double}应该至少有\texttt{float}的精度，\texttt{long double}应该至少有
 \texttt{double}的精度。\texttt{float}类型的值为\texttt{double}类型值的子集；
-\texttt{double}类型的值为\texttt{long double}类型值的子集。符点类型值表示由实现
-定义。「注：本文档不对符点类型操作的准确性作要求；见第21.3节。」整型与符点型统称
+\texttt{double}类型的值为\texttt{long double}类型值的子集。浮点类型值表示由实现
+定义。「注：本文档不对浮点类型操作的准确性作要求；见第21.3节。」整型与浮点型统称
 \textit{算术类型}。标准库模板\texttt{std::numeric\_limits}（21.3）指明实现的每一
 个算术类型最大及最小值。
 
@@ -2436,7 +2437,7 @@ character types}）。\texttt{char}、\texttt{signed char}和\texttt{unsigned ch
 \paragraph{}
 「注：即使实现定义了两个或多个基本类型拥有相同的值表示，它们也表示不同的类型。」
 
-\subsection{复合类型}
+\ssect{复合类型}{basic.compound}
 \paragraph{}
 复合类型可按如下方式构建：
 \begin{enumerate}
@@ -2506,7 +2507,7 @@ character types}）。\texttt{char}、\texttt{signed char}和\texttt{unsigned ch
 \textit{cv}限定或\textit{cv}未限定\texttt{void}指针可用于指向未知类型对象。这样
 的指针应该能够存放任何对象指针。\textit{cv} \texttt{void*}型对象应该与
 \textit{cv} \texttt{char*}对象有相同的表示和对齐要求。
-\subsection{CV限定符}
+\ssect{CV限定符}{basic.type.qualifier}
 \paragraph{}
 第6.9.1节和第6.9.2节所提到的类型为\textit{cv-限定类型}。每个cv-限定完整或不完整
 对象类型或\texttt{void}（6.9），有其类型的三个对应cv-限定版本：
@@ -2578,7 +2579,7 @@ cv-限定符有偏序关系，使得一个类型可以比另一个类型\textit{
 型被认为是const-限定的。」
 
 %10
-\section{左值和右值}
+\sect{左值和右值}{basic.lval}
 \paragraph{}
 表达式根据图\ref{fig:valuecat}分类法进行分类。
 
@@ -2656,7 +2657,7 @@ prvalue的\textit{结果}为表达式向其环境所存的值。结果为\textit
 \end{enumerate}
 
 %11
-\section{对齐}
+\sect{对齐}{basic.align}
 \paragraph{}
 对象类型有\textit{对齐要求}（\textit{alignment requirements}（6.9.1，6.9.2），即
 对该类型可能分配的对象所在地址的限制。\textit{对齐}指实现的整型值，表示可以分配

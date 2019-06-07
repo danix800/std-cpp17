@@ -1,4 +1,4 @@
-\chapter{标准转换}
+\chptr{标准转换}{conv}
 
 \paragraph{}
 标准转换指具有内置意义的隐式转换。第7章列举了全部这种转换。一个\textit{标准转换
@@ -6,7 +6,7 @@
 \begin{enumerate}
   \item{以下集合中零个或一个转换：左值到右值转换，数组到指针转换以及函数到指针转
     换。}
-  \item{以下集合中零个或一个转换：整型提升，符点提升，整型转换，符点转换，符点整
+  \item{以下集合中零个或一个转换：整型提升，浮点提升，整型转换，浮点转换，浮点整
     型转换，指针转换，指针到成员转换和布尔转换。}
   \item{零个或一个函数指针转换。}
   \item{零个或一个限定转换。}
@@ -56,7 +56,7 @@
 「注：某些上下文中一些转换被抑制了。比如，左值到右值转换不用于一元运算符
 \texttt{\&}。特定的例外情形在那些运算符和上下文的描述中给出。」
 
-\section{左值到右值转换}
+\sect{左值到右值转换}{conv.lval}
 \paragraph{}
 非函数、非数组类型\texttt{T}的泛左值（6.10）可以转换成纯右值。\footnote{由于历史
 原因，该转换被称作``左值到右值''转换，即使该名称并不能准确反应第6.10节所描述的表
@@ -101,13 +101,13 @@
 \paragraph{}
 「注：见第6.10节。」
 
-\section{数组到指针转换}
+\sect{数组到指针转换}{conv.array}
 \paragraph{}
 类型``\texttt{N}个\texttt{T}的数组''或``\texttt{T}的未知大小的数组''的左值或右值
 可以转换成``\texttt{T}的指针''类型的纯右值。使用了临时物化转换（7.4）。结果是指
 向数组第一个元素的指针。
 
-\section{函数到指针转换}
+\sect{函数到指针转换}{conv.func}
 \paragraph{}
 函数类型\texttt{T}的左值可以转换成``\texttt{T}的指针''类型的纯右值。结果为指向函
 数的指针。\footnote{该转换不用于非静态成员函数，因为无法获取引用非静态成员函数的
@@ -116,7 +116,7 @@
 \paragraph{}
 「注：见第16.4节中函数重载时的额外规则。」
 
-\section{临时物化转换}
+\sect{临时物化转换}{conv.rval}
 \paragraph{}
 类型\texttt{T}的纯右值可以转换成类型\texttt{T}的失效值。该转换使用临时对象作为结
 果对象，通过纯右值的计算对临时对象（15.2）进行初始化，并产生指代该临时对象的失效
@@ -127,7 +127,7 @@
   int k = X().n;      // OK, X() prvalue is converted to xvalue
 \end{lstlisting}」
 
-\section{限定转换}
+\sect{限定转换}{conv.qual}
 \paragraph{}
 类型\texttt{T}的\textit{cv-分解}（\textit{cv-decomposition}）指$cv_i$和$P_i$的序
 列，使得\texttt{T}为                                                          \\
@@ -180,7 +180,7 @@ $cv_1, cv_2, \cdots, cv_n$被称作\texttt{T}的\textit{cv-限定签名}。
 \paragraph{}
 「注：函数类型（包括用于指向成员函数类型的指针）不受cv限定（11.3.5）。」
 
-\section{整型提升}
+\sect{整型提升}{conv.prom}
 \paragraph{}
 除\texttt{bool}、\texttt{char16\_t}、\texttt{char32\_t}和\texttt{wchar\_t}以外，
 整数转换阶（7.15）小于\texttt{int}的整型纯右值可以转换成\texttt{int}类型的纯右值
@@ -223,14 +223,14 @@ $cv_1, cv_2, \cdots, cv_n$被称作\texttt{T}的\textit{cv-限定签名}。
 \paragraph{}
 这些转换称作\textit{整型提升}（\textit{integral promotions}）。
 
-\section{符点提升}
+\sect{浮点提升}{conv.fpprom}
 \paragraph{}
 类型\texttt{float}的纯右值可以转换成\texttt{double}类型的纯右值。其值不变。
 
 \paragraph{}
-该转换称为\textit{符点提升}（\textit{floating-point promotion}）。
+该转换称为\textit{浮点提升}（\textit{floating-point promotion}）。
 
-\section{整型转换}
+\sect{整型转换}{conv.integral}
 \paragraph{}
 整型的纯右值可以转换成另一个整型的纯右值。无作用域枚举类型的纯右值可以转换成整型
 纯右值。
@@ -250,28 +250,28 @@ $cv_1, cv_2, \cdots, cv_n$被称作\texttt{T}的\textit{cv-限定签名}。
 \paragraph{}
 整型提升所允许的转换从整型转换集合中排除。
 
-\section{符点转换}
+\sect{浮点转换}{conv.double}
 \paragraph{}
-符点类型纯右值可以转换成另一符点类型纯右值。如果源值可由目标类型确切表示，则转换
+浮点类型纯右值可以转换成另一浮点类型纯右值。如果源值可由目标类型确切表示，则转换
 的结果为该确切表示。如果源值介于两个相邻目标类型之间，则转换结果为实现选择任意一
 个。否则行为未定义。
 
 \paragraph{}
-符点提升所允许的转换从符点转换集合中排除。
+浮点提升所允许的转换从浮点转换集合中排除。
 
-\section{符点整型转换}
+\sect{浮点整型转换}{conv.fpint}
 \paragraph{}
-符点类型纯右值可以转换成整型纯右值。该转换截断，即丢弃小数部分。如果截断后的值不
+浮点类型纯右值可以转换成整型纯右值。该转换截断，即丢弃小数部分。如果截断后的值不
 能由目标类型表示则行为未定义。「注：如果目标类型为\texttt{bool}，见第7.14节。」
 
 \paragraph{}
-整型纯右值或无作用域枚举类型可以转换成符点类型纯右值。如可能，则结果确切。如果被
+整型纯右值或无作用域枚举类型可以转换成浮点类型纯右值。如可能，则结果确切。如果被
 转换值在可表示值和不可确切表示值范围之间，则选择下一个更低或更高可表示值由实现定
-义。「注：如果整型值不能确切的表示符点类型值则会丢失精度。」如果被转换值在可表示
+义。「注：如果整型值不能确切的表示浮点类型值则会丢失精度。」如果被转换值在可表示
 值范围之外，则行为未定义。如果源类型为\texttt{bool}，则值\texttt{false}转换成
 零，值\texttt{true}转换成一。
 
-\section{指针转换}
+\sect{指针转换}{conv.ptr}
 \paragraph{}
 \textit{零指针常量}（\textit{null pointer constant}）指值为零的整型字面值
 （5.13.2）或类型\texttt{std::nullptr\_t}的纯右值。零指针常量可以转换成指针类型；
@@ -293,7 +293,7 @@ $cv_1, cv_2, \cdots, cv_n$被称作\texttt{T}的\textit{cv-限定签名}。
 转换的程序为病态的。转换结果为指向派生类对象的基类子对象的指针。零指针值转换成目
 标类型的零指针值。
 
-\section{指针到成员转换}
+\sect{指针到成员转换}{conv.mem}
 \paragraph{}
 零指针常量（7.11）可以转换成成员类型指针；结果为该类型的\textit{零成员指针值}，
 且与非零指针常量创建的任何成员指针不同。这样的转换称为\textit{零成员指针转换}。
@@ -315,7 +315,7 @@ $cv_1, cv_2, \cdots, cv_n$被称作\texttt{T}的\textit{cv-限定签名}。
 要的。注意成员指针不是对象或函数指针，且这些指针的转换规则不适用于成员指针。特别
 是成员指针不能被转换成\texttt{void*}。}
 
-\section{函数指针转换}
+\sect{函数指针转换}{conv.fctptr}
 \paragraph{}
 ``\texttt{noexcept}函数指针''类型的纯右值可以转换成``函数指针''类型的纯右值。结
 果为指向函数的指针。``\texttt{noexcept}函数类型成员指针''类型的纯右值可以转换成
@@ -331,14 +331,14 @@ $cv_1, cv_2, \cdots, cv_n$被称作\texttt{T}的\textit{cv-限定签名}。
                                  // function
 \end{lstlisting}」
 
-\section{布尔转换}
+\sect{布尔转换}{conv.bool}
 \paragraph{}
 算术类型、无作用域枚举类型、指针或成员指针类型纯右值可以转换成\texttt{bool}类型
 纯右值。值零，零指针或零成员指针值转换成\texttt{false}；任何其他值转换成
 \texttt{true}。对于直接初始化（11.6），\texttt{std::nullptr\_t}类型纯右值可以转
 换成\texttt{bool}型纯右值；结果值为\texttt{false}。
 
-\section{整型转换阶}
+\sect{整型转换阶}{conv.rank}
 \paragraph{}
 每一个整型具有如下定义的\textit{整型转换阶}（\textit{integer conversion rank}）：
 \begin{enumerate}
@@ -358,6 +358,6 @@ $cv_1, cv_2, \cdots, cv_n$被称作\texttt{T}的\textit{cv-限定签名}。
     其他整型转换阶的确定规则。}
   \item{对所有整型\texttt{T1}、\texttt{T2}和\texttt{T3}，如果\texttt{T1}转换阶大
     于\texttt{T2}，\texttt{T2}转换阶大于\texttt{T3}，则\texttt{T1}转换阶大于
-    \texttt{T3}。
+    \texttt{T3}。}
 \end{enumerate}
 「主：整型转换阶用于整型提升（7.6）和常规算术转换（第8章）的定义。」

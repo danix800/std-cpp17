@@ -1,7 +1,7 @@
 %% 5. lex
-\chapter{词法惯例}
+\chptr{词法惯例}{lex}
 
-\section{独立翻译}
+\sect{独立翻译}{lex.separate}
 
 \paragraph{}
 程序文本保存于本文档称为\textit{源文件}的单元中。一个源文件加上通过预处理指令
@@ -13,7 +13,7 @@
 （比如）调用标识符具有外部链接的函数、操作标识符具有外部链接的对象或操作数据文件
 等方式通信（6.5）。翻译单元可以独立翻译然后链接到一起产生可执行程序（6.5）。」
 
-\section{翻译阶段}
+\sect{翻译阶段}{lex.phases}
 
 \paragraph{}
 翻译的语法规则间优先顺序由以下阶段指定。\footnote{实现必须表现地如同这些独立阶段
@@ -63,7 +63,7 @@
     有这样的翻译器输出组成程序镜像，该镜像包含在其执行环境中执行所需的信息。}
 \end{enumerate}
 
-\section{字符集}
+\sect{字符集}{lex.charset}
 \paragraph{}
 \textit{基本源字符集}（\textit{basic source character set}）包括$96$个字符：空白
 字符，表示水平制表符、垂直制表符、换页符和新行的控制字符，加上$91$个图形字符：
@@ -79,14 +79,14 @@
 \textasciitilde{} !\ = , \bslh{} \qdbl{} \qsgl}}
 
 \paragraph{}
-\textit{通用字符名}结构提供命名其他字符的方法。                               \\
-\mbox{\qquad \textit{hex-quad:}}                                              \\
-\mbox{\qquad \qquad \textit{hexadecimal-digit hexadecimal-digit
-    hexadecimal-digit hexadecimal-digit}}                                     \\
-\mbox{\qquad \textit{universal-character-name:}}                              \\
-\mbox{\qquad \qquad \texttt{\bslh{}u} \textit{hex-quad}}                      \\
-\mbox{\qquad \qquad \texttt{\bslh{}U} \textit{hex-quad}
-    \textit{hex-quad}}                                                        \\
+\textit{通用字符名}结构提供命名其他字符的方法。
+
+\synsym{hex-quad}
+  \synprd{\textit{hexadecimal-digit hexadecimal-digit hexadecimal-digit
+    hexadecimal-digit}}
+\synsym{universal-character-name}
+  \synprd{\texttt{\bslh{}u} \textit{hex-quad}}
+  \synprd{\texttt{\bslh{}U} \textit{hex-quad hex-quad}}
 由\textit{通用字符名}\texttt{\bslh UNNNNNNNN}所表示的是ISO/IEC 10646中
 短名为\texttt{NNNNNNNN}的字符；由\texttt{\bslh uNNNN}所表示的是ISO/IEC
 10646中短名为\texttt{0000NNNN}的字符。如\textit{通用字符名}的十六进制值对应于
@@ -105,17 +105,17 @@
 的值大。\textit{执行字符集}和\textit{执行宽字符集}为对应的基本执行字符集和基本
 执行宽字符集的实现定义超集。执行字符集和额外成员集的成员值为语言环境特定的。
 
-\section{预处理标记}
-\noindent \mbox{\qquad \textit{preprocessing-token:}}                         \\
-\mbox{\qquad \qquad \textit{header-name}}                                     \\
-\mbox{\qquad \qquad \textit{identifier}}                                      \\
-\mbox{\qquad \qquad \textit{pp-number}}                                       \\
-\mbox{\qquad \qquad \textit{character-literal}}                               \\
-\mbox{\qquad \qquad \textit{user-defined-character-literal}}                  \\
-\mbox{\qquad \qquad \textit{string-literal}}                                  \\
-\mbox{\qquad \qquad \textit{user-defined-string-literal}}                     \\
-\mbox{\qquad \qquad \textit{preprocessing-op-or-punc}}                        \\
-\mbox{\qquad \qquad 未在上面列出的每一个非空白字符}
+\sect{预处理标记}{lex.pptoken}
+\synsym{preprocessing-token}
+  \synprd{\textit{header-name}}
+  \synprd{\textit{identifier}}
+  \synprd{\textit{pp-number}}
+  \synprd{\textit{character-literal}}
+  \synprd{\textit{user-defined-character-literal}}
+  \synprd{\textit{string-literal}}
+  \synprd{\textit{user-defined-string-literal}}
+  \synprd{\textit{preprocessing-op-or-punc}}
+  \synprd[]{未在上面列出的每一个非空白字符}
 
 \paragraph{}
 每一个被转换成标记（5.6）的预处理标记其词法形式应该是关键字、标识符、字面值、
@@ -155,17 +155,17 @@
 \end{lstlisting}」
 
 \paragraph{}
-「例：程序片段\texttt{0xe+foo}被分析成预处理标记（不是有效符点或整形字面标记），
+「例：程序片段\texttt{0xe+foo}被分析成预处理标记（不是有效浮点或整型字面标记），
 即便分析成三个预处理标记\texttt{0xe}、\texttt{+}和\texttt{foo}可能产生有效表达式
 （如\texttt{foo}被宏定义为\texttt{1}）。类似的，程序段\texttt{1E1}分析成预处理
-数字（有效符点字面标记），无论\texttt{E}是否为宏名。」
+数字（有效浮点字面标记），无论\texttt{E}是否为宏名。」
 
 \paragraph{}
 「例：程序段\texttt{x+++++y}分析成\texttt{x ++ ++ + y}，即如果\texttt{x}和
 \texttt{y}为整型，该片段违反了增量运算符的限制，即使分析成\texttt{x ++ + ++ y}可
 能产生正确表达式。」
 
-\section{可选标记}
+\sect{可选标记}{lex.digraph}
 \paragraph{}
 某些运算符和标点具有可选标记表示。\footnote{包括``双字序列''和额外保留字。术语
 ``双字序列''（双字符标记）并不是最佳描述，因为其中一个可选预处理标记是
@@ -207,14 +207,13 @@
   \label{tab:alttokens}
 \end{table}
 
-\section{标记}
-
-\noindent \mbox{\qquad \textit{token}}                                        \\
-\mbox{\qquad \qquad \textit{identifier}}                                      \\
-\mbox{\qquad \qquad \textit{keyword}}                                         \\
-\mbox{\qquad \qquad \textit{literal}}                                         \\
-\mbox{\qquad \qquad \textit{operator}}                                        \\
-\mbox{\qquad \qquad \textit{punctuator}}
+\sect{标记}{lex.token}
+\synsym{token}
+  \synprd{\textit{identifier}}
+  \synprd{\textit{keyword}}
+  \synprd{\textit{literal}}
+  \synprd{\textit{operator}}
+  \synprd[]{\textit{punctuator}}
 
 \paragraph{}
 存在五种标记：标识符、关键字、字面值、\footnote{字面值包括字符串，字符和数值字
@@ -222,7 +221,7 @@
 注释（统称``空白''）被忽略，其作用仅仅为分隔标记。「注：某些分隔相邻标识符、关键
 字、数值字面值和含字母字符的可选标记是必须的。」
 
-\section{注释}
+\sect{注释}{lex.comment}
 \paragraph{}
 字符\texttt{/*}开始一个注释，使用\texttt{*/}结束。这些注释不能嵌套。字符
 \texttt{//}开始一个注释，在下一个新行字符前结束。如果这种注释中存在分页符或垂直
@@ -231,21 +230,20 @@
 字符处理无特殊意义。类似的，注释字符\texttt{//}和\texttt{/*}在一个\texttt{/*}中
 时无特殊意义。」
 
-\section{头名称}
-
-\noindent \mbox{\qquad \textit{header-name:}}                                 \\
-\mbox{\qquad \qquad \texttt{<} \textit{h-char-sequence} \texttt{>}}           \\
-\mbox{\qquad \qquad \texttt{\qdbl} \textit{h-char-sequence} \texttt{\qdbl}}   \\
-\noindent \mbox{\qquad \textit{h-char-sequence:}}                             \\
-\mbox{\qquad \qquad \textit{h-char}}                                          \\
-\mbox{\qquad \qquad \textit{h-char-sequence} \textit{h-char}}                 \\
-\noindent \mbox{\qquad \textit{h-char:}}                                      \\
-\mbox{\qquad \qquad 除新行和\texttt{>}以外的任何源字符集成员}                 \\
-\noindent \mbox{\qquad \textit{q-char-sequence:}}                             \\
-\mbox{\qquad \qquad \textit{q-char}}                                          \\
-\mbox{\qquad \qquad \textit{q-char-sequence} \textit{q-char}}                 \\
-\noindent \mbox{\qquad \textit{q-char:}}                                      \\
-\mbox{\qquad \qquad 除新行和\texttt{\qdbl}以外的任何源字符集成员}
+\sect{头名称}{lex.header}
+\synsym{header-name}
+  \synprd{\texttt{<} \textit{h-char-sequence} \texttt{>}}
+  \synprd{\texttt{\qdbl} \textit{h-char-sequence} \texttt{\qdbl}}
+\synsym{h-char-sequence}
+  \synprd{\textit{h-char}}
+  \synprd{\textit{h-char-sequence} \textit{h-char}}
+\synsym{h-char}
+  \synprd{除新行和\texttt{>}以外的任何源字符集成员}
+\synsym{q-char-sequence}
+  \synprd{\textit{q-char}}
+  \synprd{\textit{q-char-sequence} \textit{q-char}}
+\synsym{q-char}
+  \synprd[]{除新行和\texttt{\qdbl}以外的任何源字符集成员}
 
 \paragraph{}
 「注：头名称预处理标记只出现在\texttt{\#include}预处理指令中（见5.4）。」两种形
@@ -258,44 +256,42 @@
 \texttt{\qdbl}。\footnote{因此，依赖于实现，类似于转义序列的字符序列可能
 产生错误，被解释成对应于转义序列的字符，或有完全不同的意义。}
 
-\section{预处理数字}
-\noindent \mbox{\qquad \textit{pp-number:}}                                   \\
-\mbox{\qquad \qquad \textit{digit}}                                           \\
-\mbox{\qquad \qquad \textit{. digit}}                                         \\
-\mbox{\qquad \qquad \textit{pp-number digit}}                                 \\
-\mbox{\qquad \qquad \textit{pp-number identifier-nondigit}}                   \\
-\mbox{\qquad \qquad \textit{pp-number} \texttt{\qsgl}
-                    \textit{digit}}                                           \\
-\mbox{\qquad \qquad \textit{pp-number} \texttt{\qsgl}
-                    \textit{nondigit}}                                        \\
-\mbox{\qquad \qquad \textit{pp-number} \texttt{e} \textit{sign}}              \\
-\mbox{\qquad \qquad \textit{pp-number} \texttt{E} \textit{sign}}              \\
-\mbox{\qquad \qquad \textit{pp-number} \texttt{p} \textit{sign}}              \\
-\mbox{\qquad \qquad \textit{pp-number} \texttt{P} \textit{sign}}              \\
-\mbox{\qquad \qquad \textit{pp-number} \texttt{.}} \\
+\sect{预处理数字}{lex.ppnumber}
+\synsym{pp-number}
+  \synprd{\textit{digit}}
+  \synprd{\texttt{.} \textit{digit}}
+  \synprd{\textit{pp-number digit}}
+  \synprd{\textit{pp-number identifier-nondigit}}
+  \synprd{\textit{pp-number} \texttt{\qsgl} \textit{digit}}
+  \synprd{\textit{pp-number} \texttt{\qsgl} \textit{nondigit}}
+  \synprd{\textit{pp-number} \texttt{e} \textit{sign}}
+  \synprd{\textit{pp-number} \texttt{E} \textit{sign}}
+  \synprd{\textit{pp-number} \texttt{p} \textit{sign}}
+  \synprd{\textit{pp-number} \texttt{P} \textit{sign}}
+  \synprd[]{\textit{pp-number} \texttt{.}}
 
 \paragraph{}
-预处理数字标记词法上包括所有整数字面值标记（5.13.2）和所有符点字面值标记
+预处理数字标记词法上包括所有整数字面值标记（5.13.2）和所有浮点字面值标记
 （5.13.4）。
 
 \paragraph{}
-预处理数字无类型或值；二者均在成功转换成整型字面值或符点字面值后获得。
+预处理数字无类型或值；二者均在成功转换成整型字面值或浮点字面值后获得。
 
-\section{标识符}
-\noindent \mbox{\qquad \textit{identifier:}}                                  \\
-\mbox{\qquad \qquad \textit{identifier-nondigit}}                             \\
-\mbox{\qquad \qquad \textit{identifier identifier-nondigit}}                  \\
-\mbox{\qquad \qquad \textit{identifier digit}}                                \\
-\noindent \mbox{\qquad \textit{identifier-nondigit:}}                         \\
-\mbox{\qquad \qquad \textit{nondigit}}                                        \\
-\mbox{\qquad \qquad \textit{universal-character-name}}                        \\
-\noindent \mbox{\qquad \textit{nondigit:} one of}                             \\
-\mbox{\qquad \qquad \texttt{a b c d e f g h i j k l m}}                       \\
-\mbox{\qquad \qquad \texttt{n o p q r s t u v w x y z}}                       \\
-\mbox{\qquad \qquad \texttt{A B C D E F G H I J K L M}}                       \\
-\mbox{\qquad \qquad \texttt{N O P Q R S T U V W X Y Z \_}}                    \\
-\noindent \mbox{\qquad \textit{digit:} one of}                                \\
-\mbox{\qquad \qquad \texttt{0 1 2 3 4 5 6 7 8 9}}
+\sect{标识符}{lex.name}
+\synsym{identifier}
+  \synprd{\textit{identifier-nondigit}}
+  \synprd{\textit{identifier identifier-nondigit}}
+  \synprd{\textit{identifier digit}}
+\synsym{identifier-nondigit}
+  \synprd{\textit{nondigit}}
+  \synprd{\textit{universal-character-name}}
+\synsym[one of]{nondigit}
+  \synprd{\texttt{a b c d e f g h i j k l m}}
+  \synprd{\texttt{n o p q r s t u v w x y z}}
+  \synprd{\texttt{A B C D E F G H I J K L M}}
+  \synprd{\texttt{N O P Q R S T U V W X Y Z \_}}
+\synsym[one of]{digit}
+  \synprd[]{\texttt{0 1 2 3 4 5 6 7 8 9}}
 
 \paragraph{}
 标识符指任意长字母和数字序列。标识符中的每一个\textit{通用字符名}应该指代编码在
@@ -374,7 +370,7 @@ ISO 10646中，表\ref{tab:iso10646allowed}中所示范围内的字符。起始�
   \item{以下划线开始的标识符保留给实现用作全局命名空间名字。}
 \end{enumerate}
 
-\section{关键字}
+\sect{关键字}{lex.key}
 \paragraph{}
 表\ref{tab:keywords}中的标识符保留用作关键字（即第7阶段中无条件当作关键字），除
 非出现在\textit{attribute-token}中（10.6.1）：
@@ -438,11 +434,13 @@ ISO 10646中，表\ref{tab:iso10646allowed}中所示范围内的字符。起始�
   \label{tab:alt-rep-op-punc}
 \end{table}
 
-\section{运算符与标点}
+\sect{运算符与标点}{lex.operators}
 \paragraph{}
 C++程序的词法表示包括多个预处理标记，它们在预处理器的语法中使用，或者被转换成
-运算符和标点的标记：                                                          \\
-\noindent \mbox{\qquad \textit{preprocessing-op-or-punc:} one of}             \\
+运算符和标点的标记：
+\pagebreak
+
+\synsym[one of]{preprocessing-op-or-punc}
 \begin{table}[h!]
   \vspace*{-2em}\hspace*{0.5em}
   \makebox[\textwidth]{
@@ -475,69 +473,67 @@ C++程序的词法表示包括多个预处理标记，它们在预处理器的�
 \noindent 每一个\textit{preprocessing-op-or-punc}在翻译阶段7（5.2）中被转换成单
 个标记。
 
-\section{字面值}
-\subsection{字面值类型}
+\sect{字面值}{lex.literal}
+\ssect{字面值类型}{lex.literal.kinds}
 \paragraph{}
 存在多种字面值类型。\footnote{本文档中术语``字面值''一般指ISO C中称为``常量''的
-标记。}                                                                       \\
-\noindent \mbox{\qquad \textit{literal:}}                                     \\
-\mbox{\qquad \qquad \textit{integer-literal}}                                 \\
-\mbox{\qquad \qquad \textit{character-literal}}                               \\
-\mbox{\qquad \qquad \textit{floating-literal}}                                \\
-\mbox{\qquad \qquad \textit{string-literal}}                                  \\
-\mbox{\qquad \qquad \textit{boolean-literal}}                                 \\
-\mbox{\qquad \qquad \textit{pointer-literal}}                                 \\
-\mbox{\qquad \qquad \textit{user-defined-literal}}                            \\
+标记。}
 
-\subsection{整数字面值}
-\noindent \mbox{\qquad \textit{integer-literal:}}                             \\
-\mbox{\qquad \qquad \textit{binary-literal integer-suffix$_{opt}$}}           \\
-\mbox{\qquad \qquad \textit{octal-literal integer-suffix$_{opt}$}}            \\
-\mbox{\qquad \qquad \textit{decimal-literal integer-suffix$_{opt}$}}          \\
-\mbox{\qquad \qquad \textit{hexdecimal-literal integer-suffix$_{opt}$}}       \\
-\noindent \mbox{\qquad \textit{binary-literal:}}                              \\
-\mbox{\qquad \qquad \texttt{0b} \textit{binary-digit}}                        \\
-\mbox{\qquad \qquad \texttt{0B} \textit{binary-digit}}                        \\
-\mbox{\qquad \qquad \textit{binary-literal \qsgl$_{opt}$
-                            binary-digit}}                                    \\
-\noindent \mbox{\qquad \textit{octal-literal:}}                               \\
-\mbox{\qquad \qquad \texttt{0}}                                               \\
-\mbox{\qquad \qquad \textit{octal-literal \qsgl$_{opt}$
-                            octal-digit}}                                     \\
-\noindent \mbox{\qquad \textit{decimal-literal:}}                             \\
-\mbox{\qquad \qquad \textit{nonzero-digit}}                                   \\
-\mbox{\qquad \qquad \textit{decimal-literal \qsgl$_{opt}$
-                            digit}}                                           \\
-\noindent \mbox{\qquad \textit{hexdecimal-literal:}}                          \\
-\mbox{\qquad \qquad \textit{hexdecimal-prefix hexdecimal-digit-sequence}}     \\
-\noindent \mbox{\qquad \textit{binary-digit:}}                                \\
-\mbox{\qquad \qquad \texttt{0}}                                               \\
-\mbox{\qquad \qquad \texttt{1}}                                               \\
-\noindent \mbox{\qquad \textit{octal-digit:} one of}                          \\
-\mbox{\qquad \qquad \texttt{0 1 2 3 4 5 6 7}}                                 \\
-\noindent \mbox{\qquad \textit{nonzero-digit:} one of}                        \\
-\mbox{\qquad \qquad \texttt{1 2 3 4 5 6 7}}                                   \\
-\noindent \mbox{\qquad \textit{hexdecimal-prefix:} one of}                    \\
-\mbox{\qquad \qquad \texttt{0x 0X}}                                           \\
-\noindent \mbox{\qquad \textit{hexdecimal-digit-sequence:}}                   \\
-\mbox{\qquad \qquad \textit{hexdecimal-digit}}                                \\
-\mbox{\qquad \qquad \textit{hexdecimal-digit-sequence \qsgl$_{opt}$
-                            hexdecimal-digit}}                                \\
-\noindent \mbox{\qquad \textit{hexdecimal-digit:} one of}                     \\
-\mbox{\qquad \qquad \texttt{0 1 2 3 4 5 6 7 8 9}}                             \\
-\mbox{\qquad \qquad \texttt{a b c d e f}}                                     \\
-\mbox{\qquad \qquad \texttt{A B C D E F}}                                     \\
-\noindent \mbox{\qquad \textit{integer-suffix}}                               \\
-\mbox{\qquad \qquad \textit{unsigned-suffix long-suffix$_{opt}$}}             \\
-\mbox{\qquad \qquad \textit{unsigned-suffix long-long-suffix$_{opt}$}}        \\
-\mbox{\qquad \qquad \textit{long-suffix unsigned-suffix$_{opt}$}}             \\
-\mbox{\qquad \qquad \textit{long-long-suffix unsigned-suffix$_{opt}$}}        \\
-\noindent \mbox{\qquad \textit{unsigned-prefix:} one of}                      \\
-\mbox{\qquad \qquad \texttt{u U}}                                             \\
-\noindent \mbox{\qquad \textit{long-prefix:} one of}                          \\
-\mbox{\qquad \qquad \texttt{l L}}                                             \\
-\noindent \mbox{\qquad \textit{long-long-prefix:} one of}                     \\
-\mbox{\qquad \qquad \texttt{ll LL}}                                           \\
+\synsym{literal}
+  \synprd{\textit{integer-literal}}
+  \synprd{\textit{character-literal}}
+  \synprd{\textit{floating-literal}}
+  \synprd{\textit{string-literal}}
+  \synprd{\textit{boolean-literal}}
+  \synprd{\textit{pointer-literal}}
+  \synprd[]{\textit{user-defined-literal}}
+
+\ssect{整数字面值}{lex.icon} % integer constant
+\synsym{integer-literal}
+  \synprd{\textit{binary-literal integer-suffix$_{opt}$}}
+  \synprd{\textit{octal-literal integer-suffix$_{opt}$}}
+  \synprd{\textit{decimal-literal integer-suffix$_{opt}$}}
+  \synprd{\textit{hexdecimal-literal integer-suffix$_{opt}$}}
+\synsym{binary-literal}
+  \synprd{\texttt{0b} \textit{binary-digit}}
+  \synprd{\texttt{0B} \textit{binary-digit}}
+  \synprd{\textit{binary-literal} \texttt{\qsgl}\textit{$_{opt}$ binary-digit}}
+\synsym{octal-literal}
+  \synprd{\texttt{0}}
+  \synprd{\textit{octal-literal} \texttt{\qsgl}\textit{$_{opt}$ octal-digit}}
+\synsym{decimal-literal}
+  \synprd{\textit{nonzero-digit}}
+  \synprd{\textit{decimal-literal} \texttt{\qsgl}\textit{$_{opt}$ digit}}
+\synsym{hexdecimal-literal}
+  \synprd{\textit{hexdecimal-prefix hexdecimal-digit-sequence}}
+\synsym{binary-digit}
+  \synprd{\texttt{0}}
+  \synprd{\texttt{1}}
+\synsym[one of]{octal-digit}
+  \synprd{\texttt{0 1 2 3 4 5 6 7}}
+\synsym[one of]{nonzero-digit}
+  \synprd{\texttt{1 2 3 4 5 6 7}}
+\synsym[one of]{hexdecimal-prefix}
+  \synprd{\texttt{0x 0X}}
+\synsym{hexdecimal-digit-sequence}
+  \synprd{\textit{hexdecimal-digit}}
+  \synprd{\textit{hexdecimal-digit-sequence} \texttt{\qsgl}\textit{$_{opt}$
+                  hexdecimal-digit}}
+\synsym[one of]{hexdecimal-digit}
+  \synprd{\texttt{0 1 2 3 4 5 6 7 8 9}}
+  \synprd{\texttt{a b c d e f}}
+  \synprd{\texttt{A B C D E F}}
+\synsym{integer-suffix}
+  \synprd{\textit{unsigned-suffix long-suffix$_{opt}$}}
+  \synprd{\textit{unsigned-suffix long-long-suffix$_{opt}$}}
+  \synprd{\textit{long-suffix unsigned-suffix$_{opt}$}}
+  \synprd{\textit{long-long-suffix unsigned-suffix$_{opt}$}}
+\synsym[one of]{unsigned-prefix}
+  \synprd{\texttt{u U}}
+\synsym[one of]{long-prefix}
+  \synprd{\texttt{l L}}
+\synsym[one of]{long-long-prefix}
+  \synprd[]{\texttt{ll LL}}
 
 \paragraph{}
 \textit{整数字面值}指数字序列，不含小数点和指数，带有可选的单引号，在确定其值时
@@ -603,37 +599,34 @@ C++程序的词法表示包括多个预处理标记，它们在预处理器的�
 符号也包括无符号，则扩展整型可能是有符号或无符号。如一个翻译单元包括不能用任何允
 许的类型表示的字面值则程序为病态的。
 
-\subsection{字符字面值}
-\noindent \mbox{\qquad \textit{character-literal:}}                           \\
-\mbox{\qquad \qquad \textit{encoding-prefix$_{opt}$
-  \qsgl \textit{c-char-sequence}\qsgl}}                                       \\
-\noindent \mbox{\qquad \textit{encoding-prefix:} one of}                      \\
-\mbox{\qquad \qquad \texttt{u8 u U L}}                                        \\
-\noindent \mbox{\qquad \textit{c-char-sequence:}}                             \\
-\mbox{\qquad \qquad \textit{c-char}}                                          \\
-\mbox{\qquad \qquad \textit{c-char-sequence} \textit{c-char}}                 \\
-\noindent \mbox{\qquad \textit{c-char:}}                                      \\
-\mbox{\qquad \qquad 除单引号\texttt{\qsgl}、反斜杠\texttt{\bslh}和新行字符以外
-  的源字符集成员}                                                             \\
-\mbox{\qquad \qquad \textit{escape-sequence}}                                 \\
-\mbox{\qquad \qquad \textit{universal-character-name}}                        \\
-\noindent \mbox{\qquad \textit{escape-sequence:}}                             \\
-\mbox{\qquad \qquad \textit{simple-escape-sequence}}                          \\
-\mbox{\qquad \qquad \textit{octal-escape-sequence}}                           \\
-\mbox{\qquad \qquad \textit{hexadecimal-escape-sequence}}                     \\
-\noindent \mbox{\qquad \textit{simple-escape-sequence:} one of}               \\
-\mbox{\qquad \qquad \texttt{\bslh\qsgl\ \bslh\qdbl\ \bslh?\ \bslh\bslh}}      \\
-\mbox{\qquad \qquad \texttt{\bslh a \bslh b \bslh f \bslh n \bslh r \bslh t
-  \bslh v}}                                                                   \\
-\noindent \mbox{\qquad \textit{octal-escape-sequence:}}                       \\
-\mbox{\qquad \qquad \texttt{\bslh} \textit{octal-digit}}                      \\
-\mbox{\qquad \qquad \texttt{\bslh} \textit{octal-digit octal-digit}}          \\
-\mbox{\qquad \qquad \texttt{\bslh} \textit{octal-digit octal-digit
-  octal-digit}}                                                               \\
-\noindent \mbox{\qquad \textit{hexadecimal-escape-sequence:}}                 \\
-\mbox{\qquad \qquad \texttt{\bslh x} \textit{hexadecimal-digit}}              \\
-\mbox{\qquad \qquad \textit{hexadecimal-escape-sequence}
-  \textit{hexadecimal-digit}}                                                 \\
+\ssect{字符字面值}{lex.ccon} % char constant
+\synsym{character-literal}
+  \synprd{\textit{encoding-prefix$_{opt}$}
+          \texttt{\qsgl} \textit{c-char-sequence} \texttt{\qsgl}}
+\synsym[one of]{encoding-prefix}
+  \synprd{\texttt{u8 u U L}}
+\synsym{c-char-sequence}
+  \synprd{\textit{c-char}}
+  \synprd{\textit{c-char-sequence} \textit{c-char}}
+\synsym{c-char}
+  \synprd{除单引号\texttt{\qsgl}、反斜杠\texttt{\bslh}和新行字符以外的源字符集成
+          员}
+  \synprd{\textit{escape-sequence}}
+  \synprd{\textit{universal-character-name}}
+\synsym{escape-sequence}
+  \synprd{\textit{simple-escape-sequence}}
+  \synprd{\textit{octal-escape-sequence}}
+  \synprd{\textit{hexadecimal-escape-sequence}}
+\synsym[one of]{simple-escape-sequence}
+  \synprd{\texttt{\bslh\qsgl\ \bslh\qdbl\ \bslh?\ \bslh\bslh}}
+  \synprd{\texttt{\bslh a \bslh b \bslh f \bslh n \bslh r \bslh t \bslh v}}
+\synsym{octal-escape-sequence}
+  \synprd{\texttt{\bslh} \textit{octal-digit}}
+  \synprd{\texttt{\bslh} \textit{octal-digit octal-digit}}
+  \synprd{\texttt{\bslh} \textit{octal-digit octal-digit octal-digit}}
+\synsym{hexadecimal-escape-sequence}
+  \synprd{\texttt{\bslh x} \textit{hexadecimal-digit}}
+  \synprd[]{\textit{hexadecimal-escape-sequence} \textit{hexadecimal-digit}}
 
 \paragraph{}
 字符字面值指单引号括起来的一个或多个字符，如
@@ -729,90 +722,86 @@ z\qsgl}。宽字符字面值类型为\texttt{wchar\_t}。\footnote{适用于字�
 扩展字符时将引入\textit{通用字符名}。因此，所有扩展字符都用\textit{通用字符名}来
 描述。但是，只要能获得相同结果，实际编译器实现就可以使用自己的本机字符集。」
 
-\subsection{符点字面值}
-\noindent \mbox{\qquad \textit{floating-literal:}}                            \\
-\mbox{\qquad \qquad \textit{decimal-floating-literal}}                        \\
-\mbox{\qquad \qquad \textit{hexadecimal-floating-literal}}                    \\
-\noindent \mbox{\qquad \textit{decimal-floating-literal:}}                    \\
-\mbox{\qquad \qquad \textit{fractional-constant exponent-part$_{opt}$
-                              floating-suffix$_{opt}$}}                       \\
-\mbox{\qquad \qquad \textit{digit-sequence exponent-part
-                              floating-suffix$_{opt}$}}                       \\
-\noindent \mbox{\qquad \textit{hexadecimal-floating-literal:}}                \\
-\mbox{\qquad \qquad \textit{hexadecimal-prefix hexadecimal-fract-constant
-                              binary-exponent-part floating-suffix$_{opt}$}}  \\
-\mbox{\qquad \qquad \textit{hexadecimal-prefix hexadecimal-digit-sequence
-                              binary-exponent-part floating-suffix$_{opt}$}}  \\
-\noindent \mbox{\qquad \textit{fractional-constant:}}                         \\
-\mbox{\qquad \qquad \textit{digit-sequence} \texttt{.}
-                    \textit{digit-sequence}}                                  \\
-\mbox{\qquad \qquad \textit{digit-sequence} \texttt{.}}                       \\
-\noindent \mbox{\qquad \textit{hexadecimal-fract-constant:}}                  \\
-\mbox{\qquad \qquad \textit{hexadecimal-digit-sequence} \texttt{.}
-                    \textit{hexadecimal-digit-sequence}}                      \\
-\mbox{\qquad \qquad \textit{hexadecimal-digit-sequence} \texttt{.}}           \\
-\noindent \mbox{\qquad \textit{exponent-part:}}                               \\
-\mbox{\qquad \qquad \texttt{e} \textit{sign$_{opt}$} \textit{digit-sequence}} \\
-\mbox{\qquad \qquad \texttt{E} \textit{sign$_{opt}$} \textit{digit-sequence}} \\
-\noindent \mbox{\qquad \textit{sign:} one of}                                 \\
-\mbox{\qquad \qquad \texttt{+ -}}                                             \\
-\noindent \mbox{\qquad \textit{digit-sequence:}}                              \\
-\mbox{\qquad \qquad \textit{digit}}                                           \\
-\mbox{\qquad \qquad \textit{digit-sequence}
-                    \texttt{\qsgl}\textit{$_{opt}$ digit}}                    \\
-\noindent \mbox{\qquad \textit{floating-suffix:} one of}                      \\
-\mbox{\qquad \qquad \texttt{f l F L}}                                         \\
+\ssect{浮点字面值}{lex.fcon} % floating constant
+\synsym{floating-literal}
+  \synprd{\textit{decimal-floating-literal}}
+  \synprd{\textit{hexadecimal-floating-literal}}
+\synsym{decimal-floating-literal}
+  \synprd{\textit{fractional-constant exponent-part$_{opt}$
+                  floating-suffix$_{opt}$}}
+  \synprd{\textit{digit-sequence exponent-part floating-suffix$_{opt}$}}
+\synsym{hexadecimal-floating-literal}
+  \synprd{\textit{hexadecimal-prefix hexadecimal-fract-constant
+                  binary-exponent-part floating-suffix$_{opt}$}}
+  \synprd{\textit{hexadecimal-prefix hexadecimal-digit-sequence
+                  binary-exponent-part floating-suffix$_{opt}$}}
+\synsym{fractional-constant}
+  \synprd{\textit{digit-sequence} \texttt{.} \textit{digit-sequence}}
+  \synprd{\textit{digit-sequence} \texttt{.}}
+\synsym{hexadecimal-fract-constant}
+  \synprd{\textit{hexadecimal-digit-sequence} \texttt{.}
+          \textit{hexadecimal-digit-sequence}}
+  \synprd{\textit{hexadecimal-digit-sequence} \texttt{.}}
+\synsym{exponent-part}
+  \synprd{\texttt{e} \textit{sign$_{opt}$} \textit{digit-sequence}}
+  \synprd{\texttt{E} \textit{sign$_{opt}$} \textit{digit-sequence}}
+\synsym[one of]{sign}
+  \synprd{\texttt{+ -}}
+\synsym{digit-sequence}
+  \synprd{\textit{digit}}
+  \synprd{\textit{digit-sequence} \texttt{\qsgl}\textit{$_{opt}$ digit}}
+\synsym[one of]{floating-suffix}
+  \synprd[]{\texttt{f l F L}}
 
 \paragraph{}
-符点字面值包含指定基的前缀，整数部分，小数点，小数部分，一个\texttt{e}、
+浮点字面值包含指定基的前缀，整数部分，小数点，小数部分，一个\texttt{e}、
 \texttt{E}、\texttt{p}或\texttt{P}，一个可选的有符号整型指数，以及一个可选的类型
 后缀。如果没有前缀，整数和小数部分都由十进制（基为10）数字序列组成，或者前缀是
 \texttt{0x}或\texttt{0X}，由十六进制（基为16）数字序列组成。浮点字面值在前一种情
-况下是\textit{十进制符点字面值}，在后一种情况下是\textit{十六进制浮点字面值}。在
+况下是\textit{十进制浮点字面值}，在后一种情况下是\textit{十六进制浮点字面值}。在
 确定其值时，\textit{digit-sequence}或\textit{hexadecimal-digit-sequence}中忽略可
-选的分隔单引号。「例：符点字面值\texttt{1.602'176'565e-19}和
+选的分隔单引号。「例：浮点字面值\texttt{1.602'176'565e-19}和
 \texttt{1.602176565e-19}具有相同值。」整数部分或小数部分（不能同时）可以省略。
 小数点或字母\texttt{e}或\texttt{E}以及指数（不能同时）可以从十进制浮点字面值中省
 略。小数点（而不是指数）可以从十六进制浮点字面值中省略。整数部分、可选的小数点和
 可选的小数部分构成了浮点字面值的有效位。在十进制浮点字面值中，指数（如果存在）表
 示有效位按10的幂进行缩放。在十六进制浮点字面值中指数表示2的幂，用以缩放有效位。
-「例：符点字面值\texttt{49.625}和\texttt{0xC.68p+2}具有相同值。」如果缩放值在其
+「例：浮点字面值\texttt{49.625}和\texttt{0xC.68p+2}具有相同值。」如果缩放值在其
 类型的可表示值范围内，则结果是可表示的缩放值，否则是以实现定义的方式选择的最接近
-缩放值的较大或较小的可表示值。除显式指定后缀，符点字面值类型为\texttt{double}。
+缩放值的较大或较小的可表示值。除显式指定后缀，浮点字面值类型为\texttt{double}。
 后缀\texttt{f}和\texttt{F}指定\texttt{float}，\texttt{l}和\texttt{L}指定
 \texttt{double}。如果缩放值不在其类型可表示值范围内，则程序为病态的。
 
-\subsection{字符串字面值}
-\noindent \mbox{\qquad \textit{string-literal:}}                              \\
-\mbox{\qquad \qquad \textit{encoding-prefix$_{opt}$}
-\texttt{\qdbl}\textit{s-char-sequence$_{opt}$}\texttt{\qdbl}}                 \\
-\mbox{\qquad \qquad \textit{encoding-prefix$_{opt}$} \texttt{R}
-  \textit{raw-string}}                                                        \\
-\noindent \mbox{\qquad \textit{s-char-sequence:}}                             \\
-\mbox{\qquad \qquad \textit{s-char}}                                          \\
-\mbox{\qquad \qquad \textit{s-char-sequence s-char}}                          \\
-\noindent \mbox{\qquad \textit{s-char:}}                                      \\
-\mbox{\qquad \qquad 除双引号\texttt{\qdbl}、反斜杠\texttt{\bslh}或新行字符以外
-  的源字符集成员}                                                             \\
-\mbox{\qquad \qquad \textit{escape-sequence}}                                 \\
-\mbox{\qquad \qquad \textit{universal-character-name}}                        \\
-\noindent \mbox{\qquad \textit{raw-string:}}                                  \\
-\mbox{\qquad \qquad \texttt{\qdbl} \textit{d-char-sequence$_{opt}$}
-  \texttt{(} \textit{r-char-sequence$_{opt}$} \texttt{)}
-  \textit{d-char-sequence$_{opt}$} \texttt{\qdbl}}                            \\
-\noindent \mbox{\qquad \textit{r-char-sequence:}}                             \\
-\mbox{\qquad \qquad \textit{r-char}}                                          \\
-\mbox{\qquad \qquad \textit{r-char-sequence r-char}}                          \\
-\noindent \mbox{\qquad \textit{r-char:}}                                      \\
-\mbox{\qquad \qquad 除右括号\texttt{)}后跟初始\textit{d-char-sequence}（可空）
-  再跟上双引号\texttt{\qdbl}的源字符集成员。}                                 \\
-\noindent \mbox{\qquad \textit{d-char-sequence:}}                             \\
-\mbox{\qquad \qquad \textit{d-char}}                                          \\
-\mbox{\qquad \qquad \textit{d-char-sequence d-char}}                          \\
-\noindent \mbox{\qquad \textit{d-char:}}                                      \\
-\mbox{\qquad \qquad 除空格、左括号\texttt{(}、右括号\texttt{)}、反斜杠
-  \texttt{\bslh}和表示水平制表、垂直制表、换页和新}                           \\
-\mbox{\qquad \qquad 行的控制字符以外的基本源字符集成员。}                     \\
+\ssect{字符串字面值}{lex.string}
+\synsym{string-literal}
+  \synprd{\textit{encoding-prefix$_{opt}$}
+          \texttt{\qdbl}\textit{s-char-sequence$_{opt}$}\texttt{\qdbl}}
+  \synprd{\textit{encoding-prefix$_{opt}$} \texttt{R} \textit{raw-string}}
+\synsym{s-char-sequence}
+  \synprd{\textit{s-char}}
+  \synprd{\textit{s-char-sequence s-char}}
+\synsym{s-char}
+  \synprd{除双引号\texttt{\qdbl}、反斜杠\texttt{\bslh}或新行字符以外
+          的源字符集成员}
+  \synprd{\textit{escape-sequence}}
+  \synprd{\textit{universal-character-name}}
+\synsym{raw-string}
+  \synprd{\texttt{\qdbl} \textit{d-char-sequence$_{opt}$} \texttt{(}
+          \textit{r-char-sequence$_{opt}$} \texttt{)}
+          \textit{d-char-sequence$_{opt}$} \texttt{\qdbl}}
+\synsym{r-char-sequence}
+  \synprd{\textit{r-char}}
+  \synprd{\textit{r-char-sequence r-char}}
+\synsym{r-char}
+  \synprd{除右括号\texttt{)}后跟初始\textit{d-char-sequence}（可空）再跟上双引号
+          \texttt{\qdbl}的源字符集成员。}
+\synsym{d-char-sequence}
+  \synprd{\textit{d-char}}
+  \synprd{\textit{d-char-sequence d-char}}
+\synsym{d-char}
+  \synprd{除空格、左括号\texttt{(}、右括号\texttt{)}、反斜杠\texttt{\bslh}和表示
+          水平制表、垂直制表、换页和新}
+  \synprd[]{行的控制字符以外的基本源字符集成员。}
 
 \paragraph{}
 \textit{字符串字面值}指双引号包围的字符序列（第5.13.3节定义），可选前缀
@@ -967,18 +956,18 @@ z\qsgl}。宽字符字面值类型为\texttt{wchar\_t}。\footnote{适用于字�
 始化。所有字符串字面值是否不同（即存储于不重叠对象）或\textit{字符串字面值}后续
 求值是否产生相同或不同对象未指定。「注：尝试修改字符串字面值的效果未定义。」
 
-\subsection{布尔字面值}
-\noindent \mbox{\qquad \textit{boolean-literal:}}                             \\
-\mbox{\qquad \qquad \texttt{true}}                                            \\
-\mbox{\qquad \qquad \texttt{false}}
+\ssect{布尔字面值}{lex.bool}
+\synsym{boolean-literal}
+  \synprd{\texttt{true}}
+  \synprd[]{\texttt{false}}
 
 \paragraph{}
 布尔字面值为关键字\texttt{false}和\texttt{true}。这些字面值为纯右值，其类型为
 \texttt{bool}。
 
-\subsection{指针字面值}
-\noindent \mbox{\qquad \textit{pointer-literal:}}                             \\
-\mbox{\qquad \qquad \texttt{nullptr}}
+\ssect{指针字面值}{lex.nullptr}
+\synsym{pointer-literal}
+  \synprd[]{\texttt{nullptr}}
 
 \paragraph{}
 指针字面值为关键字\texttt{nullptr}。它是一个类型为\texttt{std::nullptr\_t}的纯右
@@ -986,31 +975,30 @@ z\qsgl}。宽字符字面值类型为\texttt{wchar\_t}。\footnote{适用于字�
 针；该类型的纯右值是一个零指针常量，可以转换成零指针值或零成员指针值。见7.11和
 7.12。」
 
-\subsection{自定义字面值}
-\noindent \mbox{\qquad \textit{user-defined-literal:}}                        \\
-\mbox{\qquad \qquad \textit{user-defined-integer-literal}}                    \\
-\mbox{\qquad \qquad \textit{user-defined-floating-literal}}                   \\
-\mbox{\qquad \qquad \textit{user-defined-string-literal}}                     \\
-\mbox{\qquad \qquad \textit{user-defined-character-literal}}                  \\
-\noindent \mbox{\qquad \textit{user-defined-integer-literal:}}                \\
-\mbox{\qquad \qquad \textit{decimal-literal ud-suffix}}                       \\
-\mbox{\qquad \qquad \textit{octal-literal ud-suffix}}                         \\
-\mbox{\qquad \qquad \textit{hexadecimal-literal ud-suffix}}                   \\
-\mbox{\qquad \qquad \textit{binary-literal ud-suffix}}                        \\
-\noindent \mbox{\qquad \textit{user-defined-floating-literal:}}               \\
-\mbox{\qquad \qquad \textit{fractional-constant exponent-part$_{opt}$
-                            ud-suffix}}                                       \\
-\mbox{\qquad \qquad \textit{digit-sequence exponent-part ud-suffix}}          \\
-\mbox{\qquad \qquad \textit{hexadecimal-prefix hexadecimal-fract-constant
-                            binary-exponent-part ud-suffix}}                  \\
-\mbox{\qquad \qquad \textit{hexadecimal-prefix hexadecimal-digit-sequence
-                            binary-exponent-part ud-suffix}}                  \\
-\noindent \mbox{\qquad \textit{user-defined-string-literal:}}                 \\
-\mbox{\qquad \qquad \textit{string-literal ud-suffix}}                        \\
-\noindent \mbox{\qquad \textit{user-defined-character-literal:}}              \\
-\mbox{\qquad \qquad \textit{character-literal ud-suffix}}                     \\
-\noindent \mbox{\qquad \textit{ud-suffix:}}                                   \\
-\mbox{\qquad \qquad \textit{identifier}}                                      \\
+\ssect{自定义字面值}{lex.ext}
+\synsym{user-defined-literal}
+  \synprd{\textit{user-defined-integer-literal}}
+  \synprd{\textit{user-defined-floating-literal}}
+  \synprd{\textit{user-defined-string-literal}}
+  \synprd{\textit{user-defined-character-literal}}
+\synsym{user-defined-integer-literal}
+  \synprd{\textit{decimal-literal ud-suffix}}
+  \synprd{\textit{octal-literal ud-suffix}}
+  \synprd{\textit{hexadecimal-literal ud-suffix}}
+  \synprd{\textit{binary-literal ud-suffix}}
+\synsym{user-defined-floating-literal}
+  \synprd{\textit{fractional-constant exponent-part$_{opt}$ ud-suffix}}
+  \synprd{\textit{digit-sequence exponent-part ud-suffix}}
+  \synprd{\textit{hexadecimal-prefix hexadecimal-fract-constant
+                  binary-exponent-part ud-suffix}}
+  \synprd{\textit{hexadecimal-prefix hexadecimal-digit-sequence
+                  binary-exponent-part ud-suffix}}
+\synsym{user-defined-string-literal}
+  \synprd{\textit{string-literal ud-suffix}}
+\synsym{user-defined-character-literal}
+  \synprd{\textit{character-literal ud-suffix}}
+\synsym{ud-suffix}
+  \synprd[]{\textit{identifier}}
 
 \paragraph{}
 如一个标记即可以匹配\textit{user-defined-literal}又可以匹配其他\textit{literal}i

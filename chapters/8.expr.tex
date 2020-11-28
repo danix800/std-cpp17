@@ -1,24 +1,2971 @@
 %% 8.expr
 
-\chapter{表达式}
+\chptr{表达式}{expr}
+\paragraph{}
+「注：第8章定义表达式语法、求值顺序和语义。\footnote{运算符优先级未明确指出，但
+可从语法中获取。} 表达式指表示计算的运算符和操作数序列。表达式可以产生值并带来副
+作用。」
 
-\section{主表达式}
-\section{后缀表达式}
-\section{一元表达式}
-\section{显式类型转换（强制转换）}
-\section{成员指针运算符}
-\section{乘法运算符}
-\section{加法运算符}
-\section{位移运算符}
-\section{关系运算符}
-\section{等性运算符}
-\section{按位与运算符}
-\section{按位异或运算符}
-\section{按位或运算符}
-\section{逻辑与运算符}
-\section{逻辑或运算符}
-\section{条件运算符}
-\section{抛出异常}
-\section{赋值与复合赋值运算符}
-\section{逗号运算符}
-\section{常表达式}
+\paragraph{}
+「注：运算符可以重载，即应用于类类型（第12章）或枚举类型（10.2）表达式时给予其语
+义。如第16.5节所述，重载运算符的使用被转换成函数调用。重载运算符遵循第8章中所述
+的语法和求值顺序规则，但操作数类型和值范畴要求被替换成函数调用规则。不保证重载运
+算符间的关系（16.5），如\texttt{++a}等同于\texttt{a+=1}。」
+
+\paragraph{}
+第8章定义运算符应用于未重载类型时的效果。运算符重载不应该改变\textit{内置运算符}
+规则，即运算符应用于由本标准定义的类型。然而这些内置运算符参与重载解析，且作为该
+过程的一部分，当需要转换适合于内置运算符类型的操作数时会考虑自定义转换。如果内置
+运算符被选中，则会在操作根据第8章中的规则进一步考虑前应用这种转换；见16.3.1.2，
+16.6。
+
+\paragraph{}
+在表达式求值过程中，如果结果在数学上无定义或不在其类型可表示值范围内，则行为未定
+义。「注：除零及浮点异常不同机器的对待方式不同，且有时可通过库函数进行调整。」
+
+\paragraph{}
+如果表达式最初具有类型``\texttt{T}的引用''（11.3.2，11.6.3），在进一步分析前该类
+型被调整成\texttt{T}。表达式指代由引用表示的对象或函数，且表达式是一个左值或失效
+值，依赖于具体的表达式。「注：在引用生命期开始前或结束后，行为未定义（见6.8）。」
+
+\paragraph{}
+如果纯右值具有类型``\textit{cv} \texttt{T}''，这里\texttt{T}为cv未限定、非类、非
+数组类型，则在进一步分析前表达式的类型调整为\texttt{T}。
+
+\paragraph{}
+「注：表达式式是一个失效值，如果
+\begin{enumerate}
+  \item{调用函数的结果，无论隐式或显示，其右值是一个对象类型的右值引用，}
+  \item{对象类型右值引用的强制转换，}
+  \item{\texttt{.*}成员指针表达式，其第一个操作数为失效值，第二操作数是数据成员
+    指针。}
+\end{enumerate}
+一般而言，本规则的效果即将命名右值引用当作左值，对象的未命名右值引用当作失效值；
+函数右值引用无论是否命名都当作左值。」                                        \\
+「例：
+\begin{lstlisting}
+  struct A {
+    int m;
+  };
+  A&& operator+(A, A);
+  A&& f();
+
+  A a;
+  A&& ar = static_cast<A&&>(a);
+\end{lstlisting}
+表达式\texttt{f()，f().m，static\_cast<A\&\&>(a)}和\texttt{a + a}为失效值。表达
+式\texttt{ar}为左值。」
+
+\paragraph{}
+在某些上下文中会出现\textit{未求值操作数}（8.2.8，8.3.3，8.3.7，10.1.7.2）。未求
+值操作数不求值。「注：未求值操作数中可以命名非静态类成员（8.1）且对象或函数的命
+名本身不需要提供定义（6.2）。未求值表达式被当作一个全表达式（4.6）。」
+
+\paragraph{}
+无论何时，当泛左值表达式出现在要求操作数为纯右值的运算符中时都要应用左值到右值转
+换（7.1），数组到指针转换（7.2）或函数到指针转换（7.3）将表达式转换成纯右值。
+「注：因为当表达式转换成纯右值时，非类类型表达式类型中的cv限定符被去掉，
+\texttt{const int}（比如）类型的左值表达式可以用于要求\texttt{int}型的纯右值表达
+式。
+
+\paragraph{}
+当纯右值表达式出现在要求泛左传操作数的运算符中时应用临时物化转换（7.4）将表达式
+转换成失效值。
+
+\paragraph{}
+许多要求算术或枚举类型的二元运算符会引起转换并按类似方式产生结果类型。其目的是产
+生一个通用类型，也即是结果的类型。该模式称作\textit{常规算术转换}（\textit{usual
+arithmetic conversions}，定义如下：
+\begin{enumerate}
+  \item{如任一个操作数是有作用域枚举类型（10.2）则不进行转换；如果另一个操作数具
+    有不同类型，则表达式为病态的。}
+  \item{如果任一操作数具有类型\texttt{long double}则另一操作数转换成\texttt{long
+    double}。}
+  \item{否则，如果任一操作数是\texttt{double}则另一个应转换成\texttt{double}。}
+  \item{否则，如果任一操作数是\texttt{float}则另一个应转换成\texttt{float}。}
+  \item{否则应该对两个操作数进行整型提升（7.6）。\footnote{因此\texttt{bool，
+    char16\_t，char32\_t，wchar\_t}或枚举类型被转换成整型。}以下规则适用于被提升
+    的操作数：
+    \begin{enumerate}
+      \item{如两个操作数具有相同类型，则无需再转换。}
+      \item{否则，如果两个操作数都是有符号整型或都是无符号整型，具有较小整数转换
+        阶的类型的操作数应该被转换成具有较大阶类型的操作数的类型。}
+      \item{否则，如果无符号整型操作数的转换阶大于等于另一操作数类型的转换阶，则
+        有符号整型操作数被转换成无符号操作数的类型。}
+      \item{否则，如果有符号整型操作数的类型可以表示无符号操作数的类型的所有值，
+        则无符号整型操作数应该被转换成有符号整型操作数的类型。}
+      \item{否则，两个操作数都被转换成对应于有符号操作数类型的无符号类型。}
+    \end{enumerate}
+    }
+\end{enumerate}
+
+\paragraph{}
+某些上下文中表达式仅为其副作用而出现。这样的表达式称为\textit{弃值表达式}
+（\textit{discarded-value expression}）。数组到指针（7.2）和函数到指针（7.3）标
+准转换不适用。左值到右值转换（7.1）当且仅当表达式是volatile限定类型泛左值且是以
+下之一时才适用：
+\begin{enumerate}
+  \item{\texttt{(}\textit{expression}\texttt{)}，这里\textit{expression}是这些表
+    达式中的一个，}
+  \item{\textit{id-expression}（8.1.4），}
+  \item{下标（8.2.1），}
+  \item{类成员访问（8.2.5），}
+  \item{取值（indirection）（8.3.1），}
+  \item{成员指针操作（8.5），}
+  \item{条件表达式（8.16），其中第二和第三操作数是这些表达式中的一个，}
+  \item{逗号表达式（8.19），其中右操作数是这些表达式中的一个。}
+\end{enumerate}
+「注：使用重载运算符引起函数调用；以上只覆盖内置语义运算符。」如果表达式在该可选
+转换后是一个纯右值，则应用临时物化转换（7.4）。「注：如果表达式是类类型的左值，
+则它必须有易失性拷贝构造函数以初始化该临时对象，即左值到右值转换的结果对象。」
+泛左值表达式求值后丢弃其值。
+
+\paragraph{}
+浮点操作数的值和浮点表达式的结果可能用比所需类型更大的精度或范围表示；不改变其类
+型。\footnote{强制转换与赋值运算符仍须按第8.4节，第8.2.9节和第8.18节中所述进行它
+们特定的转换。}
+
+\paragraph{}
+两个类型\texttt{T1}和\texttt{T2}的\textit{cv组合类型}
+（\textit{cv-combined type}）\texttt{T3}，类似于\texttt{T1}，其cv限定签名（7.5）
+为：
+\begin{enumerate}
+  \item{对每一个$i > 0, cv_i^3$是$cv_i^1$和$cv_i^2$的并集，}
+  \item{如果产生的$cv_i^3$不同于$cv_i^1$或$cv_i^2$，那么将\texttt{const}加到每一
+    个$cv_k^3$，$0 < k < i$。}
+\end{enumerate}
+「注：给定类似的\texttt{T1}和\texttt{T2}，该结构确保两者均能转换到\texttt{T3}。」
+
+\paragraph{}
+类型分别为\texttt{T1}和\texttt{T2}的操作数\texttt{p1}和\texttt{p2}，其中至少一个
+是指针或成员指针或\texttt{std::nullptr\_t}，两操作数的\textit{合成指针类型}
+（\textit{composite pointer type}）指：
+\begin{enumerate}
+  \item{如果\texttt{p1}和\texttt{p2}均为零指针常量，\texttt{std::nullptr\_t}；}
+  \item{如果\texttt{p1}或\texttt{p2}任一个为零指针常量，对应的\texttt{T2}或
+    \texttt{T1}；}
+  \item{如果\texttt{T1}或\texttt{T2}是``指向\textit{cv1} \texttt{void}的指针''，
+    另一个类型是``指向\textit{cv1} \texttt{T}的指针''，这里的\texttt{T}为对象类
+    型或\texttt{void}，``指向\textit{cv12} \texttt{void}的指针''，
+    这里\textit{cv12}为\textit{cv1}和\textit{cv2}的并集；}
+  \item{如果\texttt{T1}或\texttt{T2}为``指向\texttt{noexcept}函数的指针''，另一
+    个类型是``函数指针''，这里函数类型是一样的，``指向函数的指针''；}
+  \item{如果\texttt{T1}是``指向\textit{cv1} \texttt{C1}的指针''，\texttt{T2}是
+    ``指向\textit{cv2} \texttt{C2}的指针''，这里\texttt{C1}为\texttt{C2}引用相关
+    或\texttt{C2}为\texttt{C1}引用相关的（11.6.3），对应的\texttt{T1}和
+    \texttt{T2}的cv组合类型，或\texttt{T2}和\texttt{T1}的cv组合类型；}
+  \item{如果\texttt{T1}为``指向类型为\textit{cv1} \texttt{U1}的\texttt{C1}的成员
+    的指针''，\texttt{T2}为``指向类型为\textit{cv2} \texttt{U2}的\texttt{C2}的成
+    员的指针''，这里\texttt{C1}为\texttt{C2}引用相关或\texttt{C2}为\texttt{C1}引
+    用相关的（11.6.3），对应的\texttt{T2}和\texttt{T1}的cv组合类型，
+    或\texttt{T2}和\texttt{T1}的cv组合类型；}
+  \item{如果\texttt{T1}和\texttt{T2}为相似类型（7.5），\texttt{T1}和\texttt{T2}
+    的cv组合类型；}
+  \item{否则，需要确定组合类型的程序是病态的。}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  typedef void *p;
+  typedef const int *q;
+  typedef int **pi;
+  typedef const int **pci;
+\end{lstlisting}
+\texttt{p}和\texttt{q}的合成指针类型为``指向\texttt{const void}的指针''；
+\texttt{pi}和\texttt{pci}的合成指针类型为``指向\texttt{const int}的指针的
+\texttt{const}指针''。」
+
+\sect{主表达式}{expr.prim}
+\synsym{primary-expression}
+  \synprd{\textit{literal}}
+  \synprd{\texttt{this}}
+  \synprd{\texttt{(} \textit{expression} \texttt{)}}
+  \synprd{\textit{id-expression}}
+  \synprd{\textit{lambda-expression}}
+  \synprd[]{\textit{fold-expression}}
+
+\ssect{字面值}{expr.prim.literal}
+\paragraph{}
+\textit{字面值}是一个主表达式。其类型与其形式相关（5.13）。字符串字面值是一个左
+值；所有其他字面值是纯右值。
+
+\ssect{this}{expr.prim.this}
+\paragraph{}
+关键字\texttt{this}为调用非静态成员函数（12.2.2.1）或对非静态成员初始化求值
+（12.2）命名一个指向对象的指针。
+
+\paragraph{}
+如果声明类\texttt{X}的成员函数或成员函数模板，在可选的\textit{cv-qualifier-seq}
+和\textit{function-definition}、\textit{member-declarator}或\textit{declarator}
+之间，表达式\texttt{this}为``指向\textit{cv-qualifier-seq} \texttt{X}的指针''类
+型的纯右值。它不应该出现在可选的\textit{cv-qualifier-seq}之前，且不应该出现在静
+态成员函数声明中（尽管其类型和值范畴在静态成员函数内与非静态成员函数内一样有定
+义）。「注：这是因为声明匹配直到完整声明子已知时才进行。」与其它上下文中的对象表
+达式不同的是，成员函数体外为类成员访问（8.2.5）不要求\texttt{*this}是完整类型。
+「注：只有声明之前的类成员可见。」「例：
+\begin{lstlisting}
+  struct A {
+    char g();
+    template<class T> auto f(T t) -> decltype(t + g())
+      { return t + g(); }
+  };
+  template auto A::f(int t) -> decltype(t + g());
+\end{lstlisting}」
+
+\paragraph{}
+否则，如果\textit{member-declarator}声明类\texttt{X}的一个非静态数据成员（12.2）
+则表达式\texttt{this}在可选的缺省成员初始化中为一个``指向\textit{X}的指针''类型
+的纯右值。它不应该出现在\textit{member-declarator}之外的地方。
+
+\paragraph{}
+表达式\texttt{this}不应该出现在任何其他上下文中。「例：
+\begin{lstlisting}
+  class Outer {
+    int a[sizeof(*this)];             // error: not inside a member function;
+    unsigned int sz = sizeof(*this);  // OK: in default member initializer
+
+    void f() {
+      int b[sizeof(*this)];           // OK
+
+      struct Inner {
+        int c[sizeof(*this)];         // error: not inside a member function of
+                                      // Inner
+      };
+    }
+  };
+\end{lstlisting}」
+
+\ssect{括号}{expr.prim.paren}
+\paragraph{}
+括号表达式\texttt{(E)}是主表达式，其类型、值和值范畴等价于\texttt{E}。除非另有说
+明，括号表达式可以用于\texttt{E}可以使用的完全相同的上下文中。
+
+\ssect{名字}{expr.prim.id}
+\synsym{id-expression}
+  \synprd{\textit{unqualified-id}}
+  \synprd[]{\textit{qualified-id}}
+
+\paragraph{}
+\textit{id-expression}是一种受限形式的\textit{主表达式}。「注：
+\textit{id-expression}可以出现在\texttt{.}和\texttt{->}运算符之后（8.2.5）。」
+
+\paragraph{}
+指代类的非静态数据成员或非静态成员函数的\textit{id-expression}只能用于：
+\begin{enumerate}
+  \item{类成员访问的一部分，其中对象表达式引用成员的类\footnote{当对象表达式是隐
+    式的\texttt{(*this)}时也适用（12.2.2）。}或派生自该类的类，或}
+  \item{形成成员指针（8.3.1），或}
+  \item{如果\textit{id-expression}指代非静态数据成员且其出现于未求值操作数中。}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  struct S {
+    int m;
+  };
+  int i = sizeof(S::m);       // OK
+  int j = sizeof(S::m + 42);  // OK
+\end{lstlisting}」
+
+\sssect{未限定名}{expr.prim.id.unqual}
+\synsym{unqualified-id}
+  \synprd{\textit{identifier}}
+  \synprd{\textit{operator-function-id}}
+  \synprd{\textit{conversion-function-id}}
+  \synprd{\textit{literal-operator-id}}
+  \synprd{\texttt{\~} \textit{class-name}}
+  \synprd{\texttt{\~} \textit{decltype-specifier}}
+  \synprd[]{\textit{template-id}}
+
+\paragraph{}
+如\textit{identifier}正确声明（第10章）的话则它是一个\textit{id-expression}。
+「注：对\textit{operator-function-ids}，见第16.5节；对
+\textit{conversion-function-ids}，见第15.3.2节；对\textit{literal-operator-ids}
+见第16.5.8节；对\textit{template-ids}见第17.2节。\textit{class-name}或
+\textit{decltype-specifier}前加\texttt{\~}表示析构函数；见第15.4节。在非静态成员
+函数定义中，命名非静态成员名的\textit{标识符}变换成类成员访问表达式（12.2.2）。」
+表达式类型为该\textit{标识符}类型。结果为该标识符所指代实体。如果实体是函数、变
+量或数据成员则表达式为左值，否则为右值；如果标识符指代位域（11.5）则它是位域。
+
+\sssect{限定名}{expr.prim.id.qual}
+\synsym{qualified-id}
+  \synprd{\textit{nested-name-specifier}
+          \texttt{template}\textit{$_{opt}$ unqualified-id}}
+\synsym{nested-name-specifier}
+  \synprd{\texttt{::}}
+  \synprd{\textit{type-name} \texttt{::}}
+  \synprd{\textit{namespace-name} \texttt{::}}
+  \synprd{\textit{decltype-specifier} \texttt{::}}
+  \synprd{\textit{nested-name-specifier identifier} \texttt{::}}
+  \synprd[]{\textit{nested-name-specifier}
+            \texttt{template}\textit{$_{opt}$ simple-template-id} \texttt{::}}
+
+\paragraph{}
+在\textit{nested-name-specifier}中由\textit{decltype-specifier}所代表的类型应该
+是类或枚举类型。
+
+\paragraph{}
+代表类的\textit{nested-name-specifier}后跟可选关键字\texttt{template}（17.2），
+再跟上该类（12.2）或其基类之一（第13章）的成员名，构成\textit{qualified-id}；第
+6.4.3.1节描述出现在\textit{qualified-id}中的名字查询。结果是该成员。结果类型是成
+员类型。如果成员是静态成员函数或数据成员则结果是左值，否则为纯右值。「注：类成员
+可以通过\textit{qualified-id}在其潜在作用域（6.3.7）内任意点访问。」在使用
+\textit{class-name}\texttt{::\~}\textit{class-name}的地方，两个类名应该代表同一
+个类；该记法命名析构函数（15.4）。形式\texttt{\~}\textit{decltype-specifier}也表
+示析构函数，但在\textit{qualified-id}中不应该用作\textit{unqualified-id}。「注：
+命名一个类的\textit{typedef-name}即是一个\textit{class-name}（12.1）。」
+
+\paragraph{}
+\textit{nested-name-specifier} \texttt{::}命名全局命名空间。命名一个命名空间
+（10.3）的\textit{nested-name-specifier}跟上可选的关键字\texttt{template}
+（17.2）再跟上该命名空间的一个成员名（或由\textit{using-directive}使其可见的命名
+空间的成员名），构成\textit{qualified-id}；第6.4.3.2节描述出现在
+\textit{qualified-id}中的命名空间成员名查询。结果为该成员。结果类型为成员类型。
+如果成员是函数或变量则结果为左值，否则为纯右值。
+
+\paragraph{}
+代表枚举（10.2）的\textit{nested-name-specifier}跟上该枚举的枚举子名，构成指代枚
+举子的\textit{qualified-id}。结果为该枚举子。结果类型为枚举类型。结果为纯右值。
+
+\paragraph{}
+在\textit{qualified-id}中，如果\textit{unqualified-id}是一个
+\textit{conversion-function-id}，其\textit{conversion-type-id}在整个
+\textit{qualified-id}所出现的上下文和由\textit{nested-name-specifier}所代表的类
+上下文中应该代表同一类型。
+
+\ssect{Lambda表达式}{expr.prim.lambda}
+\synsym{lambda-expression}
+\synprd{\textit{lambda-introducer lambda-declarator$_{opt}$ compound-statement}}
+\synsym{lambda-introducer}
+\synprd{\texttt{[} \textit{lambda-capture$_{opt}$} \texttt{]}}
+\synsym{lambda-declarator}
+\synprd{\texttt{(} \textit{parameter-declaration-clause} \texttt{)}
+        \textit{decl-specifier-seq$_{opt}$}}
+  \synprd[]{\qquad \textit{noexcept-specifier$_{opt}$
+            attribute-specifier-seq$_{opt}$ trailing-return-type$_{opt}$}}
+
+\paragraph{}
+Lambda表达式提供一种创建简单函数对象的准确方式。「例：
+\begin{lstlisting}
+  #include <algorithm>
+  #include <cmath>
+  void abssort(float* x, unsigned N) {
+    std::sort(x, x + N, [](float a, float b) {
+      return std::abs(a) < std::abs(b);
+    });
+  }
+\end{lstlisting}」
+
+\paragraph{}
+\textit{lambda-expression}为纯左值，其结果对象称为\textit{闭包对象}
+（\textit{closure object}）。\textit{lambda-expression}不应该出现在未求值操作数
+（第8章），\textit{template-argument}，\textit{alias-declaration}，类型定义声明，
+函数体或缺省参数以外的函数或函数模板声明中。「注：其目的是禁止lambda出现在签名
+中。」「注：闭包对象行为与函数对象一样（23.14）。」
+
+\paragraph{}
+在\textit{lambda-declarator}的\textit{decl-specifier-seq}中，每一个
+\textit{decl-specifier}应该是\texttt{mutable}或\texttt{constexpr}。
+
+\paragraph{}
+如果\textit{lambda-expression}不包括\textit{lambda-declarator}，则它如同
+\textit{lambda-declarator}是\texttt{()}。lambda返回类型为\texttt{auto}，如果提供
+\textit{trailing-return-type}则由其替换，或如第10.1.7.4节所述由\texttt{return}语
+句推导类型替换。「例：
+\begin{lstlisting}
+  auto x1 = [](int i) { return i; };    // OK: return type is int
+  auto x2 = [] { return { 1, 2 }; };    // error: deducing return type from
+                                        // braced-init-list
+  int j;
+  auto x3 = []()->auto&& { return j; }  // OK: return type is int&
+\end{lstlisting}」
+
+\sssect{闭包类型}{expr.prim.lambda.closure}
+\paragraph{}
+\textit{lambda-expression}的类型（也是闭包对象的类型）是唯一的，未命名的非联合类
+类型，称为\textit{闭包类型}（\textit{closure type}），其属性如下所述。
+
+\paragraph{}
+闭包类型在包含\textit{lambda-expression}的最小块作用域、类作用域或命名空间作用域
+中声明。「注：这确定了关联于闭包类型（6.4.2）的命名空间和类集合。
+\textit{lambda-declarator}的参数类型不影响关联命名空间和类。」闭包类型不是聚合类
+型（11.6.1）。实现可能定义不同于以下所述的闭包类型，只要不改变程序可观察行为，除
+了：
+\begin{enumerate}
+  \item{闭包类型的大小和/或对齐，}
+  \item{闭包类型是否平凡可拷贝（第12章），}
+  \item{闭包类型是否为标准布局类（第12章），或}
+  \item{闭包类型是否为POD类（第12章）。}
+\end{enumerate}
+实现不应该添加右值引用类型成员到闭包类型。
+
+\paragraph{}
+非泛型\textit{lambda-expression}的闭包类型具有公有内联函数调用运算符（16.5.4），
+其参数和返回类型分别由\textit{lambda-expression}的
+\textit{parameter-declaration-clause}和\textit{trailing-return-type}所描述。对于
+泛型lambda，闭包类型具有公有内联函数调用成员模板（17.5.2），其
+\textit{template-parameter-list}对lambda的\textit{parameter-declaration-clause}
+中的每一个\texttt{auto}按其出现顺序包含一个假想类型\textit{template-parameter}。
+如果对应的\textit{parameter-declaration}声明函数参数包（11.3.5），这个假想的
+\textit{template-parameter}是一个参数包。函数调用运算符模板的返回类型和函数参数
+派生于\textit{lambda-expression}的\textit{trailing-return-type}和
+\textit{parameter-declaration-clause}，通过把
+\textit{parameter-declaration-clause}的\textit{decl-specifier}中的每一个
+\texttt{auto}替换为对应的假想\textit{template-parameter}名。「例：
+\begin{lstlisting}
+  auto glambda = [](auto a, auto&& b) { return a < b; };
+  bool b = glambda(3, 3,14);          // OK
+
+  auto vglambda = [](auto printer) {
+    return [=](auto&& ... ts) {       // OK: ts is a function parameter pack
+      printer(std::forward<decltype(ts)>(ts)...);
+
+      return [=]() {
+        printer(ts ...);
+      };
+    };
+  };
+  auto p = vglambda([](auto v1, auto v2, auto v3)
+                    { std::cout << v1 << v2 << v3; });
+  auto q = p(1, 'a', 3.14);           // OK: outputs 1a3.14
+  q();                                // OK: outputs 1a3.14
+\end{lstlisting}」
+
+\paragraph{}
+函数调用运算符或运算符模板当且仅当\textit{lambda-expression}的
+\textit{parameter-declaration-clause}后面没有跟上\texttt{mutable}时才声明成
+\texttt{const}（12.2.2）。它即不是virtual也不声明成\texttt{volatile}。
+\textit{lambda-expression}中指定的任何\textit{noexcept-specifier}应用于对应的函
+数调用运算符或运算符模板。\textit{lambda-expression}中的
+\textit{attribute-specifier-seq}属于对应函数调用运算符或运算符模板的类型。函数调
+用运算符或任何给定运算符模板特例化是一个constexpr函数，如果对应
+\textit{lambda-expression}的\textit{parameter-declaration-clause}跟上
+\texttt{constexpr}，或它满足constexpr函数的要求（10.1.5）。「注：
+\textit{lambda-declarator}中引用的名字在\textit{lambda-expression}出现的上下文中
+查询。」「例：
+\begin{lstlisting}
+  auto ID = [](auto a) { return a; };
+  static_assert(ID(3) == 3); // OK
+
+  struct NonLiteral {
+    NonLiteral(int n) : n(n) { }
+    int n;
+  };
+  static_assert(ID(NonLiteral{3}).n == 3); // ill-formed
+\end{lstlisting}」
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  auto monoid = [](auto v) { return [=] { return v; }; };
+  auto add = [](auto m1) constexpr {
+    auto ret = m1();
+    return [=](auto m2) mutable {
+      auto m1val = m1();
+      auto plus = [=](auto m2val) mutable constexpr {
+        return m1val += m2val;
+      };
+      ret = plus(m2());
+      return monoid(ret);
+    };
+  };
+  constexpr auto zero = monoid(0);
+  constexpr auto one = monoid(1);
+  static_assert(add(one)(zero)() ==  one()); // OK
+
+  // Since two below is not declared constexpr, an evaluation of its constexpr
+  // member function call operator cannot perform an lvalue-to-rvalue
+  // conversion on one of its subobjects (that represents its capture) in a
+  // constant expression.
+  auto two = monoid(2);
+  assert(two() == 2); // OK, not a constant expression.
+  static_assert(add(one)(one)() == two()); // ill-formed: two() is not a
+                                           // constant expression
+  static_assert(add(one)(one)() == monoid(2)()); // OK
+\end{lstlisting}
+
+\paragraph{}
+不带\textit{lambda-capture}的非泛型\textit{lambda-expression}的闭包类型具有到C++
+语言链接（10.5）的函数指针的转换函数，该函数指针具有与闭包类型的函数调用运算符相
+同的参数和返回类型。如果函数调用运算符具有不抛出异常规范，则转换为``指向
+\texttt{noexcept}函数的指针''。该转换函数的返回值是函数\texttt{F}的地址，当调用
+时具有调用闭包类型函数调用运算符相同的效果。如果函数调用运算符是constexpr函数则
+\texttt{F}是constexpr函数。对于没有\textit{lambda-capture}的泛型lambda，闭包类型
+具有到函数指针的转换函数模板。该转换函数模板具有相同的假想的
+\textit{template-parameter-list}，且函数指针具有与函数调用模板相同的参数类型。函
+数指针的返回类型应该表现的如同它是指代对应函数调用运算符模板特例化的返回类型的
+\textit{decltype-specifier}。
+
+\paragraph{}
+「注：如果泛型lambda没有\textit{trailing-return-type}或
+\textit{trailing-return-type}包含占位类型则必须对对应函数调用运算符模板特例化进
+行返回类型推导。对应特例化指使用与从转换函数模板进行推导的相同模板参数进行函数调
+用运算符模板的实例化。考虑如下：
+\begin{lstlisting}
+  auto glambda = [](auto a) { return a; };
+  int (*fp)(int) = glambda;
+\end{lstlisting}
+以上\texttt{glambda}的转换函数行为和以下转换函数一样：
+\begin{lstlisting}
+  struct Closure {
+    template<class T> auto operator()(T t) const { ... }
+    template<class T> static auto lambda_call_operator_invoker(T a) {
+      // forwards execution to operator()(a) and therefore has
+      // the same return type deduced
+      ...
+    }
+    template<class T> using fptr_t =
+      decltype(lambda_call_operator_invoker(decltype<T>())) (*)(T);
+
+    template<class T> operator fptr_t<T>() const {
+      return &lambda_call_operator_invoker;
+    }
+  };
+\end{lstlisting}」
+「例：
+\begin{lstlisting}
+  void f1(int  (*)(int)) { }
+  void f2(char (*)(int)) { }
+
+  void g(int  (*)(int))  { }  // #1
+  void g(char (*)(char)) { }  // #2
+
+  void h(int  (*)(int))  { }  // #3
+  void h(char (*)(int))  { }  // #4
+
+  auto glambda = [](auto a) { return a; };
+  f1(glambda); // OK
+  f2(glambda); // error: ID is not convertible
+  g(glambda);  // error: ambigous
+  h(glambda);  // OK: calls #3 since it is convertible from ID
+  int& (*fpi)(int *) = [](auto* a) -> auto& { return *a; };   // OK
+\end{lstlisting}
+
+\paragraph{}
+该转换函数模板的任何特例化的返回值为函数\texttt{F}的地址，调用该函数的效果与调用
+泛型lambda对应函数调用运算符模板特例化一样。如果对应特例化是constexpr函数则
+\texttt{F}是一个constexpr函数。「注：这会产生泛型lambda体的隐式实例化。实例化的
+泛型lambda返回类型和参数应该与函数指针的返回类型和参数类型一致。」「例：
+\begin{lstlisting}
+  auto GL = [](auto a) { std::cout << a; return a; };
+  int (*GL_int)(int) = GL;  // OK: through conversion function template
+  GL_int(3);                // OK: same as GL(3);
+\end{lstlisting}」
+
+\paragraph{}
+转换函数或转换函数模板为公有，非虚拟，非显式，const且有不抛异常规范（18.4）。
+「例：
+\begin{lstlisting}
+  auto Fwd = [](int (*fp)(int), auto a) { return fp(a); };
+  auto C = [](auto a) { return a; };
+
+  static_assert(Fwd(C, 3) == 3);   // OK
+
+  // No specialization of the function call operator template can be constexpr
+  // (due to the local static).
+  auto NC = [](auto a) { static int s; return a; };
+  static_assert(Fwd(NC, 3) == 3);  // ill-formed
+\end{lstlisting}
+
+\paragraph{}
+\textit{lambda-expression}的\textit{compound-statement}生成函数调用运算符的
+\textit{function-body}（11.4），但为了名字查询（6.4），确定\texttt{this}
+（12.2.2.1）的类型和值以及为将引用非静态类成员的\textit{id-expression}转换成使用
+\texttt{(*this)}（12.2.2）的类成员访问表达式，该\textit{compound-statement}在
+\textit{lambda-expression}的上下文中考虑。「例：
+\begin{lstlisting}
+  struct S1 {
+    int x, y;
+    int operator()(int);
+    void f() {
+      [=]()->int {
+        return operator()(this->x + y); // equivalent to
+                                        // S1::operator()(this->x + (*this).y)
+                                        // this has type S1*
+      };
+    }
+  };
+\end{lstlisting}」
+进一步，在\textit{lambda-expression}的\textit{compound-statement}开始处定义变量
+\texttt{\_\_func\_\_}，语义如第11.4.1节所述。
+
+\paragraph{}
+关联于\textit{lambda-expression}的闭包类型无缺省构造函数和删除的拷贝赋值运算符。
+它具有缺少拷贝构造函数和缺省移动构造函数（15.8）。「注：这些特殊成员函数正常隐式
+定义，因此可以被定义为删除。」
+
+\paragraph{}
+关联于\textit{lambda-expression}的闭包类型具有隐式声明析构函数（15.4）。
+
+\paragraph{}
+闭包类型成员不应该显式实例化（17.7.2），显式特例化（17.7.3）或在\texttt{friend}
+声明中使用（14.3）。
+
+\sssect{抓取}{expr.prim.lambda.capture}
+\synsym{lambda-capture}
+  \synprd{\textit{capture-default}}
+  \synprd{\textit{capture-list}}
+  \synprd{\textit{capture-default} \texttt{,} \textit{capture-list}}
+\synsym{capture-default}
+  \synprd{\texttt{\&}}
+  \synprd{\texttt{=}}
+\synsym{capture-list}
+  \synprd{\textit{capture} \texttt{...}\textit{$_{opt}$}}
+  \synprd{\textit{capture-list} \texttt{,} \textit{capture}
+          \texttt{...}\textit{$_{opt}$}}
+\synsym{capture}
+  \synprd{\textit{simple-capture}}
+  \synprd{init-clause}
+\synsym{simple-capture}
+  \synprd{\textit{identifier}}
+  \synprd{\texttt{\&} \textit{identifier}}
+  \synprd{\texttt{this}}
+  \synprd{\texttt{* this}}
+\synsym{init-clause}
+  \synprd{\textit{identifier initializer}}
+  \synprd[]{\texttt{\&} \textit{identifier initializer}}
+
+\paragraph{}
+如下所述，\textit{lambda-expression}体通过抓取可以引用包含块作用域中的自动存储期
+变量和\texttt{*this}对象（如有）。
+
+\paragraph{}
+如果\textit{lambda-capture}包含一个为\texttt{\&}的\textit{capture-default}，该
+\textit{lambda-capture}的\textit{simple-capture}中不应该有标识符前加\texttt{\&}。
+如果\textit{lambda-capture}包含一个为\texttt{\&}的\textit{capture-default}，该
+\textit{lambda-capture}的每一个\textit{simple-capture}应该形如``\texttt{\&}
+\textit{identifier}''或``\texttt{* this}''。「注：形式\texttt{[\&, this]}是冗余
+的，但为与ISO C++ 2014兼容是可接受的。」忽略\textit{initializer}中出现的
+\textit{init-capture}，标识符或\texttt{this}不应该在\textit{lambda-capture}中出
+现超过一次。「例：
+\begin{lstlisting}
+  struct S2 { void f(int i); };
+  void S2::f(int i) {
+    [&, i]{ };        // OK
+    [&, &i]{ };       // error: i preceded by & when & is the default
+    [=, *this]{ };    // OK
+    [=, this]{ };     // error: this when = is the default
+    [i, i]{ };        // error: i repeated
+    [this, *this]{ }; // error: this appears twice
+  }
+\end{lstlisting}」
+
+\paragraph{}
+其最小包含作用域为块作用域（6.3.3）的\textit{lambda-expression}是一个
+\textit{局部lambda表达式}；任何其他\textit{lambda-expression}在其
+\textit{lambda-introducer}中不应该有\textit{capture-default}或
+\textit{simple-capture}。局部lambda表达式的\textit{到达作用域}
+（\textit{reaching scope}）为一组包括最内层包含函数及其参数的包含作用域的集合。
+「注：该到达作用域包含任何中间\textit{lambda-expression}。」
+
+\paragraph{}
+\textit{simple-capture}中的\textit{identifier}使用未限定名查询（6.4.1）的常规规
+则进行查询；每一个这样的查询应该找到一个实体。由\textit{simple-capture}所指代的
+实例被说成是\textit{显式抓取}的，且应该是\texttt{*this}
+（当\textit{simple-capture}是``\texttt{this}''或``\texttt{* this}''时）或该局部
+lambda表达式的到达作用域中声明的自动存储期变量。
+
+\paragraph{}
+如果\textit{simple-capture}中的\textit{标识符}作为\textit{lambda-declarator}的
+\textit{parameter-declaration-clause}的参数的\textit{declarator-id}出现，则程序
+是病态的。「例：
+\begin{lstlisting}
+  void f() {
+    int x = 0;
+    auto g = [x](int x) { return 0; } // error: parameter and simple-capture
+                                      // have the same name
+  }
+\end{lstlisting}
+
+\paragraph{}
+\textit{init-capture}的行为如同其声明并显式抓取形如``\texttt{auto}
+\textit{init-capture}''的变量，该变量声明区域为\textit{lambda-expression}的
+\textit{compound-statement}，除了：
+\begin{enumerate}
+  \item{如果是拷贝抓取（见下文），为抓取而声明的非静态数据成员和变量被当成引用同
+    一对象的两种不同方式，该对象具有非静态数据成员生命期，且不进行额外的拷贝和析
+    构，且}
+  \item{如果是引用抓取，当闭包对象生命期结束时该变量生命期也结束。}
+\end{enumerate}
+「注：这使得形如``\texttt{x = std::move(x)}''的\textit{init-capture}成为可能；
+第二个``\texttt{x}''必须绑定到包含上下文中的声明。」「例：
+\begin{lstlisting}
+  int x = 4;
+  auto y = [&r = x, x = x + 1]()->int {
+    r += 2;
+    return x + 2;
+  }();  // Updates ::x to 6, and initializes y to 7.
+
+  auto z = [a = 42](int a) { return 1; } // error: parameter and local variable
+                                         // have the same name
+\end{lstlisting}」
+
+\paragraph{}
+未显式抓取\texttt{*this}或自动存储期变量（不包括已引用\textit{init-capture}的关
+联非静态数据成员任何\textit{id-expression}）的带有关联\textit{capture-default}的
+\textit{lambda-expression}，被说成是\textit{隐式抓取}该实体（即\texttt{*this}或
+变量），如果\textit{compound-statement}：
+\begin{enumerate}
+  \item{odr-使用（\ref{basic.def.odr}）该实体（变量的情况下），}
+  \item{odr-使用（\ref{basic.def.odr}）\texttt{this}（\texttt{*this}指代对象的情
+    况下），或}
+  \item{潜在求值表达式中使用该实体，其中包含的全表达式依赖于
+    \textit{lambda-expression}可达作用域中定义的泛型lambda参数。}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  void f(int, const int (&) [2] = {}) { }    // #1
+  void f(const int&, const int (&) [1] ) { } // #2
+  void test() {
+    const int x = 17;
+    auto g = [] (auto a) {
+      f(x) ;            // OK: calls #1, does not capture x
+    };
+    auto g2 = [=] (auto a) {
+      int selector[sizeof(a) == 1 ? 1 : 2] {};
+      f(x, selector);   // OK: is a dependent expression, so captures x
+    };
+  }
+\end{lstlisting}
+」所有这样的隐式抓取实体应该在lambda表达式可达作用域内声明。「注：由嵌套的
+\textit{lambda-expression}对实体的隐式抓取可导致其被包含它的
+\textit{lambda-expression}隐式抓取。\texttt{this}的隐式odr-使用可导致隐式抓取。」
+
+\paragraph{}
+如果实体被显式或隐式抓取，则它是被\textit{抓取}的。被\textit{lambda-expression}
+抓取的实体在包含\textit{lambda-expression}的作用域内是odr-used
+（\ref{basic.def.odr}）。如果\texttt{*this}由局部lambda表达式抓取，其最近包含函
+数应该是非静态成员函数。如果一个\textit{lambda-expression}或一个泛型lambda的函数
+调用运算符模板实例化odr-use（\ref{basic.def.odr}）\texttt{this}或其可达作用域内
+的自动存储期变量，该实体应该由\textit{lambda-expression}抓取。如果一个
+\textit{lambda-expression}抓取一个实体，而该实体未定义或由直接包含的lambda表达式
+或函数抓取，则程序为病态。「例：
+\begin{lstlisting}
+  void f1(int i) {
+    int const N = 20;
+    auto m1 = [=] {
+      int const M = 30;
+      auto m2 = [i] {
+        int x[N][M];  // OK: N and M are not odr-used
+        x[0][0] = i;  // OK: i is explicitly captured by m2 and implicitly captured by m1
+      };
+    };
+    struct s1 {
+      int f;
+      void work(int n) {
+        int m = n*n;
+        int j = 40;
+        auto m3 = [this, m] {
+          auto m4 = [&, j ] { // error: j not captured by m3
+            int x = n; // error: n implicitly captured by m4 but not captured by m3
+            x += m;    // OK: m implicitly captured by m4 and explicitly captured by m3
+            x += i;    // error: i is outside of the reaching scope
+            x += f;    // OK: this captured implicitly by m4 and explicitly by m3
+          };
+        };
+      }
+    };
+  }
+
+  struct s2 {
+    double ohseven = . 007;
+    auto f() {
+      return [this] {
+        return [*this] {
+          return ohseven;  // OK
+        }
+      }() ;
+    }
+    auto g() {
+      return [] {
+        return [*this] { }; // error: *this not captured by outer lambda-expression
+      }() ;
+    }
+  };
+\end{lstlisting}」
+
+\paragraph{}
+出现在缺少参数中的\textit{lambda-expression}不应该隐式或显式抓取任何实体。「例：
+\begin{lstlisting}
+  void f2() {
+    int i = 1;
+    void g1(int = ([i]{ return i; })());       // ill-formed
+    void g2(int = ([i]{ return 0; })());       // ill-formed
+    void g3(int = ([=]{ return i; })());       // ill-formed
+    void g4(int = ([=]{ return 0; })());       // OK
+    void g5(int = ([]{ return sizeof i; })()); // OK
+  }
+\end{lstlisting}」
+
+\paragraph{}
+一个实体由\textit{拷贝抓取}，如果
+\begin{enumerate}
+  \item{其由隐式抓取，\textit{capture-default}为\texttt{=}，且所抓取实体不是
+    \texttt{*this}，或}
+  \item{其由不是\texttt{this}，\texttt{\&}\textit{identifier}或
+    \texttt{\&}\textit{identifier initializer}形式的抓取所抓取。}
+\end{enumerate}
+对每一个拷贝抓取的实体，在该闭包类型内声明一个无名非静态数据成员。这些成员的声明
+顺序未指明。如果实体是对象的引用，这样的数据成员的类型为所引用类型，如果实体是函
+数的引用，则为所引用函数类型的左值引用，否则为对应抓取实体的类型。匿名联合的成员
+不应拷贝抓取。
+
+\paragraph{}
+\textit{lambda-expression}的\textit{compound-statement}复合语句中的每一个
+\textit{id-expression}，如果是odr-use（\ref{basic.def.odr}）的拷贝抓取实体，被转
+换成闭包类型的对应无名数据成员的访问。「注：非odr-use的\textit{id-expression}引
+用原实体，而不是闭包类型成员。进一步，这样的\textit{id-expression}不会引起实体的
+隐式抓取。」如果\texttt{*this}由拷贝抓取，每一个\texttt{this}的odr-use被转换成指
+向对应闭包类型无名数据成员的指针，强制转换（\ref{expr.cast}）成\texttt{this}的类
+型。「注：该强制转换确保被转换表达式为纯右值。」\textit{lambda-expression}的
+\textit{compound-statement}中的一个\textit{id-expression}（通过引用抓取的引用
+odr-use）引用了被抓取引用绑定到的实体，而不是被抓取引用。「注：这种抓取的有效性
+由引用所引对象的生命期决定，而不是由引用本身决定。」「例：
+\begin{lstlisting}
+  void f(const int*);
+  void g() {
+    const int N = 10;
+    [=] {
+      int arr[N]; // OK: not an odr-use, refers to automatic variable
+      f(&N);      // OK: causes N to be captured; &N points to
+                  // the corresponding member of the closure type
+    };
+  }
+  auto h(int &r) {
+    return [&] {
+      ++r; // Valid after h returns if the lifetime of the
+           // object to which r is bound has not ended
+    };
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果一个实体隐式或显式抓取但不是拷贝抓取，则该实体由引用抓取。未指定引用抓取的闭
+包类型中是否声明额外的无名非静态数据成员。如果声明，这些非静态数据成员应该是字面
+类型。「例：
+\begin{lstlisting}
+  // The inner closure type must be a literal type regardless of how reference captures are represented.
+  static_assert([](int n) { return [&n] { return ++n; }(); }(3) == 4);
+\end{lstlisting}」位字段或联合成员不应该由引用抓取。
+
+\paragraph{}
+如果一个\textit{lambda-expression}\texttt{m2}抓取一个实体，而该实体被直接包含的
+\textit{lambda-expression}\texttt{m1}抓取，则\texttt{m2}的抓取按如下转换：
+\begin{enumerate}
+  \item{如果\texttt{m1}由拷贝抓取实体，则\texttt{m2}抓取\texttt{m1}闭包类型的对
+    应非静态数据成员；}
+  \item{如果\texttt{m1}由引用抓取实体，\texttt{m2}抓取\texttt{m1}所抓取的同一实
+    体。}
+\end{enumerate}
+「例：嵌套的lambda表达式及其调用将输出\texttt{123234}。
+\begin{lstlisting}
+  int a = 1, b = 1, c = 1;
+  auto m1 = [a, &b, &c]() mutable {
+    auto m2 = [a, b, &c]() mutable {
+      std: : cout << a << b << c;
+      a = 4; b = 4; c = 4;
+    };
+    a = 3; b = 3; c = 3;
+    m2();
+  };
+  a = 2; b = 2; c = 2;
+  m1();
+  std::cout << a << b << c;
+\end{lstlisting}」
+
+\paragraph{}
+对每一个\texttt{decltype((x))}，这里\texttt{x}为可能括号包含的命名自动存储期实体
+的\textit{id-expression}，将被视为\texttt{x}被转换成对闭包类型的如果\texttt{x}是
+所表示实体的odr-use则声明的相应数据成员的访问。「例：
+\begin{lstlisting}
+  void f3() {
+    float x, &r = x;
+    [=] {                     // x and r are not captured (appearance in a
+                              //  decltype operand is not an odr-use)
+      decltype(x) y1;         // y1 has type float
+      decltype((x) ) y2 = y1; // y2 has type float const& because this lambda is
+                              //  not mutable and x is an lvalue
+      decltype(r) r1 = y1;    // r1 has type float& (transformation not
+                              //  considered)
+      decltype((r) ) r2 = y2; // r2 has type float const&
+    };
+  }
+\end{lstlisting}」
+
+\paragraph{}
+计算lambda时，由拷贝抓取的实体用于产生的闭包对象的每一个对应非静态数据成员的直接
+初始化，而对应于\textit{init-captures}的非静态数据成员按对应\textit{initializer}
+进行初始化（可能是拷贝或直接初始化）。（对于数组成员，数组元素按下标顺序直接初始
+化）。这些初始化按非静态数据成员声明（未指明）顺序进行。「注：确保析构按构造顺序
+相反的顺序进行。」
+
+\paragraph{}
+「注：如果非引用实体按引用隐式或显式抓取，在实体生命期结束后调用
+\textit{lambda-expression}对应的函数调用运算符很可能会产生未定义行为。」
+
+\paragraph{}
+\textit{simple-capture}后跟上省略号是一个包展开（\ref{temp.variadic}）。一个
+\textit{init-capture}跟上省略号为病态程序。「例：
+\begin{lstlisting}
+  template<class... Args>
+  void f(Args... args) {
+    auto lm = [&, args... ] { return g(args... ); };
+    lm();
+  }
+\end{lstlisting}」
+
+\ssect{折叠表达式}{expr.prim.fold}
+
+\paragraph{}
+折叠表达式在二元运算符上对模板参数包（\ref{temp.variadic}）进行折叠。
+
+\synsym{fold-expression}
+  \synprd{\tm{(} \nt{cast-expression fold-operator} \tm{... )}}
+  \synprd{\tm{( ...} \nt{fold-operator cast-expression} \tm{)}}
+  \synprd{\tm{(} \nt{cast-expression fold-operator} \tm{...}
+    \nt{fold-operator cast-expression} \tm{)}}
+\synsym[one of]{fold-operator}
+  \synprd{\tm{+\ \ -\ \ *\ \ /\ \ \%\ \ \^\ \ \&\ \ |\ \ \tl{}\tl\ \ \tg{}\tg}}
+  \synprd{\tm{+= -= *= /= \%= \^{}= \&= |= \tl{}\tl= \tg{}\tg= =}}
+  \synprd[]{\tm{== != \tl\ \ \tg\ \ \tl= \tg= \&\& || ,\ \ \ .*\ \ -\tg*}}
+
+\paragraph{}
+形如\tm{(...}\nt{op} \tm{e)}的表达式，其中\nt{op}为\nt{fold-operator}，称为
+\nt{一元左折叠}。形如\tm{(e} \nt{op}\tm{...)}的表达式，\nt{op}为
+\nt{fold-operator}，称为\nt{一元右折叠}。一元左折叠和一元右折叠统称
+\nt{一元折叠}。在一元折叠中，\nt{cast-expression}应该包含未展开的参数包
+（\ref{temp.variadic}）。
+
+\paragraph{}
+形如\tm{(e1} \nt{op1} \tm{...} \nt{op2} \tm{e2)}的表达式，其中\nt{op1}和\nt{op2}
+为\nt{fold-operator}，称为\nt{binary fold}。在二元折叠中，\nt{op1}和\nt{op2}应该
+为同一\nt{fold-operator}，且要么\tm{e1}包含未展开参数包，要么\tm{e2}包含未展开参
+数包，但不是同时包含。如果\tm{e2}包含未展开参数包，则表达式称为\nt{二元左折叠}。
+如果\tm{e1}包含未展开参数包，则表达式称为\nt{二元右折叠}。「例：
+\begin{lstlisting}
+  template<typename ...Args>
+  bool f(Args ...args) {
+    return (true && ... && args) ; // OK
+  }
+  template<typename ...Args>
+  bool f(Args ...args) {
+    return (args + ... + args); // error: both operands contain unexpanded
+                                   // parameter packs
+  }
+\end{lstlisting}」
+
+\sect{后缀表达式}{expr.post}
+
+\paragraph{}
+后缀表达式自左向右分组。
+
+\synsym{postfix-expression}
+  \synprd{\nt{primary-expression}}
+  \synprd{\nt{postfix-expression} \tm{[} \nt{expr-or-braced-init-list} \tm{]}}
+  \synprd{\nt{postfix-expression} \tm{(} \nt{expression-list\tsub{opt}} \tm{)}}
+  \synprd{\nt{simple-type-specifier} \tm{(} \nt{expression-list\tsub{opt}}
+    \tm{)}}
+  \synprd{\nt{typename-specifier} \tm{(} \nt{expression-list\tsub{opt}} \tm{)}}
+  \synprd{\nt{simple-type-specifier braced-init-list}}
+  \synprd{\nt{typename-specifier braced-init-list}}
+  \synprd{\nt{postfix-expression} \tm{. template}\nt{\tsub{opt}}
+    \nt{id-expression}}
+  \synprd{\nt{postfix-expression} \tm{-\tg template}\nt{\tsub{opt}}
+    \nt{id-expression}}
+  \synprd{\nt{postfix-expression} \tm{.} \nt{pseudo-destructor-name}}
+  \synprd{\nt{postfix-expression} \tm{-\tg} \nt{pseudo-destructor-name}}
+  \synprd{\nt{postfix-expression} \tm{++}}
+  \synprd{\nt{postfix-expression} \tm{-{}-}}
+  \synprd{\tm{dynamic\_cast \tl} \nt{type-id} \tm{\tg (} \nt{expression} \tm{)}}
+  \synprd{\tm{static\_cast \tl} \nt{type-id} \tm{\tg (} \nt{expression} \tm{)}}
+  \synprd{\tm{reinterpret\_cast \tl} \nt{type-id} \tm{\tg (} \nt{expression}
+    \tm{)}}
+  \synprd{\tm{const\_cast \tl} \nt{type-id} \tm{\tg (} \nt{expression} \tm{)}}
+  \synprd{\tm{typeid (} \nt{expression} \tm{)}}
+  \synprd{\tm{typeid (} \nt{type-id} \tm{)}}
+\synsym{expression-list}
+  \synprd{\nt{initializer-list}}
+\synsym{pseudo-destructor-name}
+  \synprd{\nt{nested-name-specifier\tsub{opt} type-name} \tm{::\~{}}
+    \nt{type-name}}
+  \synprd{\nt{nested-name-specifier} \tm{template} \nt{simple-template-id}
+    \tm{::\~} \nt{type-name}}
+  \synprd{\tm{\~} \nt{type-name}}
+  \synprd[]{\tm{\~} \nt{decltype-specifier}}
+
+\paragraph{}
+「注：在\tm{dynamic\_cast}，\tm{static\_cast}，\tm{reinterpret\_cast}或
+\tm{const\_cast}中，跟在\nt{type-id}之后的\tm{\tg}标记可能由将一个\tm{\tg{}\tg}
+标记替换成两个连续\tm{\tg}标记而产生（\ref{temp.names}）。」
+
+\ssect{下标}{expr.sub}
+\paragraph{}
+后缀表达式后跟表达式于其方括号中，是一个后缀表达式。其中一个表达式应该是类型为
+``\tm{T}的数组''的泛左值或类型为``指向\tm{T}的指针''的纯右值，且另一个应该是无作
+用域枚举或整型的纯右值。结果类型为``\tm{T}''。类型``\tm{T}''应该是完整定义的对象
+类型。\footnote{即使下标运算符用于以下常用语句中也成立：\tm{\&x[0]}。} 表达式
+\tm{E1[E2]}（定义上）等价于\tm{*((E1)+(E2))}「注：见\ref{expr.unary}节和
+\ref{expr.add}节关于\tm{*}和\tm{+}的细节，以及\ref{dcl.array}节关于数组的细
+节。」，除数组操作数的情况下，如果操作数是左值，则结果为左传，否则为失效值。表达
+式\tm{E1}前序于表达式\tm{E2}。
+
+\paragraph{}
+\tm{braced-init-list}不应用于内置下标运算符。
+
+\ssect{函数调用}{expr.call}
+
+\paragraph{}
+函数调用是一个后缀表达式后跟括号，包含（可能为空的）逗号分隔的
+\tm{initializer-clause}列表，构成函数的实参。后缀表达式应具有函数类型或函数指针
+类型。对于非成员函数或静态成员函数调用，后缀表达式应该要么是引用一个函数的左值
+（这种情况下函数到指针标准转换（\ref{conv.func}）不用于该后缀表达式），要么具有
+函数指针类型。通过函数类型与被调用函数定义的函数类型不同的表达式调用一个函数产生
+未定义行为（\ref{dcl.link}）。对于非静态成员函数调用，后缀表达式应该是一个隐式
+（\ref{class.mfct.non-static}，\ref{class.static}）或显式类成员访问，其
+\nt{id-expression}是函数成员名，或是选择函数成员的成员指针表达式
+（\ref{expr.mptr.oper}）；该调用作为对象表达式所引用的类对象的成员。在隐式类成员
+访问的情况下，隐含对象即\tm{this}所指向的对象。「注：一个形如\tm{f()}的成员函数
+访问被理解为\tm{(*this).f()}（见\ref{class.mfct.non-static}）。」如果一个函数或
+成员函数名被使用，其名字可被重载（第\ref{over}章），这种情况下应通过
+\ref{over.match}中的规则合适的函数。如果所选函数为非虚函数，或如果类成员访问表达
+式中的\nt{id-expression}是一个\nt{qualified-id}，则调用该函数。否则调用其对象表
+达式动态类型的最终重写函数（final overrider）（\ref{class.virtual}）；这种调用称
+为\nt{虚函数调用}。「注：动态类型指对象表达式当前值所引用对象的类型。
+\ref{class.cdtor}描述了当对象表达式引用正在构造或析构的对象时的虚函数调用行为。」
+
+\paragraph{}
+「注：如果使用了一个函数或成员函数名，且名字查询未找到该名字的声明，则程序为病态
+。这种调用不会隐式声明函数。」
+
+\paragraph{}
+如果\nt{postfix-expression}指代一个析构函数（\ref{class.dtor}），函数调用表达式
+的类型为\tm{void}；否则，函数调用的类型为静态所选择的函数的返回类型（即忽略
+\tm{virtual}关键字），即使实际调用的函数类型不同。该返回类型应该是对象类型，引用
+类型或\nt{cv} \tm{void}。
+
+\paragraph{}
+当调用函数时，每一个形参（\ref{dcl.fct}）应该由其对应的实参（\ref{dcl.init}，
+\ref{class.copy}，\ref{class.ctro}）初始化。如果函数是一个非静态成员函数，函数的
+\tm{this}参数（\ref{class.this}）应使用指向如同显式类型转换（\ref{expr.cast}）后
+的调用对象的指针初始化。「注：该转换无访问或歧义检查；访问检查和去歧义是类成员访
+问运算符的一部分（可能隐式）。见\ref{class.member.lookup}，
+\ref{class.access.base}和\ref{expr.ref}。」当调用一个函数时，具有对象类型的参数
+应具有完整对象类型。「注：这仍然允许参数为指向或引用不完整类类型的指针或引用。」
+当定义函数返回或在包含全表达式结束时形参生命期是否结束由实现定义。每个形参的初始
+化和析构在调用函数的上下文中进行。「例：构造函数，转换函数或析构函数的检查在调用
+函数的调用点进行检查。如果函数参数的构造函数和析构函数抛出异常，则异常处理从调用
+函数作用域中开始；特别地，如果被调用函数具有一个带有该异常处理的
+\nt{function-try-block}（第\ref{except}章），则不再考虑这个异常处理。」
+
+\paragraph{}
+\nt{postfix-expression}前序于\nt{expression-list}和任何缺省参数中的表达式。参数
+初始化，包括每一个关联的值计算和副作用，相对于彼此是不确定性有序的。「注：所有参
+数计算的副作用前序于进入函数之前（见\ref{intro.execution}）。」「例：
+\begin{lstlisting}
+  void f() {
+    std::string s = "but I have heard it works even if you don’t believe in it";
+    s.replace(0, 4, "").replace(s.find("even"), 4, "only")
+     .replace(s.find("don’t"), 6, "");
+    assert(s == "I have heard it works only if you believe in it"); // OK
+  }
+\end{lstlisting}」「注：如果运算符函数使用运算符记号调用，参数计算与内置运算符有
+序性一致；见\ref{over.match.oper}。」「例：
+\begin{lstlisting}
+  struct S {
+    S(int);
+  };
+  int operator<<(S, int);
+  int i, j;
+  int x = S(i=1) << (i=2);
+  int y = operator<<(S(j=1), j=2);
+\end{lstlisting}
+在初始化之后，\tm{i}的值为2（见\ref{expr.shift}），但未指明\tm{j}的值为1还是2。」
+
+\paragraph{}
+函数调用的结果为被调用函数内的\tm{return}语句（\ref{stmt.return}）（如果有）计算
+后的操作数的结果，除非在虚函数调用中如果最终重写函数的返回类型与静态所选函数的返
+回类型不一致时，最终重写函数的返回值被转换成静态所选函数的类型。
+
+\paragraph{}
+「注：函数可以改变其非const形参的值，但这些变更不会影响实参的值，除非形参为引用
+类型（\ref{dcl.ref}）；如果引用的是const限定的类型，为修改实参的值，需要使用
+\tm{const\_cast}移除常量属性（constness）。当形参具有\tm{const}引用类型时则会根
+据需要引入临时对象（\ref{dcl.type}，\ref{lex.literal}，\ref{lex.string}，
+\ref{dcl.array}，\ref{class.temporary}）。此外，可以通过指针参数修改非常量对象的
+值。」
+
+\paragraph{}
+函数可以接受比函数定义（\ref{dcl.fct.def}）中的形参数量少的实参个数（通过声明缺
+省参数（\ref{dcl.fct.default}））或更多的参数（通过使用省略号，\tm{...}，或函数
+参数包（\ref{dcl.fct}））。「注：这意味着除了在使用省略号（\tm{...}）或函数参数
+包的情况下，每一个实参都有对应的形参。」
+
+\paragraph{}
+在给定实参没有形参对应的情况下，实参以使接受函数可以通过调用\tm{va\_arg}（21.10）
+来获取实参的值的方式进行传递。「注：本段不适用传递给函数参数包的参数。函数参数包
+在模板实例化过程中展开（\ref{temp.variadic}），因此当函数模板特例化实际调用时，
+每一个这样的实参有一个对应形参。」左值到右值（\ref{conv.lval}），数组到指针
+（\ref{conv.array}），以及函数到指针（\ref{conv.func}）这些标准转换应用于实参表
+达式。具有\nt{cv} \tm{std::nullptr\_t}类型的实参被转换成\tm{void*}类型
+（\ref{conv.ptr}）。在这些转换之后，如果实参不具有算术类型，枚举类型，指针，指针
+到成员或类类型，则程序为病态。无对应形参的情况下传递一个类类型的潜在求值实参
+（第\ref{class}章），该类型具有非平凡拷贝构造函数，非平凡移动构造函数或非平凡析
+构函数，为条件支持，具有实现定义语义。如果实参具有受限于整型提升
+（\ref{conv.prom}）的整型或枚举类型，或受限于浮点提升（\ref{conv.fpprom}）的浮点
+类型，则在调用前实参的值被转换成提升后的类型。这些提升称为\textit{缺省参数提升}。
+
+\paragraph{}
+除\texttt{main}函数（\ref{basic.start.main}）外允许递归调用。
+
+\ssect{显式类型转换（函数式）}{expr.type.conv}
+\paragraph{}
+一个\nt{simple-type-specifier}（\ref{dcl.type.simple}）或\nt{typename-specifier}
+（\ref{temp.res}）跟上括号包含的可选\nt{expression-list}或跟上一个
+\nt{braced-init-list}（初始化）构造一个由给定初始化所指定类型的值。如果类型是一
+个推导类类型的占位符，则在本节剩余部分中，将其替换成由类模板推导
+（\ref{over.match.class.deduct}）的重载解析所选择的函数的返回类型。
+
+\paragraph{}
+如果初始化是括号括起来的单个表达式，该类型转换表达式等价于（在定义性上，如果有定
+义在语义上）对应的转换表达式（\ref{expr.cast}）。如果类型为\nt{cv} \tm{void} 且
+初始化为\tm{()}，则表达式为不进行初始化的指定类型的纯右值。否则，表达式为结果对
+象由初始化直接初始化的指定类型的纯右值。对于形如\tm{T()}的表达式，\tm{T}不应该为
+数组类型。
+
+\ssect{伪析构调用}{expr.pseudo}
+\paragraph{}
+在点\tm{.}或箭头\tm{-\tg}运算符之后的\nt{pseudo-destructor-names}的使用表示由
+\nt{type-name}或\nt{decltype-specifier}所指代的非类类型的析构函数。其结果应该只
+用于函数调用运算符\tm{()}的操作数，而这种调用的结果应该具有\tm{void}类型。其唯一
+的效果是点或箭头前的\nt{postfix-expression}的计算。
+
+\paragraph{}
+点运算符的左端应为标量类型。箭头运算符的左端应该为指向标量的指针。该标量类型即对
+象的类型。该对象类型和\nt{pseudo-destructor-name}所指代的类型的\nt{cv}未限定版本
+应该是相同类型。更进一步，一个\nt{pseudo-destructor-name}中形如               \\
+\mbox{\qquad \nt{nested-name-specifier\tsub{opt} type-name} \tm{::\~}
+  \nt{type-name}}                                                             \\
+的这两个\nt{type-name}应该指代相同的标量类型（忽略cv限定）。
+
+\ssect{类成员访问}{expr.ref}
+\paragraph{}
+后缀表达式后跟点\tm{.}或箭头\tm{-\tg}，可选的跟上关键字\tm{template}
+（\ref{temp.names}），再跟上一个\nt{id-expression}，是一个后缀表达式。计算点或箭
+头之前的后缀表达式；\footnote{如果计算类成员访问表达式，即使其结果对确定整个后缀
+表达式的值是不必要的，子表达式的计算也会发生，比如\nt{id-expression}代表静态成员
+的时候。} 计算的结果，连同\nt{id-expression}，确定了整个后缀表达式的结果。
+
+\paragraph{}
+对于第一个选项（点），第一个表达式应该是一个泛左值，具有完整类型。对于第二个选项
+（箭头），第一个表达式应该是具有指向完整类类型的指针的纯右值。表达式\tm{E1->E2}
+被转换成等价形式\tm{(*(E1)).E1}；\ref{expr.ref}剩余部分将只处理第一个选项（点）。
+\footnote{注意\tm{(*(E1))}是一个左值。} 在任一种情况下，\nt{id-expression}应该命
+名一个类或其基类的成员。「注：因为类的名字被插入到其类作用域（第\ref{class}章）
+中，类的名字也被认为是该类的一个嵌套成员。」「注：\ref{basic.lookup.classref}描
+述\tm{.}或\tm{->}运算符之后的名字如何查询。」
+
+\paragraph{}
+将\nt{postfix-expression.id-expression}简写为\tm{E1.E2}，\tm{E1}称为\textit{对象
+表达式}。如果\tm{E2}为位域，则\tm{E1.E2}为位域。\tm{E1.E2}的类型和值范畴按如下确
+定。在\ref{expr.ref}节的剩余部分中，\nt{cq}表示\tm{const}或不存在\tm{const}，
+\nt{vq}表示\tm{volatile}或不存在\tm{volatile}。\nt{cv}表示
+\ref{basic.type.qualifier}节中定义的cv限定符的任何集合。
+
+\paragraph{}
+如果\tm{E2}声明为具有类型为``\tm{T}的引用''，则\tm{E1.E2}是一个左值；\tm{E1.E2}
+的类型为\tm{T}。否则，以下规则之一成立。
+\begin{enumerate}
+  \item{如果\tm{E2}是一个静态成员且\tm{E2}的类型为\tm{T}则\tm{E1.E2}是一个左值；
+    表达式指代类的命名成员。\tm{E1.E2}的类型的\tm{T}。}
+  \item{如果\tm{E2}是一个非静态成员且\tm{E1}的类型为``\nt{cq1 vq1} \tm{X}''，
+    \tm{E2}的类型为``\nt{cq2 vq2} \tm{T}''，则表达式指代第一个表达式所指代对象的
+    命名成员。如果\tm{E1}是一个左值，则\tm{E1.E2}是一个左值；否则\tm{E1.E2}是一
+    个失效值。设记号\nt{vq12}代表\nt{vq1}和\nt{vq2}的``并集''；即如果\nt{vq1}或
+    \nt{vq2}任一个是\tm{volatile}，则\nt{vq12}是\tm{volatile}。类似的，设记号
+    \nt{cq12}代表\nt{cq1}和\nt{cq2}的``并集''；即，如果\nt{cq1}或\nt{cq2}任一个
+    是\tm{const}，则\nt{cq12}是\tm{const}。如果\tm{E2}声明为\tm{mutable}成员，则
+    \tm{E1.E2}的类型为``\nt{vq12} \tm{T}''。如果\tm{E2}未被声明为\tm{mutable}成
+    员，则\tm{E1.E2}的类型为``\nt{cq12 vq12} \tm{T}''。}
+  \item{如果\tm{E2}是一个（可能被重载的）成员函数，则使用函数重载解析
+    （\ref{over.match}）确定\tm{E1.E2}引用静态还是非静态成员函数。
+    \begin{enumerate}
+      \item{如果它引用静态成员函数且\tm{E2}的类型为``返回\tm{T}的参数类型列表函
+        数''，则\tm{E1.E2}是一个左值；表达式指代静态成员函数。\tm{E1.E2}的类型与
+        \tm{E2}相同，即``返回\tm{T}的参数类型列表函数''。}
+      \item{否则，如果\tm{E1.E2}引用一个非静态成员函数且\tm{E2}的类型为``返回
+        \tm{T}的参数类型列表\nt{cv ref-qualifier\tsub{opt}}函数''，则\tm{E1.E2}
+        是一个左值。表达式指代一个非静态成员函数。表达式仅能用作成员函数调用
+        （\ref{class.mfct}）的左操作数。「注：忽略包含表达式的任何冗余括号集合
+        （\ref{expr.prim}）。」\tm{E1.E2}的类型为``返回\tm{T}的参数类型列表
+        \nt{cv}函数''。}
+    \end{enumerate}
+  }
+  \item{如果\tm{E2}是一个嵌套类型，则表达式\tm{E1.E2}为病态。}
+  \item{如果\tm{E2}是一个枚举成员且\tm{E2}的类型为\tm{T}，则表达式\tm{E1.E2}是一
+    个左值。\tm{E1.E2}的类型的\tm{T}。}
+\end{enumerate}
+
+\paragraph{}
+如果\tm{E2}是一个非静态数据成员或非静态成员函数，且如果\tm{E2}作为其直接成员的类
+是\tm{E2}所命名类（\ref{class.access.base}）的歧义基类
+（\ref{class.member.lookup}），则程序为病态。「注：如果命名类是对象表达式的类类
+型的一个歧义基类，则程序也为病态；见\ref{class.access.base}。」
+
+\ssect{自增与自减}{expr.post.incr}
+\paragraph{}
+后缀\tm{++}表达式的值为其操作数的值。「注：所获值为原值的拷贝。」操作数应该是一
+个可修改左值。操作数的类型应该是一个除\nt{cv} \tm{bool}以外的算术类型，或者是指
+向完整对象类型的指针。操作数对象的值由向其加1后修改。\tm{++}表达式的值计算前序于
+操作数对象的修改。对于不确定性有序的函数调用，后缀\tm{++}操作为单个操作。「注：
+因此，函数调用不应该介于左值到右值转换和关联于任何单个后缀\tm{++}运算符的副作用
+之间。」结果为纯右值。结果类型为操作数类型的cv非限定版本。如果操作数是不能表示增
+值的位域，则位域所产生的值由实现定义。见\ref{expr.add}和\ref{expr.ass}。
+
+\paragraph{}
+后缀\tm{\dsh\dsh}的操作数递减，与后缀\tm{++}运算符类似。「注：对于前缀自增和自减
+见\ref{expr.pre.incr}。」
+
+\ssect{动态类型转换}{expr.dynamic.cast}
+\paragraph{}
+表达式\tm{dynamic\_cast<T>(v)}的结果为转换表达式\tm{v}为类型\tm{T}后的结果。
+\tm{T}应该是一个完整类类型的指针或引用，或``指向\nt{cv} \tm{void}的指针''。
+\tm{dynamic\_cast}运算符不应该移除常性（\ref{expr.const.cast}）。
+
+\paragraph{}
+如果\tm{T}为指针类型，\tm{v}应该是完整类类型指针的纯右值，且结果为类型\tm{T}的纯
+右值。如果\tm{T}是一个左值引用类型，\tm{v}应该是一个完整类类型的左值，且结果是一
+个\tm{T}所指类型的左值。如果\tm{T}是右值引用类型，\tm{v}应该是具有完整类类型的泛
+左值，且结果是一个\tm{T}所指类型的失效值。
+
+\paragraph{}
+如果\tm{v}的类型与\tm{T}相同，或除了\tm{T}中的类对象类型比\tm{v}中的类对象类型cv
+限定更多之外是相同的，则结果为\tm{v}（根据需要进行转换）。
+
+\paragraph{}
+如果\tm{v}的值在指针的情况下是一个零指针，结果是\tm{T}类型的零指针值。
+
+\paragraph{}
+如果\tm{T}是``指向\nt{cv1} \tm{B}的指针''且\tm{v}具有类型``指向\nt{cv2} \tm{D}的
+指针''，使得\tm{B}为\tm{D}的基类，则结果为指向由\tm{v}所指对象\tm{D}的唯一子对象
+\tm{B}的指针。类似的，如果\tm{T}是``\nt{cv1} \tm{B}的引用''，\tm{v}具有类型
+\nt{cv2} \tm{D}使得\tm{B}是\tm{D}的基类，则结果为由\tm{v}所引用的对象\tm{D}的唯
+一子对象\tm{B}的引用。\footnote{\tm{v}所指向或引用的最终派生对象
+（\ref{intro.object}）可以包含其他\tm{B}对象，但将被忽略。} 在指针和引用两种情况
+下，如果\nt{cv2}比\nt{cv1}具有更多的cv限定，或如果\tm{B}是类\tm{D}的不可访问或歧
+义基类，则程序为病态。「例：
+\begin{lstlisting}
+  struct B { };
+  struct D : B { };
+  void foo(D* dp) {
+    B* bp = dynamic_cast<B*>(dp) ; // equivalent to B* bp = dp;
+  }
+\end{lstlisting}」
+
+\paragraph{}
+否则，\tm{v}应该是具有多态类型的指针或泛左值（\ref{class.virtual}）。
+
+\paragraph{}
+如果\tm{T}为``指向\nt{cv} \tm{void}的指针''，则结果为指向由\tm{v}所指的最终派生
+对象的指针。否则，进行运行时检查以确认\tm{v}所指或引用对象是否可以转换成\tm{T}所
+指或引用的类型。
+
+\paragraph{}
+如果\tm{C}为\tm{T}所指或引用的类类型，运行时检查按如下逻辑进行：
+\begin{enumerate}
+  \item{如果在\tm{v}所指（引用）的最终派生对象中，\tm{v}指向（引用）一个\tm{C}对
+    象的\tm{public}基类子对象，且如果仅一个\tm{C}类型对象派生自\tm{v}所指（引用）
+    子对象，则结果指向（引用）该\tm{C}对象。}
+  \item{否则，如果\tm{v}指向（引用）最终派生对象的\tm{public}基类子对象，且该最
+    终派生对象有一个\tm{C}类型的基类，无歧义且为\tm{public}，则结果指向（引用）
+    最终派生对象的\tm{C}子对象。}
+  \item{否则运行时检查失败。}
+\end{enumerate}
+
+\paragraph{}
+失败的指针类型转换值为所需结果类型的零指针值。失败的引用类型转换抛出类型能够匹配
+\tm{std::bad\_cast}（21.7.3）类型的异常处理程序（\ref{except.handle}）的异常
+（\ref{except.throw}）。「例：
+\begin{lstlisting}
+  class A { virtual void f(); };
+  class B { virtual void g(); };
+  class D : public virtual A, private B { };
+  void g() {
+    D d;
+    B* bp = (B*) &d;               // cast needed to break protection
+    A* ap = &d;                    // public derivation, no cast needed
+    D& dr = dynamic_cast<D&>(*bp); // fails
+    ap = dynamic_cast<A*>(bp);     // fails
+    bp = dynamic_cast<B*>(ap);     // fails
+    ap = dynamic_cast<A*>(&d);     // succeeds
+    bp = dynamic_cast<B*>(&d);     // ill-formed (not a runtime check)
+  }
+
+  class E : public D, public B { };
+  class F : public E, public D { };
+  void h() {
+    F f;
+    A* ap = &f;                    // succeeds: finds unique A
+    D* dp = dynamic_cast<D*>(ap) ; // fails: yields null; f has two D subobjects
+    E* ep = (E*) ap;               // ill-formed: cast from virtual base
+    E* ep1 = dynamic_cast<E*>(ap); // succeeds
+  }
+\end{lstlisting}」「注：\ref{class.cdtor}描述了\tm{dynamic\_cast}应用于正在构造
+或析构的对象时的行为。」
+
+\ssect{类型识别}{expr.typeid}
+\paragraph{}
+\tm{typeid}表达式的结果为具有静态类型\tm{const std::type\_info}（21.7.2）和动态
+类型\tm{const std::type\_info}或\tm{const} \nt{name}的左值，其中\nt{name}为实现
+定义类，公有派生自\tm{std::type\_info}，保有第21.7.2节所述行为。\footnote{这种类
+的推荐类名为\tm{extended\_type\_info}。} 该左值所引用对象的生命期直到程序结束。
+程序结束时是否调用\tm{std::type\_info}对象的析构函数未指明。
+
+\paragraph{}
+当\tm{typeid}应用于类型为多态类类型（\ref{class.virtual}）的泛左值表达式时，结果
+引用一个表示该泛左值所引用的最终派生对象（\ref{intro.object}）类型的
+\tm{std::type\_info}对象（即动态类型）。如果泛左值表达式通过应用一元\tm{*}运算符
+于指针\footnote{如果\tm{p}为指针类型表达式，则\tm{*p, (*p), *(p), ((*p)), *((p))}
+等等都满足此要求。} 来取得，且该指针为零指针值（\ref{conv.ptr}），则\tm{typeid}
+表达式抛出一个异常（\ref{except.throw}），其类型为\tm{std::bad\_typeid}（21.7.4）
+异常类型的异常处理程序能够匹配的异常类型。
+
+\paragraph{}
+当\tm{typeid}应用于除多态类类型的泛左值表达式时，其结果引用一个
+\tm{std::type\_info}对象，表示该表达式的静态类型。左值到右值（\ref{conv.lval}），
+数组到指针（\ref{conv.array}），以及函数到指针（\ref{conv.func}）转换不应用于此
+表达式。如果表达式为纯右值，则应用临时物化转换（\ref{conv.rval}）。该表达式为未
+计算操作数（第\ref{expr}章）。
+
+\paragraph{}
+当\tm{typeid}应用于一个\nt{type-id}时，结果引用一个\tm{std::type\_info}对象，表示
+\nt{type-id}的类型。如果\nt{type-id}的类型是一个可能cv限定类型的引用，则
+\tm{typeid}表达式的结果引用一个\tm{std::type\_info}对象，表示cv未限定引用类型。
+如果\tm{type-id}的类型是一个类类型或类类型的引用，则该类应该完整定义。
+
+\paragraph{}
+如果表达式的类型或\nt{type-id}是一个cv限定类型，则\tm{typeid}表达式的结果引用一
+个\tm{std::type\_info}对象，表示cv未限定类型。「例：
+\begin{lstlisting}
+  class D { /* ... */ };
+  D d1;
+  const D d2;
+  typeid(d1) == typeid(d2);       // yields true
+  typeid(D)  == typeid(const D);  // yields true
+  typeid(D)  == typeid(d2);       // yields true
+  typeid(D)  == typeid(const D&); // yields true
+\end{lstlisting}」
+
+\paragraph{}
+如果在使用\tm{typeid}之前未包含头\tm{<typeinfo>}（21.7.2），则程序为病态。
+
+\paragraph{}
+「注：\ref{class.cdtor}节描述了应用\tm{typeid}于正在构造或析构的对象的行为。」
+
+\ssect{静态类型转换}{expr.static.cast}
+\paragraph{}
+表达式\tm{static\_cast}的结果为转换表达式\tm{v}到类型\tm{T}的结果。如果\tm{T}是
+一个左值引用类型或函数类型的右值引用，则结果是一个左值；如果\tm{T}是一个对象类型
+的右值引用，则结果为一个失效值；否则，结果为纯右值。\tm{static\_cast}运算符不应该
+移除常量属性（\ref{expr.const.cast}）。
+
+\paragraph{}
+类型为``\nt{cv1} \tm{B}''的左值，其中\tm{B}为类类型，可转换成类型``\nt{cv2}
+\tm{D}的引用''，其中\tm{D}为\tm{B}的派生类（第\ref{class.derived}章），如果
+\nt{cv2}与\nt{cv1}限定相同，或是比\nt{cv1}更强的限定。如果\tm{B}是\tm{D}的虚基类
+或是\tm{D}的虚基类的基类，或如果不存在从``指向\tm{D}的指针''到
+``指向\tm{B}的指针''的有效标准转换（\ref{conv.ptr}），则程序为病态。类型为
+``\nt{cv1} \tm{B}''的失效值可以转换成``\nt{cv2} \tm{D}的右值引用''类型，具有与
+类型为``\nt{cv1} \tm{B}''的左值相同的约束。如果类型为``\nt{cv1} \tm{B}''的对象实
+际上为\tm{D}类型对象的基类子对象，则结果为类型\tm{D}的包含对象。否则行为未定义。
+「例：
+\begin{lstlisting}
+  struct B { };
+  struct D : public B { };
+  D d;
+  B &br = d;
+  static_cast<D&>(br); // produces lvalue to the original d object
+\end{lstlisting}」
+
+\paragraph{}
+类型为``\nt{cv1} \tm{T1}''的左值可以转换成为``\nt{cv2} \tm{T2}的右值引用''类型，
+如果``\nt{cv2} \tm{T2}''与``\nt{cv1} \tm{T1}''（\ref{dcl.init.ref}）引用兼容。如
+果值不是位域，则结果引用该对象或其指定的基类子对象；否则，对位域应用左值到右值转
+换（\ref{conv.lval}），产生的纯右值作为本节剩余部分的\tm{static\_cast}的表达式。
+如果\tm{T2}为\tm{T1}的不可访问（第\ref{class.access}章）或歧义
+（\ref{class.member.lookup}）基类，则需要此转换的程序为病态。
+
+\paragraph{}
+表达式\tm{e}可显式转换成类型\tm{T}，如果存在从\tm{e}到\tm{T}的隐式转换序列
+（\ref{over.best.ics}），或如果使用\tm{e}进行类型\tm{T}的对象或引用类型的直接初
+始化（\ref{dcl.init}）的重载解析找到至少一个可用函数（\ref{over.match.viable}。
+如果\tm{T}是引用类型，其效果与执行声明与初始化相同                            \\
+\mbox{\qquad \tm{T t(e);}} \\
+\tm{t}为某假想的临时变量（\ref{dcl.init}），并使用该临时变量作为转换的结果。否则
+结果对象使用\tm{e}直接初始化。「注：尝试将类类型转换为不可访问或歧义基类的转换为
+病态。」
+
+\paragraph{}
+否则，\tm{static\_cast}应该执行以下所列转换之一。使用\tm{static\_cast}不进行其他
+显式转换。
+
+\paragraph{}
+任何表达式可显式转换成\nt{cv} \tm{void}类型，这种情况下变成一个弃值表达式
+（第\ref{expr}章）。「注：然而，如果值在一个临时对象中（\ref{class.temporary}），
+该对象的析构函数直到正常时间才执行，且该对象的值将保留用于执行析构函数。」
+
+\paragraph{}
+不包含左值到右值（\ref{conv.lval}），数组到指针（\ref{conv.array}），函数到指针
+（\ref{conv.func}），零指针（\ref{conv.ptr}），零成员指针（\ref{conv.mem}），布
+尔（\ref{conv.bool}）或函数指针（\ref{conv.fctptr}）转换的任何标准转换序列的逆转
+换，可以使用\tm{static\_cast}显式执行。如果使用\tm{static\_cast}执行一个病态标准
+转换序列的逆，则程序为病态。「例：
+\begin{lstlisting}
+  struct B { };
+  struct D : private B { };
+  void f() {
+    static_cast<D*>((B*)0);             // error: B is a private base of D
+    static_cast<int B::*>((int D::*)0); // error: B is a private base of D
+  }
+\end{lstlisting}」
+
+\paragraph{}
+左值到右值（\ref{conv.lval}），数组到指针（\ref{conv.array}），函数到指针
+（\ref{conv.func}）转换作用于操作数。这种\tm{static\_cast}受显式转换不移除常量属
+性（\ref{expr.const.cast}）的限制，以及以下额外的特殊情形下的规则：
+
+\paragraph{}
+有作用域枚举类型（\ref{dcl.enum}）值可以显式转换为整型。当该类型为\nt{cv}
+\tm{bool}时，如果原值为零则产生的值为\tm{false}，任何其他值产生\tm{true}。对于其
+余整型，如果指定类型可以表示原始值，则值不变。否则，产生的值未指明。有作用域枚举
+值也可以显式转换成浮点类型；结果值与使用原始值转换成浮点类型产生的值相同。
+
+\paragraph{}
+整型的值或枚举值可以显式转换成完整枚举类型。如果原始值在枚举值（\ref{dcl.enum}）
+范围内则该值不变。否则行为未定义。浮点类型值也可以显式转换成枚举类型。产生的值与
+转换原始值到枚举的底层类型（\ref{conv.fpint}），随后再转换成枚举类型相同。
+
+\paragraph{}
+类型为``指向\nt{cv1} \tm{B}的指针''的纯右值，其中\tm{B}是类类型，可以转换成类型
+为``指向\nt{cv2} \tm{D}的指针''的纯右值，其中\tm{D}是\tm{B}的派生类
+（第\ref{class.derived}章），如果\nt{cv2}与\tm{cv1}相同的cv限定，或比\tm{cv1}限
+定更强。如果\tm{B}是\tm{D}的虚基类或\tm{D}的虚基类的基类，或如果不存在从``\tm{D}
+的指针''到``\tm{B}的指针''标准转换序列（\ref{conv.ptr}），则程序为病态。零指针值
+（\ref{conv.ptr}）被转换成目标类型的零指针值。如果类型为``指向\nt{cv1} \tm{B}的
+指针''的纯右值指向实际为类型\tm{D}的子对象的\tm{B}，则产生的指针指向\tm{D}类型的
+包含对象。否则行为未定义。
+
+\paragraph{}
+类型``指向类型为\nt{cv1} \tm{T}的\tm{D}的成员的指针''可以转换成类型为``指向类型
+为\nt{cv2} \tm{T}的\tm{B}的成员指针''，这里\tm{B}是\tm{D}的基类
+（第\ref{class.derived}章），如果\nt{cv2}是与\nt{cv1}相同的cv限定，或比\nt{cv1}
+更强的限定。\footnote{函数类型（包含用于成员函数类型的指针）不含cv限定；
+见\ref{dcl.fct}。} 如果不存在从``指向类型\tm{T}的\tm{B}的成员指针''到``指向类型
+\tm{T}的\tm{D}的成员指针''的标准转换（\ref{conv.mem}），则程序为病态。零成员指针
+值（\ref{conv.mem}）被转换成目标类型的零成员指针值。如果类\tm{B}包含原始成员，或
+是包含原始成员的基类或其派生类，则产生的成员指针指向原始成员。否则行为未定义。
+「注：尽管\tm{B}不需要包含原始成员，在其上通过成员指针进行间接访问操作的对象的动
+态类型必须包含该原始成员；见\ref{expr.mptr.oper}。」
+
+\paragraph{}
+类型为``指向\nt{cv1} \tm{void}的指针''的纯右值可以转换成类型为``指向\nt{cv2}
+\tm{T}的指针''的纯右值，这里\tm{T}是一个对象类型且\nt{cv2}是与\nt{cv1}相同的限定
+或比\nt{cv1}更强的限定。如果原始指针值表示内存中字节的地址\tm{A}且\tm{A}不满足
+\tm{T}的对齐需求，则产生的指针值未指明。否则，如果原始指针值指向一个对象\nt{a}，
+且存在与\nt{a}可指针互转（\ref{basic.compound}）的\tm{T}类型对象\nt{b}（忽略cv限
+定），则结果为指向\nt{b}的指针。否则，转换后指针值不变。「例：
+\begin{lstlisting}
+  T* p1 = new T;
+  const T* p2 = static_cast<const T*>(static_cast<void*>(p1));
+  bool b = p1 == p2; // b will have the value true.
+\end{lstlisting}」
+
+\ssect{重解释转换}{expr.reinterpret.cast}
+\paragraph{}
+表达式\tm{reinterpret\_cast<T>(v)}的结果为转换表达式\tm{v}到类型\tm{T}的结果。如
+果\tm{T}是一个左值引用或函数类型的右值引用，则结果为左值；如果\tm{T}是一个对象类
+型的右值引用，则结果为失效值；否则，结果为纯右值，且对表达式\tm{v}进行左值到右值
+（\ref{conv.lval}），数组与指针（\ref{conv.array}），函数到指针
+（\ref{conv.func}）标准转换。可以通过\tm{reinterpret\_cast}显式进行的转换下文列
+举。通过\tm{reinterpret\_cast}不再进行其他显式转换。
+
+\paragraph{}
+\tm{reinterpret\_cast}运算符不应该移除常量属性（\ref{expr.const.cast}）。整型、
+枚举类型、指针或成员指针类型的表达式，可以显式转换成其自身的类型；这种转换产生其
+操作数的值。
+
+\paragraph{}
+「注：\tm{reinterpret\_cast}所进行的映射可能，也可能不会产生与原始值不同的表示。」
+
+\paragraph{}
+指针可以显式转换成足够存储其值的任意整型。映射函数由实现定义。「注：其目的是不会
+使熟悉底层机器地址结构的人感到意外。」类型\tm{std::nullptr\_t}的值可以转换成整型；
+转换具有与转换\tm{(void*)0}到整型相同的语义和有效性。「注：一个
+\tm{reinterpret\_cast}不能用于转换任何类型到\tm{std::nullptr\_t}类型。」
+
+\paragraph{}
+整型或枚举类型值可以显式转换成指针。指针转换成足够大小的整型（如果实现中存在这样
+为类型）并转换回相同的指针类型，将具有原始值；其他情况下的指针与整型间的映射由实
+现定义。「注：除\ref{basic.stc.dynamic.safety}中所述之外，这种转换的结果不是一个
+安全派生指针值。」
+
+\paragraph{}
+函数指针可以显式转换成不同类型的函数指针。「注：通过与函数定义中所用类型不同的函
+数类型指针调用一个函数的效果未定义。」除转换``\tm{T1}的指针''类型的纯右值到
+``\tm{T2}的指针''类型（其中\tm{T1}和\tm{T2}为函数类型）并转换回其原始类型，产生
+原始指针值，这种指针转换的结果未指明。「注：见\ref{conv.ptr}节关于指针转换的更多
+细节。」
+
+\paragraph{}
+对象指针可以显式转换成不同类型的对象指针。\footnote{在\tm{reinterpret\_cast}不能
+移除常量属性的整体限制下，类型可能具有不同cv限定。} 当对象指针类型的纯右值\tm{v}
+被转换成``指向\nt{cv} \tm{T}的指针''类型的对象指针类型时，结果为
+\tm{static\_cast<}\nt{cv} \tm{T*>(static\_cast<}\nt{cv} \tm{void*>(v))}。「注：
+转换类型为``指向\tm{T1}的指针''的纯右值到``指向\tm{T2}的指针''类型（其中\tm{T1}
+和\tm{T2}为对象类型，且\tm{T2}的对齐要求不比\tm{T1}的更严格）并转换回原始类型将
+产生原始指针值。」
+
+\paragraph{}
+转换函数指针值到对象类型并转回为条件支持特性。这种转换的语义由实现定义，除非实现
+支持双向转换，转换其中一个类型的纯右值到另一类型并转换回原类型，可能具有不同的cv
+限定，应该产生原始指针值。
+
+\paragraph{}
+零指针值（\ref{conv.ptr}）被转换成目标类型的零指针值。「注：一个类型为
+\tm{std::nullptr\_t}的零指针常量不能转换成指针类型，且整型零指针常量不需要转换成
+零指针值。」
+
+\paragraph{}
+类型为``类型\tm{T1}的\tm{X}的成员指针''的纯右值可以显式转换成不同的``类型\tm{T2}
+的\tm{Y}的成员指针''，如果\tm{T1}和\tm{T2}均为函数类型或均为对象类型。
+\footnote{在\tm{reinterpret\_cast}不能移除常量属性的整体限制下，\tm{T1}和\tm{T2}
+可能具有不同cv限定符。} 零成员指针值（\ref{conv.mem}）被转换成目标类型的零成员指
+针值。除以下情况外，该转换的结果未指明：
+\begin{enumerate}
+  \item{转换类型为``成员函数指针''的纯右值到不同成员函数指针类型并转换回原始类型
+    产生原始成员指针值。}
+  \item{转换类型为``类型\tm{T}的\tm{X}的数据成员指针''纯右值到类型``\tm{T2}的
+    \tm{Y}的数据成员指针''（其中\tm{T2}的对齐要求不比\tm{T1}的更严格）并转回原始
+    类型产生原始成员指针值。}
+\end{enumerate}
+
+\paragraph{}
+类型\tm{T1}的泛左值表达式可以转换成类型``\tm{T2}的引用''，如果可以用
+\tm{reinterpret\_cast}显式地将类型``指向\tm{T1}的指针''的表达式转换成类型``指向
+\tm{T2}的指针''。结果引用与源泛左值相同的对象，但是具有所指定的类型。「注：即对
+于左值，一个引用转换\tm{reinterpret\_cast<T\&>(x)}与使用内置\tm{\&}和\tm{*}运算
+符时的转换\tm{*reinterpret\_cast<T*>(\&x)}具有相同效果。」不创建临时变量，不进行
+拷贝，且不调用构造函数或转换函数。\footnote{有时称为\textit{类型}双关。}
+
+\ssect{常转换}{expr.const.cast}
+\paragraph{}
+表达式\tm{const\_cast<T>(v)}的结果具有\tm{T}。如果\tm{T}是对象类型的左值引用，结
+果为一个左值；如果\tm{T}是对象类型的右值引用，结果为失效值；否则，结果为纯右值，
+且对表达式\tm{v}进行左值到右值（\ref{conv.lval}），数组到指针（\ref{conv.array}）
+和函数到指针（\ref{conv.func}）标准转换。可以通过显式\tm{const\_cast}进行的转换
+由以下列出。除此外使用\tm{const\_cast}不再进行其他显式转换。
+
+\paragraph{}
+「注：限于本节限制，表达式可以使用\tm{const\_cast}运算符转换成其自身类型。」
+
+\paragraph{}
+对两个相信类型\tm{T1}和\tm{T2}（\ref{conv.qual}），类型\tm{T1}的纯右值可用
+\tm{const\_cast}显式转换成类型\tm{T2}。\tm{const\_cast}的结果引用原始实体。
+「例：
+\begin{lstlisting}
+  typedef int *A[3]; // array of 3 pointer to int
+  typedef const int *const CA[3]; // array of 3 const pointer to const int
+
+  CA &&r = A{}; // OK, reference binds to temporary array object after
+                // qualification conversion to type CA
+  A &&r1 = const_cast<A>(CA{}); // error: temporary array decayed to pointer
+  A &&r2 = const_cast<A&&>(CA{}); // OK
+\end{lstlisting}」
+
+\paragraph{}
+对两个对象类型\tm{T1}和\tm{T2}，如果指向\tm{T1}的指针可以使用\tm{const\_cast}显
+式转换成``指向\tm{T2}的指针''类型，则也可以进行以下转换：
+\begin{enumerate}
+  \item{类型\tm{T1}的左值可以使用\tm{const\_cast<T2\&>}显式转换成类型\tm{T2}的左
+    值；}
+  \item{类型\tm{T1}的泛左值可以使用\tm{const\_cast<T2\&>}显式转换成类型\tm{T2}的
+    左值；}
+  \item{如果\tm{T1}是类类型，类型\tm{T1}的纯右值可以使用\tm{const\_cast<T2\&\&>}
+    显式转换成一个类型\tm{T2}的失效值。}
+\end{enumerate}
+如果操作数是一个泛左值，则引用\tm{const\_cast}的结果引用原始对象，否则引用应用临
+时物化转换（\ref{conv.rval}）后的结果。
+
+\paragraph{}
+零指针值（\ref{conv.ptr}）被转换成目标类型的零指针值。零成员指针值
+（\ref{conv.mem}）被转换成目标类型的零成员指针值。
+
+\paragraph{}
+「注：根据对象类型，通过去除const限定符\footnote{\tm{const\_cast}不限于去除const
+限定符的转换。}的\tm{const\_cast}产生的指针，左值或成员指针的写操作可能产生未定
+义行为（\ref{dcl.type.cv}）。」
+
+\paragraph{}
+如果\tm{T1}与\tm{T2}不同，从类型\tm{T1}到\tm{T2}的转换\textit{去除常量属性}
+（casts away constness），存在产生\nt{n}的\tm{T1}的cv分解（\ref{conv.qual}）使得
+\tm{T2}具有形如                                                               \\
+\mbox{\qquad$cv_0^2P_0^2cv_1^2P_1^2 \cdots cv_{n-1}^2P_{n-1}^2cv_n^2$
+\tm{U\tsub{2}}，}                                                             \\
+的cv分解，且不存在限定转换将\tm{T1}转换成                                     \\
+\mbox{\qquad$cv_0^2P_0^1cv_1^2P_1^1 \cdots cv_{n-1}^2P_{n-1}^1cv_n^2$
+\tm{U\tsub{1}}。}
+
+\paragraph{}
+使用左值引用转换将类型\tm{T1}的左值转换成类型\tm{T2}的左值，或使用右值引用转换将
+类型\tm{T1}的表达式转换成类型\tm{T2}的失效值去除常量属性，如果从类型``指向\tm{T1}
+的指针''的纯右值到类型``指向\tm{T2}的指针''的转换去除常量属性。
+
+\paragraph{}
+「注：某些仅涉及cv限定的改变的转换不能使用\tm{const\_cast}。比如，不包括从指针到
+函数的转换，因为如使用这些转换产生值将产生未定义行为。同理，指针到成员函数的转换
+，特别是不包括const成员函数指针到非const成员函数指针的转换。」
+
+\sect{一元表达式}{expr.unary}
+\paragraph{}
+一元运算符表达式自右向左分组。
+
+\synsym{unary-expression}
+  \synprd{\nt{postfix-expression}}
+  \synprd{\tm{++} \nt{cast-expression}}
+  \synprd{\tm{\dsh\dsh} \nt{cast-expression}}
+  \synprd{\nt{unary-operator cast-expression}}
+  \synprd{\tm{sizeof} \nt{unary-expression}}
+  \synprd{\tm{sizeof (} \nt{type-id} \tm{)}}
+  \synprd{\tm{sizeof ... (} \nt{identifier} \tm{)}}
+  \synprd{\tm{alignof (} \nt{type-id} \tm{)}}
+  \synprd{\nt{noexcept-expression}}
+  \synprd{\nt{new-expression}}
+  \synprd{\nt{delete-expression}}
+\synsym[one of]{unary-operator}
+  \synprd[]{\tm{* \& + - ! \~}}
+
+\ssect{一元运算符}{expr.unary.op}
+\paragraph{}
+一元\tm{*}运算符进行\textit{间接}（\textit{indirection}）操作：所应用的表达式应
+该是指向对象类型或指向函数类型的指针，其结果是引用指针所指的对象或函数的左值。如
+果表达式的类型为``指向\tm{T}的指针''，结果的类型为``\tm{T}''。「注：指向不完整类
+型的间接（除\nt{cv} \tm{void}）是有效的。所获取的左值可以受限方式使用（如用于初始
+化引用）；该左值不能转换成纯右值，见\ref{conv.lval}。」
+
+\paragraph{}
+以下每一个一元运算符的结果都是一个纯右值。
+
+\paragraph{}
+一元\tm{\&}运算符的结果是其操作数的指针。其操作数应该是一个左值或一个
+\nt{qualified-id}。如果操作数是一个命名某个类\tm{C}中的类型为\tm{T}的非静态或可
+变成员\tm{m}的\nt{qualified-id}，则结果具有类型``指向类\tm{C}的类型为\tm{T}的成
+员的指针''，且是指代\tm{C::m}的纯右值。否则，如果表达式类型为\tm{T}，则结果具有
+类型``指向\tm{T}的指针''，且是一个纯右值，为所指代对象（\ref{intro.memory}）的地
+址或所指代函数的指针。「注：特别的，类型为``\nt{cv} \tm{T}''的对象的地址为``指向
+\nt{cv} \tm{T}的指针''，具有相同的cv限定。」为计算指针算术（\ref{expr.add}）和
+指针比较（\ref{expr.rel}，\ref{expr.eq}），以这种方式取地址的非数组元素的对象被
+当成属于类型为\tm{T}的具有一个元素的数组。「例：
+\begin{lstlisting}
+  struct A { int i; };
+  struct B : A { };
+  ... &B::i ...  // has type int A::*
+  int a;
+  int* p1 = &a;
+  int* p2 = p1 + 1; // defined behavior
+  bool b = p2 > p1; // defined behavior, with value true
+\end{lstlisting}」「注：从\tm{mutable}非静态数据成员（\ref{dcl.stc}）所形成的成
+员指针不反应关联于非静态数据成员的\tm{mutable}说明符。」
+
+\paragraph{}
+成员指针仅在显式使用\tm{\&}且其操作数是一个未包含在括号中的\nt{qualified-id}时才
+形成。「注：即，表达式\tm{\&(qualified-id)}，其中\nt{qualified-id}包含在括号中，
+不形成类型为``成员指针''的表达式。\tm{qualified-id}也是，因为没有像函数类型左值
+到``函数指针''类型（\ref{conv.func}）转换的从非静态成员函数\nt{qualified-id}到
+``成员函数指针''类型的转换。\tm{\&unqualified-id}也不是成员指针，即使在
+\nt{unqualified-id}的类作用域中。」
+
+\paragraph{}
+如果\tm{\&}应用于不完整类类型的左值，且完整类型声明了\tm{operator\&()}，该运算符
+具有内置语义还是所调用运算符函数未指明。\tm{\&}的操作数不应该是位域。
+
+\paragraph{}
+重载函数（第\ref{over}章）的地址只能在该重载函数所引用的版本（见\ref{over.over}）
+可以唯一确定的上下文中才可以取得。「注：因为该上下文可以确定操作数是静态还是非静
+态成员函数，该上下文也可以影响表达式是具有``函数指针''类型还是``成员函数指针''。」
+
+\paragraph{}
+一元\tm{+}运算符的操作数应该具有算术、无作用域枚举或指针类型，且其结果为参数的值。
+整型提升作用于整型或枚举操作数。结果类型为提升后的操作数类型。
+
+\paragraph{}
+一元\tm{-}运算符的操作数应该具有算术或无作用域枚举类型，其结果为其操作数的负值。
+整型提升作用于整型或枚举操作数。无符号量值的负值通过$2^n$减去其值计算而得，其中
+$n$为提升后类型的位数。结果类型为提升后的操作数的类型。
+
+\paragraph{}
+逻辑取反运算符\tm{!}的操作数根据上下文转换成\tm{bool}（第\ref{conv}章）；如果所
+转换操作数为\tm{false}则其值为\tm{true}，否则为\tm{false}。结果类型为\tm{bool}。
+
+\paragraph{}
+\tm{\~}的操作数应该具有整型或无作用域枚举类型；结果为其操作数的一补码。执行整型
+提升。结果类型为提升后的操作数的类型。当\tm{\~}跟在\nt{class-name}或
+\nt{decltype-specifier}之后在语法上存在歧义。该歧义通过将\tm{\~}当作一元补码运算
+符而不是作为命名析构函数的\nt{unqualified-id}的开头来解决。「注：因为语法不允许
+运算符跟在\tm{.}，\tm{->}或\tm{::}标记之后，成员访问表达式或\nt{qualified-id}中
+后跟\nt{class-name}或\nt{decltype-specifier}的\tm{\~}无歧义的分析为析构函数名。」
+
+\ssect{自增与自减}{expr.pre.incr}
+\paragraph{}
+前缀\tm{++}的操作数通过加1进行修改。操作数应该为可修改左值。操作数类型应该是除
+\nt{cv} \tm{bool}之外的算术类型，或指向完整对象类型的指针。其结果为更新后的操作
+数；这是一个左值，如果操作数为位域则结果也是一个位域。表达式\tm{++x}等价于
+\tm{x+=1}。「注：见加法（\ref{expr.add}）和赋值运算符（\ref{expr.ass}）关于转换
+的讨论。」
+
+\paragraph{}
+前缀\tm{\dsh\dsh}的操作数通过减1进行修改。前缀\tm{\dsh\dsh}操作数的要求和其结果
+的属性与前缀\tm{++}相同。「注：对后缀自增和自减，见\ref{expr.post.incr}。」
+
+\ssect{sizeof}{expr.sizeof}
+\paragraph{}
+\tm{sizeof}运算符产生其操作数对象表示中的字节数。操作数要么为一个表达式，这种情
+况下为不计算操作数（第\ref{expr}章），要么为加括号的\nt{type-id}。\tm{sizeof}运
+算符不应该用于函数或不完整类型表达式，这些类型的加括号的名字，或代表位域的泛左值。
+\tm{sizeof(char)}，\tm{sizeof(signed char)}以及\tm{sizeof(unsigned char)}值为1。
+\tm{sizeof}应用于其他基本类型的结果由实现定义。「注：特别是，\tm{sizeof(bool)}，
+\tm{sizeof(char16\_t)}，\tm{sizeof(char32\_t)}以及\tm{sizeof(wchar\_t)}由实现定
+义。\footnote{\tm{sizeof(bool)}不要求为1。}」「注：见\ref{intro.memory}关于
+\textit{字节}的定义和\ref{basic.types}关于\textit{对象表示}的定义。」
+
+\paragraph{}
+当应用于引用或引用类型时，结果为引用类型的大小。当应用于类时，结果为该类对象的字
+节数，包括将该对象放到其类型数组中时所需要的填充。最终派生类的大小应该大于零
+（\ref{intro.object}）。应用\tm{sizeof}于一个基类子对象的结果为基类类型的大小。
+\footnote{由于虚基类以及基类子对象的不严格填充要求，基类子对象的实际大小可能小于
+应用\tm{sizeof}于子对象的结果。} 当应用于数组时，结果为数组中全部字节数。这意味
+着$n$个元素的数组的大小为$n$乘以一个元素的大小。
+
+\paragraph{}
+\tm{sizeof}运算符可以用于函数指针，但不可以直接应用于函数。
+
+\paragraph{}
+左值到右值（\ref{conv.lval}），数组到指针（\ref{conv.array}）和函数到指针
+（\ref{conv.func}）标准转换不用于\tm{sizeof}的操作数。如果操作数为纯右值，则应用
+临时物化转换（\ref{conv.rval}）。
+
+\paragraph{}
+\tm{sizeof...}表达式中的标识符应该命名一个参数包。\tm{sizeof...}运算符产生参数包
+\nt{identifier}所提供的参数个数。\tm{sizeof...}表达式是一个包展开
+（\ref{temp.variadic}）。「例：
+\begin{lstlisting}
+  template<class... Types>
+  struct count {
+    static const std::size_t value = sizeof...(Types);
+  };
+\end{lstlisting}」
+
+\paragraph{}
+\tm{sizeof}和\tm{sizeof...}的结果是类型为\tm{std::size\_t}的常量。「注：
+\tm{std::size\_t}在标准头\tm{<cstddef>}中定义（21.2.1，21.2.4）。」
+
+\ssect{new}{expr.new}
+\paragraph{}
+\nt{new-expression}尝试创建所应用的\nt{type-id}或\nt{new-type-id}的对象。该对象
+的类型为\textit{分配类型}（\textit{allocated type}）。该类型应该是完整对象类型，
+但不是抽象类类型或其数组类型（\ref{intro.object}，\ref{basic.types}，
+\ref{class.abstract}）。「注：因为引用不是对象，不能使用\nt{new-expression}创建
+引用。」「注：\nt{type-id}可能是cv限定类型，这种情况下\nt{new-expression}所创建
+的对象具有cv限定类型。」
+
+\synsym{new-expression}
+  \synprd{\tm{::}\nt{\tsub{opt}} \tm{new}
+    \nt{new-placement\tsub{opt} new-type-id new-identifier\tsub{opt}}}
+  \synprd{\tm{::}\nt{\tsub{opt}} \tm{new} \nt{new-placement\tsub{opt}} \tm{(}
+    \nt{type-id} \tm{)} \nt{new-identifier\tsub{opt}}}
+\synsym{new-placement}
+  \synprd{\tm{(} \nt{expression-list} \tm{)}}
+\synsym{new-type-id}
+  \synprd{\nt{type-specifier-seq new-declarator\tsub{opt}}}
+\synsym{new-declarator}
+  \synprd{\nt{ptr-operator new-declarator\tsub{opt}}}
+  \synprd{\nt{noptr-new-declarator}}
+\synsym{noptr-new-declarator}
+  \synprd{\tm{[} \nt{expression} \tm{]} \nt{attribute-specifier-seq\tsub{opt}}}
+  \synprd{\nt{noptr-new-declarator} \tm{[} \nt{constant-expression} \tm{]}
+    \nt{attribute-specifier-seq\tsub{opt}}}
+\synsym{new-initializer}
+  \synprd{\tm{(} \nt{expression-list\tsub{opt}}}
+  \synprd[]{\nt{braced-init-list}}
+
+由\nt{new-expression}所创建实体具有动态存储期（\ref{basic.stc.dynamic}）。「注：
+这种实体的生命期不受限于所创建它的作用域。」如果实体为非数组对象，则
+\nt{new-expression}返回所创建对象的指针。如果是一个数组，则\nt{new-expression}返
+回数组初始元素的指针。
+
+\paragraph{}
+如果一个占位符类型（\ref{dcl.spec.auto}）出现在\nt{new-expression}的
+\nt{new-type-id}或\nt{type-id}的\nt{type-specifier-seq}中，则所分配类型按如下推
+导：如果存在，假设\nt{init}为\nt{new-initializer}，且\nt{T}为\nt{new-expression}
+的\nt{new-type-id}或\nt{type-id}，则分配类型为假想声明（\ref{dcl.spec.auto}）：\\
+\mbox{\qquad \tm{T x} \nt{init} \tm{;}} \\
+中变量\tm{x}的推导类型。「例：
+\begin{lstlisting}
+  new auto(1);            // allocated type is int
+  auto x = new auto(’a’); // allocated type is char , x is of type char*
+  template<class T> struct A { A(T, T); };
+  auto y = new A{1, 2};   // allocated type is A<int>
+\end{lstlisting}」
+
+\paragraph{}
+\nt{new-expression}中的\nt{new-type-id}为\nt{new-declarator}的最长可能序列。
+「注：这防止了声明运算符\tm{\&}，\tm{\&\&}，\tm{*}和\tm{[]}以及它们的表达式对应
+部分之间的歧义。」「例：
+\begin{lstlisting}
+  new int * i; // syntax error: parsed as (new int*) i, not as (new int)*i
+\end{lstlisting}
+\tm{*}为指针声明子而不是乘法运算符。」
+
+\paragraph{}
+「注：\nt{new-expression}的\nt{new-type-id}中的括号可能具有预料之外的效果。「例：
+\begin{lstlisting}
+  new int(*[10])();    // error
+\end{lstlisting}
+是病态的，因为绑定为
+\begin{lstlisting}
+  (new int) (*[10])(); //error
+\end{lstlisting}
+相反，显式括号版本的\tm{new}运算符可用来创建复合类型对象（\ref{basic.compound}）：
+\begin{lstlisting}
+  new (int (*[10])());
+\end{lstlisting}
+分配了10个函数指针的数组（无参数，返回\tm{int}）。」」
+
+\paragraph{}
+当分配对象为数组时（即使用了\nt{noptr-new-declarator}语法，或者\nt{new-type-id}
+或\nt{type-id}代表数组类型），则\nt{new-expression}产生该数组的首个元素（如果存
+在）的指针。「注：\tm{new int}和\tm{new int[10]}均具有类型\tm{int*}，而
+\tm{new int[i][10]}的类型为\tm{int (*)[10]}。」在\nt{noptr-new-declarator}中的
+\nt{attribute-specifier-seq}作用于关联的数组类型。
+
+\paragraph{}
+\nt{noptr-new-declarator}中的每一个\nt{constant-expression}应该被转换成类型为
+\tm{std::size\_t}的常量表达式（\ref{expr.const}），且应该计算为严格正值。
+\nt{noptr-new-declarator}中的表达式被隐式转换成\tm{std::size\_t}。「例：给定定义
+\tm{int n = 42}，\tm{new float[n][5]}为良态（因\tm{n}是\nt{noptr-new-declarator}
+的表达式），但\tm{new float[5][n]}为病态（因\tm{n}不是常量表达式）。」
+
+\paragraph{}
+\nt{noptr-new-declarator}中的\nt{expression}是错误的，如果：
+\begin{enumerate}
+  \item{表达式为非类类型且其值在转换成\tm{std::size\_t}之前小于零；}
+  \item{表达式为类类型且其值在应用第二标准转换（\ref{over.ics.user}）
+    \footnote{如果转换函数返回有符号整型，第二标准转换将转换成无符号类型的
+    \tm{std::size\_t}，因此阻碍了之后的任何检测负值的机会。}之前小于零；}
+  \item{其值使得所分配对象的大小超过实现定义限制（附录B）；或}
+  \item{\nt{new-initializer}是一个\nt{braced-init-list}且为初始化所提供的数组元
+    素个数（包括字符串文本的结尾\tm{\sq\bs{}0\sq}（\ref{lex.string}））超过需要
+    初始化的元素个数。}
+\end{enumerate}
+如果\nt{expression}在转换成\tm{std::size\_t}之后是错误的：
+\begin{enumerate}
+  \item{如果\nt{expression}是一个核心常量表达式，则程序为病态；}
+  \item{否则不调用分配函数；取代的是
+    \begin{enumerate}
+      \item{如果原应调用的分配函数具有非抛出异常标准（\ref{except.spec}），则
+        \nt{new-expression}的值为所需类型的零指针值；}
+      \item{否则，\nt{new-expression}通过抛出匹配
+        \tm{std::bad\_array\_new\_length}类型（21.6.3.2）的处理器
+        （\ref{except.handle}）类型的异常来终止。}
+    \end{enumerate}}
+\end{enumerate}
+当\nt{expression}的结果为零时，分配函数被调用以分配一个无元素的数组。
+
+\paragraph{}
+通过调用分配函数（\ref{basic.stc.dynamic.allocation}），\nt{new-expression}可以
+为对象获取存储。如果\nt{new-expression}通过抛出异常而终止，其可以通过调用释放函
+数（\ref{basic.stc.dynamic.deallocation}）以释放存储。如果所分配类型为非数组类型
+，则分配函数名为\tm{operator new}，释放函数名为\tm{operator delete}。如果分配类
+型为数组类型，则分配函数名为\tm{operator new[]}，释放函数名为\tm{operator
+delete[]}。「注：实现应该为全局分配函数提供缺省定义（\ref{basic.stc.dynamic}，
+21.6.2.1，21.6.2.2）。C++程序可以为这些函数提供可选的定义或者类特定版本
+（\ref{class.free}）。可供\nt{new-expression}调用的分配与释放函数集合可能包括不
+进行分配和释放的函数，见21.6.2.3。」
+
+\paragraph{}
+如果\nt{new-expression}以一元\tm{::}运算符开始，则分配函数名在全局作用域中查询。
+否则，如果分配类型为类类型\tm{T}或其数组，则分配函数名在\tm{T}的作用域中查询。如
+果该查询不能找到该名字，或者如果分配类型不是类类型，则分配函数名在全局作用域中查
+询。
+
+\paragraph{}
+允许实现忽略一个可替换全局分配函数的调用（21.6.2.1，21.6.2.2）。当忽略时，存储由
+实现提供，或由扩展另一个\nt{new-expression}来提供。如果分配未扩展，实现可能扩展
+一个\nt{new-expression} \tm{e1}的分配为一个\nt{new-expression} \tm{e2}提供存储，
+如果以下为真：
+\begin{enumerate}
+  \item{\tm{e1}的计算前序于\tm{e2}的计算，且}
+  \item{当\tm{e1}获得存储时计算\tm{e2}，且}
+  \item{\tm{e1}和\tm{e2}调用相同的可替换全局分配函数，且}
+  \item{如果\tm{e1}和\tm{e2}调用的分配函数抛出异常，则无论\tm{e1}还是\tm{e2}的计
+    算过程中抛出的异常都会首先在同一异常处理器中被捕获，且}
+  \item{\tm{e1}或\tm{e2}产生的指针值为计算的\nt{delete-expression}的操作数，且}
+  \item{\tm{e2}的求值前序于操作数\tm{e1}所产生的指针值的\nt{delete-expression}的
+    计算。}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  void mergeable(int x) {
+    // These allocations are safe for merging:
+    std::unique_ptr<char[]> a{new (std::nothrow) char[8]};
+    std::unique_ptr<char[]> b{new (std::nothrow) char[8]};
+    std::unique_ptr<char[]> c{new (std::nothrow) char[x]};
+    g(a.get(), b.get(), c.get());
+  }
+
+  void unmergeable(int x) {
+    std::unique_ptr<char[]> a{new char[8]};
+    try {
+      // Merging this allocation would change its catch handler.
+      std::unique_ptr<char[]> b{new char[x]};
+    } catch (const std::bad_alloc& e) {
+      std::cerr << "Allocation failed: " << e.what() << std::endl;
+      throw;
+    }
+  }
+\end{lstlisting}」
+
+\paragraph{}
+当一个\nt{new-expression}调用一个分配函数时，且该分配未被扩展，则
+\nt{new-expression}将所请求空间大小作为类型为\tm{std::size\_t}的第一个参数传递给
+分配函数。该参数应该不小于所创建对象的大小；仅当对象为数组时可以比所创建对象的大。
+对于\tm{char}，\tm{unsigned char}和\tm{std::byte}类型的数组，\nt{new-expression}
+的结果与分配函数所返回的地址的差应该是任何不大于所创建数组的大小的对象类型的最严
+格对齐需求（\ref{basic.align}）的整数倍。「注：因为假定分配函数返回任何基本对齐
+类型适当对齐的存储的指针，该针对数组分配开销的约束允许分配字符数组的惯用法，其他
+类型的对象之后放置到该字符数组中。」
+
+\paragraph{}
+当一个\nt{new-expression}调用一个分配函数且该分配函数被扩展了，则分配调用的大小
+参数应该不大于以上指定的忽略的调用的大小之和加上未扩展调用的大小，再加上分配内存
+中分配对象对齐所需的必要的填充。
+
+\paragraph{}
+\nt{new-placement}语法用于向分配函数提供额外参数；这样的表达式被称为
+\textit{定点}（\textit{placement}）\nt{new-expression}。
+
+\paragraph{}
+对装配参数列表所创建的函数调用进行重载解析。第一个参数为所请求空间大小，具有类型
+\tm{std::size\_t}。如果所分配对象的类型具有new扩展对齐，则下一个参数为类型的对齐，
+且具有类型\tm{std::align\_val\_t}。如果使用了\nt{new-placement}语法，则其
+\nt{expression-list}中的\nt{initializer-clause}为后续参数。如果找不到匹配的函数
+且分配对象的类型有new扩展对齐，则从参数列表中去除对齐参数，并重新进行重载解析。
+
+\paragraph{}
+「例：
+\begin{enumerate}
+  \item{\tm{new T}产生以下调用之一：\\
+    \mbox{\qquad\tm{operator new(sizeof(T))}} \\
+    \mbox{\qquad\tm{operator new(sizeof(T), std::align\_val\_t(alignof(T)))}}}
+  \item{\tm{new(2, f) T}产生以下调用之一：\\
+    \mbox{\qquad\tm{operator new(sizeof(T), 2, f)}} \\
+    \mbox{\qquad\tm{operator new(sizeof(T), std::align\_val\_t(alignof(T)), 2,
+      f)}}}
+  \item{\tm{new T[5]}产生以下调用之一：
+    \mbox{\qquad\tm{operator new(sizeof(T) * 5 + x)}} \\
+    \mbox{\qquad\tm{operator new(sizeof(T) * 5 + x, std::align\_val\_t(alignof(T)))}}}
+  \item{\tm{new(2, f) T[5]}产生以下调用之一：
+    \mbox{\qquad\tm{operator new(sizeof(T) * 5 + x, 2, f)}} \\
+    \mbox{\qquad\tm{operator new(sizeof(T) * 5 + x, std::align\_val\_t(alignof(T)), 2, f)}}}
+\end{enumerate}
+其中每一个\tm{x}都是一个未指明的非负值，表示数组分配开销；\nt{new-expression}的
+结果将相对\tm{operator new[]}返回值偏移该大小。该开销可能应用于所有数组
+\nt{new-expression}，包括引用库函数\tm{operator new[](std::size\_t, void*)}的那
+些以及其他定点分配函数。开销量对\tm{new}的每一次调用而不同。」
+
+\paragraph{}
+「注：除非一个分配函数具有不抛异常规范（\ref{except.spec}），否则分配函数通过抛出
+\tm{std::bad\_alloc}异常（\ref{basic.stc.dynamic.allocation}，第\ref{except}章，
+21.6.3.1）来表明分配失败；否则返回一个非零指针。如果分配函数具有不抛异常规范，其
+通过返回零指针来表明存储分配失败，否则返回非零指针。」如果分配函数是一个非分配形
+式而返回了零指针的行为未定义。否则，如果分配函数返回零指针，则不应该进行初始化，
+不应该调用释放函数，且\nt{new-expression}的值应该为零。
+
+\paragraph{}
+「注：当分配函数返回非零值时，该值必须是指向为对象保留空间的存储块的指针。存储块
+假定已合适对齐且具有所请求大小。如果对象是数组时，所创建对象的地址不一定与块地址
+相同。」
+
+\paragraph{}
+创建类型\tm{T}的对象的\nt{new-expression}按如下方式初始化该对象：
+\begin{enumerate}
+  \item{如果省略了\nt{new-initializer}，则对象缺省初始化（\ref{dcl.init}）。
+    「注：如果不进行初始化，则对象具有不确定值。」}
+  \item{否则，根据\ref{dcl.init}中直接初始化的初始化规则进行\nt{new-initializer}
+    的解释。}
+\end{enumerate}
+
+\paragraph{}
+分配函数的调用前序于\nt{new-initializer}中表达式的计算。所分配对象的初始化前序于
+\nt{new-expression}的值计算。
+
+\paragraph{}
+如果\nt{new-expression}创建一个类类型对象或对象数组，则对分配函数，释放函数
+（\ref{class.free}）和构造函数（\ref{class.ctor}）进行访问和歧义控制。如果
+\nt{new-expression}创建类类型的数组对象，则析构函数可能被调用（\ref{class.dtor}）。
+
+\paragraph{}
+如果以上所述\footnote{可能包括\nt{new-initializer}和/或调用构造函数的计算。}的对
+象初始化的任何部分以抛出异常而终止，且可以找到一个合适的释放函数，则调用该释放函
+数以释放创建对象的内存，此后异常继续在\nt{new-expression}的上下文中传播。如果找
+不到无歧义匹配的释放函数，传播异常不会使对象内存被释放。「注：当调用函数未分配内
+存时这是合适的；否则很可能造成内存泄露。」
+
+\paragraph{}
+如果\nt{new-expression}以\tm{::}运算符开始，则释放函数名在全局作用域内查询。否则，
+如果分配类型为类类型\tm{T}或其数组类型，则释放函数名在\tm{T}的作用域内查询。如果
+查询未能找到该名字，或如果分配类型不是类类型或其数组类型，则分配函数名在全局作用
+域中查询。
+
+\paragraph{}
+如果具有相同数量的参数，且在参数变换（\ref{dcl.fct}）后，除第一个参数外其余参数
+类型等价，定点释放函数声明匹配定点分配函数声明。如果查询找到单个匹配的释放函数，
+则调用该函数；否则不调用任何释放函数。如果查询找到一个常规的释放函数，具有类型为
+\tm{std::size\_t}（\ref{basic.stc.dynamic.deallocation}）的参数，且作为定点释放
+函数，该函数被选作分配函数的匹配，则程序为病态。对一个非定点分配函数，正常的释放
+函数查询用于查找匹配的释放函数（\ref{expr.delete}）「例：
+\begin{lstlisting}
+  struct S {
+    // Placement allocation function:
+    static void* operator new(std: : size_t, std: : size_t) ;
+
+    // Usual (non-placement) deallocation function:
+    static void operator delete(void*, std: : size_t) ;
+  };
+  S* p = new (0) S; // ill-formed: non-placement deallocation function matches
+                    // placement allocation function
+\end{lstlisting}」
+
+\paragraph{}
+如果一个\nt{new-expression}调用释放函数，它传递分配函数返回的值作为\tm{void*}类
+型的第一个参数。如果调用定点释放函数，与传递给分配函数一样传递额外的参数，即与
+\nt{new-placement}语法所指定的相同参数。如果实现允许作为分配函数调用的一部分对参
+数进行拷贝，它也允许作为释放函数调用的一部分对参数（与原值相同）进行拷贝，或重用
+分配函数调用过程中的拷贝。如果其中一处省略拷贝，另一处无需省略。
+
+\ssect{delete}{expr.delete}
+\paragraph{}
+\nt{delete-expression}运算符销毁\nt{new-expression}创建的最终派生对象
+（\ref{intro.object}）或数组。
+
+\synsym{delete-expression}
+  \synprd{\tm{::}\nt{\tsub{opt}} \tm{delete} \nt{cast-expression}}
+  \synprd[]{\tm{::}\nt{\tsub{opt}} \tm{delete [ ]} \nt{cast-expression}}
+
+第一种形式用于非数组对象，第二种用于数组。当\tm{delete}关键字后紧跟空的方括号时，
+应该解释为第二种形式。\footnote{如果由括号包含，则带有\nt{lambda-introducer}（由
+空的方括号组成）的lambda表达式可以跟在\tm{delete}关键字后面。} 操作数应该为对象
+类型或类类型指针。如果为类类型，则操作数根据上下文隐式转换（第\ref{conv}章）成对
+象类型指针。\footnote{这意味着对象不能使用\tm{void*}类型的指针删除，因为
+\tm{void}不是对象类型。} \nt{delete-expression}的结果为\tm{void}类型。
+
+\paragraph{}
+如果操作数具有类类型，则通过以上所提的转换函数将操作数转换成指针类型，且在本节剩
+余部分中用转换后的操作数代替原操作数。在第一种形式（\textit{删除对象}）中，
+\tm{delete}操作数的值可以是零指针值，之前由\nt{new-expression}创建的非数组对象的
+指针，或表示该对象的基类（第\ref{class.derived}章）子对象（\ref{intro.object}）
+的指针。如是不是，则行为未定义。在第二种形式（\textit{删除数组}）中，\tm{delete}
+操作数的值可以是零指针值，之前的数组形式\nt{new-expression}的结果指针。
+\footnote{对于非零长度数组，这与\nt{new-expression}所创建数组的第一个元素的指针
+相同。零长数组没有第一个元素。} 如果不是，则行为未定义。「注：这意味着
+\nt{delete-expression}的语法必须与\tm{new}所分配对象的类型匹配，而不是与
+\nt{new-expression}的语法匹配。」「注：指向\tm{const}类型的指针可以作为
+\nt{delete-expression}的操作数；作为\nt{delete-expression}的操作数之前不需要移除
+指针表达式的常量属性（\ref{expr.const.cast}）。」
+
+\paragraph{}
+在第一种形式（\textit{删除对象}）中，如果待删除对象的静态类型与其动态类型不同，
+则静态类型应该是待删除对象的动态类型的基类，且静态类型应该具有一个虚析构函数，否
+则行为未定义。在第二种形式（\textit{删除数组}）中，如果待删除对象的动态类型与其
+静态类型不同，则行为未定义。
+
+\paragraph{}
+\nt{delete-expression}中的\nt{cast-expression}应该仅计算一次。
+
+\paragraph{}
+如果删除的对象在删除时具有不完整类类型且完整类类型具有非平凡析构或释放函数，则行
+为未定义。
+
+\paragraph{}
+如果\nt{delete-expression}的操作数的值不是零指针值，则\nt{delete-expression}将为
+待删除的对象或数组元素调用析构函数（如果有）。在数组的情形下，元素将按地址降序删
+除（即与构造函数完成的相反顺序；见\ref{class.base.init}）。
+
+\paragraph{}
+如果\nt{delete-expression}的操作数的值不是零指针值，则：
+\begin{enumerate}
+  \item{如果待删除对象的\nt{new-expression}分配调用未被省略且分配未被扩展
+    （\ref{expr.new}），则\nt{delete-expression}将调用释放函数
+    （\ref{base.stc.dynamic.deallocation}）。\nt{new-expression}分配调用的返回值
+    应该作为第一个参数传递给释放函数。}
+  \item{否则，如果分配被扩展或由扩展另一个\nt{new-expression}的分析提供，且
+    由扩展\nt{new-expression}提供存储的\nt{new-expression}所创建的每一个其他指针
+    值的\nt{delete-expression}已被计算，则该\nt{delete-expression}应该调用释放函
+    数。扩展\nt{new-expression}的分配调用所返回的值应该作为第一个参数传递给释放
+    函数。}
+  \item{否则，\nt{delete-expression}不会调用释放函数。}
+\end{enumerate}
+「注：无论对象或数组元素的析构函数是否抛出异常，释放函数都会被调用。」如果
+\nt{delete-expression}操作数的值是一个零指针值，则未指明释放函数是否按以上所述被
+调用。
+
+\paragraph{}
+「注：实现为非数组（21.6.2.1）的\tm{operator delete}和数组（21.6.2.2）的
+\tm{operator delete[]}这些全局释放函数提供缺省定义。C++程序可以为这些函数提供可
+选定义（20.5.4.6），和/或类特定的版本（\ref{class.free}）。」
+
+\paragraph{}
+当\nt{delete-expression}中的关键字\tm{delete}前加上一元\tm{::}运算符时，释放函数
+名在全局作用域中查询。否则，查询考虑类特定的释放函数（\ref{class.free}）。如果没
+有找到类特定的释放函数，则在全局作用域中查找释放函数名。
+
+\paragraph{}
+如果释放函数查询找到超过常规释放函数，待调用函数按以下进行选择：
+\begin{enumerate}
+  \item{如果类型具有new扩展对齐，首选具有一个参数类型为\tm{std::align\_val\_t}的
+    函数；否则首选不具有这种参数的函数。如果找到恰好一个首选函数，则选择该函数，
+    选择过程结果。如果找到超过一个首选函数，则从进一步考虑中删除所有未选函数。}
+  \item{如果释放函数具有类作用域，选择不具有\tm{std::size\_t}类型参数的函数。}
+  \item{如果类型完整，且仅对于第二种形式（删除数组），操作数为指向具有非平凡析构
+    或其数组（可能多维）的类类型指针，则选择具有一个\tm{std::size\_t}类型参数的
+    函数。}
+  \item{否则，未指明是否选择具有一个\tm{std::size\_t}类型参数的释放函数。}
+\end{enumerate}
+
+\paragraph{}
+在执行\nt{delete-expression}时，在\textit{删除对象}的情形中，所选释放函数应该使
+用最终派生对象的地址作为其第一个参数调用，在\textit{删除数组}的情形中，应该使用
+为数组分配开销（\ref{expr.new}）适当调整后的对象地址作为其第一个参数调用。如果使
+用具有一个\tm{std::align\_val\_t}类型参数的释放函数，待删除对象的类型对齐作为对
+应参数传递。如果使用具有\tm{std::size\_t}类型参数的释放函数，则最终派生类型的大
+小，或数组大小加上分配开销，作为对应参数进行传递。\footnote{如果待删除对象的静态
+类型是完整类型且与动态类型不同，并且析构函数不是虚函数，则大小可能不正确，但这种
+情形已经如上所述是未定义的。} 「注：如果这导致常规释放函数的调用，且要么第一个参
+数不是之前的常规分配函数调用的结果，要么第二个参数不是所述调用对应的参数，则行为
+未定义（21.6.2.1，21.6.2.2）。」
+
+\paragraph{}
+对释放函数和析构函数都要进行访问与歧义控制（\ref{class.dtor}，\ref{class.free}）
+。
+
+\ssect{Alignof}{expr.alignof}
+\paragraph{}
+\tm{alignof}表达式产生其操作数的对齐要求。操作数应该是表示完整对象类型的
+\nt{type-id}，或其数组，或这些类型的引用。
+
+\paragraph{}
+结果是\tm{std::size\_t}类型的整型常量。
+
+\paragraph{}
+当\tm{alignof}应用于引用类型时，结果为引用类型的对齐要求。当\tm{alignof}应用于数
+组类型时，结果为元素类型的对齐要求。
+
+\ssect{noexcept运算符}{expr.unary.noexcept}
+\paragraph{}
+\tm{noexcept}运算符确定其操作数（为不计算操作数（第\ref{expr}章））的计算是否可
+以抛出异常（\ref{except.throw}）。
+
+\synsym{noexcept-expression}
+  \synprd[]{\tm{noexcept (} \nt{expression} \tm{)}}
+
+\paragraph{}
+\tm{noexcept}运算符的结果为\tm{bool}类型常量，且是一个纯右值。
+
+\paragraph{}
+\tm{noexcept}运算符的结果为\tm{true}，除非\nt{expression}潜在抛出异常
+（\ref{except.spec}）。
+
+\sect{显式类型转换（强制转换）}{expr.cast}
+\paragraph{}
+表达式\tm{(T)} \nt{cast-expression}的结果类型为\tm{T}。如果\tm{T}是左值引用或函
+数类型的右值引用则结果是一个左值，或如果\tm{T}是对象类型的右值引用则结果是一个失
+效值；否则结果为纯右值。「注：如果\tm{T}为一个cv限定的非类类型，在确定结果纯右值
+的类型时将丢弃\nt{cv-qualifier}；见第\ref{expr}章。」
+
+\paragraph{}
+显式类型转换可以使用函数式记法（\ref{expr.type.conv}），一个类型转换运算符
+（\tm{dynamic\_cast}，\tm{static\_cast}，\tm{reinterpret\_cast}，
+\tm{const\_cast}），或\nt{cast}记法来表示
+
+\synsym{cast-expression}
+  \synprd{\nt{unary-expression}}
+  \synprd[]{\tm{(} \nt{type-id} \tm{)} \nt{cast-expression}}
+
+\paragraph{}
+以下未提到的以及用户未显式定义（\ref{class.conv}）的任何类型转换均为病态形式。
+
+\paragraph{}
+以下进行的转换
+\begin{enumerate}
+  \item{\tm{const\_cast}（\ref{expr.const.cast}），}
+  \item{\tm{static\_cast}（\ref{expr.static.cast}），}
+  \item{\tm{static\_cast}跟上\tm{const\_cast}，}
+  \item{\tm{reinterpret\_cast}（\ref{expr.reinterpret.cast}），或}
+  \item{\tm{reinterpret\_cast}跟上\tm{const\_cast}，}
+\end{enumerate}
+可以使用显式类型转换记法来进行。二者具 有相同的语义限制和行为，除了进行
+\tm{static\_cast}时在以下情形中，即使基类不可访问的情况下转换仍有效：
+\begin{enumerate}
+  \item{派生类类型对象的指针或派生类类型的左值或右值可以分别显式转换成无歧义基类
+    类型的指针或引用；}
+  \item{派生类类型的成员指针可以显式转换成无歧义非虚基类类型的成员指针；}
+  \item{无歧义非虚基类类型对象的指针，无歧义非虚基类类型的泛左值，或无歧义非虚基
+    类类型成员指针，可以分别转换成派生类类型指针，引用或成员指针。}
+\end{enumerate}
+如果转换可以按以上多于一种方式解释，则使用第一条可解释的规则，即使该解释产生的转
+换是病态的。如果转换可以按\tm{static\_cast}跟上\tm{const\_cast}的多于一种方式解
+释，则转换为病态的。「例：
+\begin{lstlisting}
+  struct A { };
+  struct I1 : A { };
+  struct I2 : A { };
+  struct D : I1, I2 { };
+  A* foo( D* p ) {
+    return (A*) ( p ); // ill-formed static_cast interpretation
+  }
+\end{lstlisting}」
+
+\paragraph{}
+使用转换记法的转换操作数可以是类型为``指向不完整类类型的指针''的纯右值。使用转换
+记法的转换的目标类型可以是``指向不完整类类型的指针''。如果操作数和目标类型均为类
+类型且其中一个或两个都是不完整的，则未指明使用\tm{static\_cast}还是
+\tm{reinterpret\_cast}，即使两个类之间存在继承关系。「注：比如，如果类在翻译单元
+之后的地方定义，在转换点处，允许一个多遍编译器将类指针间的转换当作类是完整的来解
+释。」
+
+\sect{成员指针运算符}{expr.mptr.oper}
+\paragraph{}
+成员指针运算符\tm{->*}和\tm{.*}自左向右分组。
+
+\synsym{pm-expression}
+  \synprd{\nt{cast-expression}}
+  \synprd{\nt{pm-expression} \tm{.*} \nt{cast-expression}}
+  \synprd[]{\nt{pm-expression} \tm{->*} \nt{cast-expression}}
+
+\paragraph{}
+二元运算符\tm{.*}将其第二个操作数（应该具有类型``\tm{T}的成员指针''）绑定到其第
+一个操作数（应该是类\tm{T}或类\tm{T}为其无歧义且可访问基类的类的一个泛左值）。结
+果为第二操作数所指定类型的对象或函数。
+
+\paragraph{}
+二元运算符\tm{->*}将其第二个操作数（应该具有类型``\tm{T}的成员指针''）绑定到其第
+一个操作数（应该具有类型``\tm{U}的指针''，其中\tm{U}或者是\tm{T}，或者是类\tm{T}
+为其无歧义且可访问基类的一个类）。表达式\tm{E1->*E2}被转换成等价形式
+\tm{(*(E1)).*E2}。
+
+\paragraph{}
+简写\nt{pm-expression}\tm{.*}\nt{cast-expression}为\tm{E1.*E2}，\tm{E1}被称为
+\textit{对象表达式}。如果\tm{E1}的动态类型不包含\tm{E2}所引用的成员，则行为未定
+义。否则，表达式\tm{E1}前序于表达式\tm{E2}。
+
+\paragraph{}
+\nt{cv}限定的限制以及操作数的\nt{cv}限定符绑定以产生结果的\nt{cv}限定符的方式，
+与\ref{expr.ref}节给出的\tm{E1.E2}的规则相同。「注：不可以使用指向\tm{mutable}成
+员的指针来修改\tm{const}类对象。比如，
+\begin{lstlisting}
+  struct S {
+    S() : i(0) { }
+    mutable int i;
+  };
+  void f()
+  {
+    const S cs;
+    int S::* pm = &S::i; // pm refers to mutable member S: : i
+    cs.*pm = 88;         // ill-formed: cs is a const object
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果\tm{.*}或\tm{->*}的结果是一个函数，则该结果只能用作函数调用运算符\tm{()}的操
+作数。「例：
+\begin{lstlisting}
+  (ptr_to_obj->*ptr_to_mfct)(10);
+\end{lstlisting}
+调用\tm{ptr\_to\_obj}所指对象的由\tm{ptr\_to\_mfct}所指向的成员函数。」在一个对
+象表达式为右值的\tm{.*}表达式中，如果第二个操作数是带有\nt{ref-qualifier}\tm{\&}
+的成员函数指针则程序为病态。在一个对象表达式为左值的\tm{.*}表达式中，如果第二个
+操作数是带有\nt{ref-qualifier}\tm{\&\&}的成员函数指针则程序为病态。如果第一个操
+作数为左值则第二个操作数为数据成员指针的\tm{.*}表达式的结果为左值，否则为失效值。
+第二个操作数是成员函数指针的\tm{.*}表达式的结果为纯右值。如果第二个操作数是零成
+员指针值（\ref{conv.mem}）则行为未定义。
+
+\sect{乘法运算符}{expr.mul}
+\paragraph{}
+乘法运算符\tm{*}，\tm{/}和\tm{\%}自左向右分组。
+
+\synsym{multiplicative-expression}
+  \synprd{\nt{pm-expression}}
+  \synprd{\nt{multiplicative-expression} \tm{*} \nt{pm-expression}}
+  \synprd{\nt{multiplicative-expression} \tm{/} \nt{pm-expression}}
+  \synprd[]{\nt{multiplicative-expression} \tm{\%} \nt{pm-expression}}
+
+\paragraph{}
+\tm{*}和\tm{/}的操作数应该具有算术或无作用域枚举类型；\tm{\%}的操作数应该具有整
+型或无作用域枚举类型。常规算术转换作用于操作数并决定结果的类型。
+
+\paragraph{}
+二元\tm{*}运算符代表乘法。
+
+\paragraph{}
+二元\tm{/}运算符产生商，二元\tm{\%}运算符产生第一表达式除以第二表达式的余数。如
+果\tm{/}或\tm{\%}的第二操作数为零则行为未定义。对于整型操作数，\tm{/}运算符产生
+丢弃任何小数部分\footnote{通常称为向零截断。}的代数商；如果商\tm{a/b}可以使用结
+果类型表示，则\tm{(a/b)*b + a\%b}等于\tm{a}；否则\tm{a/b}和\tm{a\%b}的行为均未定
+义。
+
+\sect{加法运算符}{expr.add}
+\paragraph{}
+加法运算符\tm{+}和\tm{-}自左向右分组。常规算术转换作用于算术或枚举类型。
+
+\synsym{additive-expression}
+  \synprd{\nt{multiplicative-expression}}
+  \synprd{\nt{additive-expression} \tm{+} \nt{multiplicative-expression}}
+  \synprd[]{\nt{additive-expression} \tm{-} \nt{multiplicative-expression}}
+
+对于加法，要么两个操作数均为算术或无作用域枚举类型，要么一个是完整对象类型指针，
+另一个是整型或无作用域枚举类型。
+
+\paragraph{}
+对于减法，以下之一应该成立：
+\begin{enumerate}
+  \item{两个操作数均为算术或无作用域枚举类型；或}
+  \item{两个操作数均为同一完整对象类型的cv限定或cv未限定版本；或}
+  \item{左操作数是指向完整对象类型的指针，右操作数为整型或无作用域枚举类型。}
+\end{enumerate}
+
+\paragraph{}
+二元\tm{+}运算符的结果为操作数的和。二元\tm{-}运算符的结果为从第一操作数减去第二
+操作数的差。
+
+\paragraph{}
+当整型表达式加到指针或从指针减去，结果具有指针操作数的类型。如果表达式\tm{P}指向
+具有\nt{n}个元素的数组对象\tm{x}的元素\tm{x[i]}，\footnote{为此目的，非数组元素
+的对象当作属于单个元素的数组；见\ref{expr.unary.op}。为些目的，越过\nt{n}个元素
+数组\tm{x}的最后一个元素的指针被当成是等价于指向假想元素\tm{x[n]}的指针；见
+\ref{basic.compound}。} 如果$0 \le i+j \le n$，表达式\tm{P + J}和\tm{J + P}（其
+中\tm{J}的值为\nt{j}）指向（可能假想的）元素\tm{x[i + j]}；否则行为未定义。同样，
+如果$0 \le i - j \le n$，则表达式\tm{P - J}指向（可能假想的）元素\tm{x[i - j]}；
+否则行为未定义。
+
+\paragraph{}
+当指向相同数组元素的两个指针相减时，结果类型为实现定义的有符号整型；该类型应该与
+\tm{<cstddef>}头（21.2）中定义为\tm{std::ptrdiff\_t}相同的类型。如果表达式\tm{P}
+和\tm{Q}分别指向相同的数组对象\tm{x}的元素\tm{x[i]}和\tm{x[j]}，则表达式
+\tm{P - Q}的值为$i - j$；否则行为未定义。「注：如果值$i - j$不在
+\tm{std::ptrdiff\_t}类型可表示范围内，则行为未定义。」
+
+\paragraph{}
+对于加法或减法，如果表达式\tm{P}或\tm{Q}具有类型``指向\nt{cv} \tm{T}的指针''，其
+中\tm{T}和数组元素类型不同（\ref{conv.qual}），则行为未定义。「注：特别是，当数
+组包含派生类类型元素时，基类指针不能用于指针算术。」
+
+\paragraph{}
+当值0被加到零指针值或从零指针值减去时，结果是零指针值。如果两个零指针值相减，结
+果等于被转换成\tm{std::ptrdiff\_t}类型的0。
+
+\sect{位移运算符}{expr.shift}
+\paragraph{}
+移位运算符\tm{\tl{}\tl}和\tm{\tg{}\tg}自左向右分组。
+
+\synsym{shift-expression}
+  \synprd{\nt{additive-expression}}
+  \synprd{\nt{shift-expression} \tm{\tl{}\tl} \nt{additive-expression}}
+  \synprd[]{\nt{shift-expression} \tm{\tg{}\tg} \nt{additive-expression}}
+
+操作数应该具有整型或无作用域枚举类型，且进行整型提升。结果类型为提升后左操作数的
+类型。如果右操作数为负值或大于等于提升后左操作数位长度，则行为未定义。
+
+\paragraph{}
+\tm{E1 \tl{}\tl{} E2}的值为\tm{E1}左移\tm{E2}位；空位用零填充。如果\tm{E1}为无符
+号类型，结果的值为\tm{E1 \ttim\ 2\tsup{E2}}，取结果类型可表示最大值加一的模。否
+则如果\tm{E1}为有符号类型且为非负值，并且\tm{E1 \ttim\ 2\tsup{E2}}在结果类型对应
+的无符号类型中可表示，则结果为该值在转换到结果类型后的值；否则行为未定义。
+
+\paragraph{}
+\tm{E1 \tg{}\tg{} E2}的值为\tm{E1}右移\tm{E2}位。如果\tm{E1}具有无符号类型或如果
+\tm{E1}为有符号类型和非负值，则结果为\tm{E1 / 2\tsup{E2}}的商的整数部分。如果
+\tm{E1}为有符号类型且为负值，则结果由实现定义。
+
+\paragraph{}
+表达式\tm{E1}前序于\tm{E2}。
+
+\sect{关系运算符}{expr.rel}
+\paragraph{}
+关系运算符自左向右分组。「例：\tm{a<b<c}意味着\tm{(a<b)<c}而不是
+\tm{(a<b)\&\&(b<c)}。」
+
+\synsym{relational-expression}
+  \synprd{\nt{shift-expression}}
+  \synprd{\nt{relational-expression} \tm{<} \nt{shift-expression}}
+  \synprd{\nt{relational-expression} \tm{>} \nt{shift-expression}}
+  \synprd{\nt{relational-expression} \tm{<=} \nt{shift-expression}}
+  \synprd[]{\nt{relational-expression} \tm{>=} \nt{shift-expression}}
+
+操作数应该具有算术，枚举或指针类型。运算符\tm{<}（小于），\tm{>}（大于），
+\tm{<=}（小于等于）和\tm{>=}（大于等于）均产生\tm{false}或\tm{true}。结果类型为
+\tm{bool}。
+
+\paragraph{}
+常规算术转换作用于算术或枚举类型。如果操作数均为指针，则进行指针转换
+（\ref{conv.ptr}）和限定转换（\ref{conv.qual}）将其转换成合成指针类型
+（第\ref{expr}章）。在转换后，操作数具有相同类型。
+
+\paragraph{}
+不相等对象指针\footnote{为此目的，非数组元素的对象当作属于单个元素的数组；见
+\ref{expr.unary.op}。为此目的，越过\nt{n}个元素数组\tm{x}的最后一个元素的指针被
+当成是等价于指向假想元素\tm{x[n]}的指针；见\ref{basic.compound}。}比较定义如下：
+\begin{enumerate}
+  \item{如果两个指针指向同一数组的不同元素或其子对象，指向具有较大下标的元素比较
+    更大。}
+  \item{如果两个指针指向同一对象的不同非静态数据成员，或这种元素的子对象（递归）
+    如果两个成员具有相同访问控制且其类不是联合，则指向后声明的成员比较更大。}
+  \item{否则，两者均不相等。}
+\end{enumerate}
+
+\paragraph{}
+如果两个操作数\tm{p}和\tm{q}相等（\ref{expr.eq}），\tm{p<=q}和\tm{p>=q}均产生
+\tm{true}，\tm{p<q}和\tm{p>q}均产生\tm{false}。否则，如果指针\tm{p}大于指针
+\tm{q}，则\tm{p>=q}，\tm{p>q}，\tm{q<=p}和\tm{q<p}均产生\tm{true}，\tm{p<=q}，
+\tm{p<q}，\tm{q>=p}和\tm{q>p}均产生\tm{false}。否则，这些运算符的结果未指定。
+
+\paragraph{}
+如果两个操作数（转换后）均为算术或枚举类型，如果所指定的结果为真，则每个运算符产
+生\tm{true}，否则产生\tm{false}。
+
+\sect{等性运算符}{expr.eq}
+\synsym{equality-expression}
+  \synprd{\nt{relational-expression}}
+  \synprd{\nt{equality-expression} \tm{==} \nt{relational-expression}}
+  \synprd[]{\nt{equality-expression} \tm{!=} \nt{relational-expression}}
+
+\paragraph{}
+\tm{==}（等于）和\tm{!=}（不等于）运算符自左向右分组。操作数应该具有算术、枚举、
+指针或成员指针，或\tm{std::nullptr\_t}。运算符\tm{==}和\tm{!=}均产生\tm{true}或
+\tm{false}，即结果为\tm{bool}类型。在以下每种情况中，应用指定转换后，操作数应具
+有相同类型。
+
+\paragraph{}
+如果至少一个操作数为指针，则对两个操作数应用指针转换（\ref{conv.ptr}），函数指针
+转换（\ref{conv.fctptr}）和限定转换（\ref{conv.qual}），以获取它们的合成类型
+（第\ref{expr}章）。指针比较定义如下：
+\begin{enumerate}
+  \item{如果其中一个指针代表一个完整对象的地址，另一个指针代表越过另一个完整对象
+    最后一个元素的地址\footnote{为此目的，非数组元素对象被当成属于单元素数组；见
+    \ref{expr.unary.op}。}，则比较结果未指定。}
+  \item{否则，如果两个指针均为零，均指向同一个函数，或者均表示同一地址
+    （\ref{basic.compound}），则二者相等。}
+  \item{否则，两指针不相等。}
+\end{enumerate}
+
+\paragraph{}
+如果至少一个操作数是成员指针，则对两个操作数进行指针到成员转换（\ref{conv.mem}）
+和限定转换（\ref{conv.qual}）以将二者转换成其合成指针类型（第\ref{expr}章）。成
+员指针比较定义如下：
+\begin{enumerate}
+  \item{如果两个成员指针均为零成员指针，则二者相等。}
+  \item{如果仅有一个是零成员指针，则二者不相等。}
+  \item{如果任一个是虚成员函数指针，则结果未指定。}
+  \item{如果一个引用类\tm{C1}的成员，另一个引用不同的类\tm{C2}的成员，且二者都不
+    是另一个的基类，则结果未指定。「例：
+\begin{lstlisting}
+  struct A {};
+  struct B : A { int x; };
+  struct C : A { int x; };
+
+  int A::*bx = (int(A::*))&B::x;
+  int A::*cx = (int(A::*))&C::x;
+
+  bool b1 = (bx == cx); // unspecified
+\end{lstlisting}」}
+  \item{如果二者均引用同一联合的成员（可能不同），则二者相等。}
+  \item{否则，如果在关联类类型的假想对象上进行间接操作，二者引用相同的最终派生对
+    象（\ref{intro.object}）或同一子对象的相同成员，则二者相等，否则二者不相等。
+    「例：
+\begin{lstlisting}
+  struct B {
+    int f();
+  };
+  struct L : B { };
+  struct R : B { };
+  struct D : L, R { };
+
+  int (B::*pb) () = &B::f;
+  int (L::*pl) () = pb;
+  int (R::*pr) () = pb;
+  int (D::*pdl) () = pl;
+  int (D::*pdr) () = pr;
+  bool x = (pdl == pdr); // false
+  bool y = (pb == pl);   // true
+\end{lstlisting}」}
+\end{enumerate}
+
+\paragraph{}
+两个\tm{std::nullptr\_t}类型的操作数或其中一个是\tm{std::nullptr\_t}而另一个是零
+指针常量相等。
+
+\paragraph{}
+如果两操作数相等，则\tm{==}运算符的结果为\tm{true}，\tm{!=}运算符的结果为
+\tm{false}。如果两个运算符不相等，则\tm{==}运算符的结果为\tm{false}，\tm{!=}运算
+符的结果为\tm{true}。否则两运算符的结果未指定。
+
+\paragraph{}
+如果两个操作数均为算术或枚举类型，则对二者进行常规算术转换；如果指定关系为真，则
+每一个运算符应该产生\tm{true}，如果为假，则产生\tm{false}。
+
+\sect{按位与运算符}{expr.bit.and}
+\synsym{and-expression}
+  \synprd{\nt{equality-expression}}
+  \synprd[]{\nt{and-expression} \tm{\&} \nt{equality-expression}}
+
+\paragraph{}
+进行常规算术转换；结果为操作数的按位与函数。运算符仅应用于整型或无作用域枚举操作
+数。
+
+\sect{按位异或运算符}{expr.xor}
+\synsym{exclusive-or-expression}
+  \synprd{\nt{and-expression}}
+  \synprd[]{\nt{exclusive-or-expression} \tm{\^} \nt{and-expression}}
+
+\paragraph{}
+进行常规算术转换；结果为操作数的按位异或函数。运算符仅应用于整型或无作用域枚举操
+作数。
+
+\sect{按位或运算符}{expr.or}
+\synsym{inclusive-or-expression}
+  \synprd{\nt{exclusive-or-expression}}
+  \synprd[]{\nt{inclusive-or-expression} \tm{|} \nt{exclusive-or-expression}}
+
+\paragraph{}
+进行常规算术转换；结果为操作数的按位或函数。运算符仅应用于整型或无作用域枚举操作
+数。
+
+\sect{逻辑与运算符}{expr.log.and}
+\synsym{logical-and-expression}
+  \synprd{\nt{inclusive-or-expression}}
+  \synprd[]{\nt{logical-and-expression} \tm{\&\&} \nt{inclusive-or-expression}}
+
+\paragraph{}
+\tm{\&\&}运算符自左向右分组。操作数均按上下文转换成\tm{bool}（第\ref{conv}章）。
+如果两个操作数均为\tm{true}则结果为\tm{true}，否则为\tm{false}。与\tm{\&}不同的
+是，\tm{\&\&}保证自左向右求值：如果第一个操作数为\tm{false}则第二个不求值。
+
+\paragraph{}
+结果为\tm{bool}。如果第二个表达式求值，则关联于第一个表达式的值计算和副作用前序
+于关联于第二个表达式的值计算和副作用。
+
+\sect{逻辑或运算符}{expr.log.or}
+\synsym{logical-or-expression}
+  \synprd{\nt{logical-and-expression}}
+  \synprd[]{\nt{logical-or-expression} \tm{||} \nt{logical-and-expression}}
+
+\paragraph{}
+\tm{||}运算符自左向右分组。操作数均按上下文转换成\tm{bool}（第\ref{conv}章）。
+如果任一操作数为\tm{true}则返回\tm{true}，否则返回\tm{false}。与\tm{|}不同的是，
+\tm{||}确保自左向右求值；即如果第一操作数求值为\tm{true}则第二操作数不求值。
+
+\paragraph{}
+结果为\tm{bool}。如果第二表达式求值，则关联于第一表达式的每一个值计算和副作用前
+序于关联于第二表达式的每一个值计算和副作用。
+
+\sect{条件运算符}{expr.cond}
+\synsym{conditional-expression}
+  \synprd{\nt{logical-or-expression}}
+  \synprd[]{\nt{logical-or-expression} \tm{?} \nt{expression} \tm{:}
+    \nt{assignment-expression}}
+
+\paragraph{}
+条件表达式自左向右分组。第一表达式按上下文转换成\tm{bool}（第\ref{conv}章）。对
+其进行求值，如果为\tm{true}，则条件表达式的结果为第二表达式的值，否则为第三表达
+式的值。第二表达式和第三表达式中只有一个被求值。关联于第一个表达式的每一个值计算
+和副作用前序于关联于第二或第三表达式的每一个值计算和副作用。
+
+\paragraph{}
+如果第二或第三表达式中任一个类型为\tm{void}，则以下之一应该成立：
+\begin{enumerate}
+  \item{第二或第三操作数（但不是全部）是一个（可能括号包含）
+    \nt{throw-expression}（\ref{expr.throw}）；结果为另一个的类型和值范畴。如果
+    该操作数为位域，则\nt{conditional-expression}是位域。}
+  \item{第二操作数和第三操作数均具有类型\tm{void}；则结果具有类型\tm{void}且是一
+    个纯右值。「注：包括两个操作数均为\nt{throw-expression}的情形。」}
+\end{enumerate}
+
+\paragraph{}
+否则，如果第二和第三操作数为同一值范畴位域的泛左值且分别为类型\nt{cv1} \tm{T}和
+\nt{cv2} \tm{T}，则在剩余部分中认为操作数具有类型\nt{cv} \tm{T}，其中\nt{cv}为
+\nt{cv1}和\nt{cv2}的并。
+
+\paragraph{}
+否则，如果第二和第三操作数具有不同类型，且任一个具有（可能cv限定）类类型，或如果
+二者均为同一值范畴和除cv限定外的相同类型的泛左值，则尝试对每一个操作数形成到另一
+操作数类型的隐式转换序列（\ref{over.best.ics}）。「注：在确定过程中忽略诸如访问，
+操作数是否为位域或转换函数是否被删除等属性。」按以下方法尝试从类型为\tm{T1}的操
+作数表达式\tm{E1}形成到类型为\tm{T2}的操作数表达式\tm{E2}的隐式转换序列：
+\begin{enumerate}
+  \item{如果\tm{E2}为左值，受转换中引用必须直接绑定一个左值（\ref{dcl.init.ref}）
+    的约束，目标类型为``\tm{T2}的左值引用''。}
+  \item{如果\tm{E2}为失效值，受引用必须直接绑定的约束，目标类型为``\tm{T2}的右值
+    引用''。}
+  \item{如果\tm{E2}是一个纯右值，或如果都不能形成以上的两个转换序列，且至少一个
+    操作数具有（可能cv限定）类类型：
+    \begin{enumerate}
+      \item{如果\tm{T1}和\tm{T2}为相同类类型（忽略cv限定），或其中一个为另一个的
+        基类，}
+      \item{否则，目标类型为假定在\tm{E2}上应用左值到右值（\ref{conv.lval}），数
+        组到指针（\ref{conv.array}）和函数到指针（\ref{conv.func}）等标准转换后
+        所具有的类型。}
+    \end{enumerate}
+  }
+\end{enumerate}
+使用这一过程可以确定是否能从第二操作数形成到由第三操作数确定的目标类型的隐式转换
+序列，反之亦然。如果可以形成两个序列，或者可以形成一个但该序列为有歧义转换序列，
+则程序为病态。如果不能形成转换序列，则操作数不变，并按以下进行进一步检查。否则，
+如果恰好形成一个转换序列，则对选中操作数进行转换，在本节剩余部分中，用转换后的操
+作数代替原有操作数。「注：即使可以形成隐式转换序列，转换也有可能是病态的。」
+
+\paragraph{}
+如果第二和第三操作数为同一值范畴的泛左值并具有相同类型，则结果为该类型和值范畴，
+如果第二或第三操作数（或二者均是）为位域则结果为位域。
+
+\paragraph{}
+否则，结果为纯右值。如果第二和第三操作数不具有相同类型且任一个具有（可能cv限定）
+类类型，则使用重载解析来确定作用于操作数（\ref{over.match.oper}，
+\ref{over.built}）的转换（如果有）。如果重载解析失败，则程序为病态。否则应用由此
+确定的转换，并在本节剩余部分中使用转换后的操作数代替原有操作数。
+
+\paragraph{}
+左值到右值（\ref{conv.lval}），数组到指针（\ref{conv.array}）和函数到指针
+（\ref{conv.func}）标准转换作用于第二和第三操作数。在这些转换之后，以下之一应该
+成立：
+\begin{enumerate}
+  \item{第二和第三操作数具有相同类型；结果为该类型，且结果对象使用所选操作数初始
+    化。}
+  \item{第二和第三操作数具有算术或枚举类型；进行常规算术转换将操作数转换成其公共
+    类型，结果具有该类型。}
+  \item{第二和第三操作数中的一个或两者均为指针类型；使用指针转换
+    （\ref{conv.ptr}），函数指针转换（\ref{conv.fctptr}）以及限定转换
+    （\ref{conv.qual}）将其转换成合成指针类型（第\ref{expr}章）。结果具有该合成
+    指针类型。}
+  \item{第二和第三操作数中的一个或二者均具有成员指针类型；使用指针到成员转换 
+    （\ref{conv.mem}）和限定转换（\ref{conv.qual}）将其转换成合成指针类型（第
+    \ref{expr}章）。结果具有该合成指针类型。}
+  \item{第二和第三操作数二者均具有\tm{std::nullptr\_t}类型或其中之一具有该类型，
+    另一个为零指针常量。结果具有类型\tm{std::nullptr\_t}。}
+\end{enumerate}
+
+\sect{抛出异常}{expr.throw}
+  \synsym{throw-expression}
+    \synprd[]{\tm{throw} \nt{assignment-expression\tsub{opt}}}
+
+\paragraph{}
+\nt{throw-expression}类型为\tm{void}。
+
+\paragraph{}
+对带有操作数的\nt{throw-expression}进行求值将抛出异常（\ref{except.throw}）；异
+常对象的类型通过由操作数的静态类型中去除任何顶层\nt{cv-qualifier}并将``\tm{T}的
+数组''或函数类型\tm{T}调整成``指向\tm{T}的指针''来确定。
+
+\paragraph{}
+不带操作数的\nt{throw-expression}重抛出当前所处理异常（\ref{except.handle}）。该
+异常使用已有异常对象重新激活；不创建新的异常对象。异常不再当成是已被抓取。「例：
+因为异常而必须执行但不能完全处理异常本身的代码可以如下：
+\begin{lstlisting}
+  try {
+    // ...
+  } catch (...) { // catch all exceptions
+    // respond (partially) to exception
+    throw;        // pass the exception to some other handler
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果当前无正在处理的异常，对一个无操作数的\nt{throw-expression}进行求值将调用
+\tm{std::terminate()}（\ref{except.terminate}）。
+
+\sect{赋值与复合赋值运算符}{expr.ass}
+\paragraph{}
+赋值运算符（\tm{=}）以及复合赋值运算符均自左向右分组。均要求可修改左值作为左操作
+数并返回引用左操作数的左值。如果左操作数为位域则在所有情形下结果为位域。在所有情
+形下，赋值后序于左/右操作数的值计算，前序于赋值表达式的值计算。右操作数前序于左
+操作数。对于不确定有序函数调用，复合赋值为单个求值。「注：因此，函数调用不应该在
+左值到右值转换和关联于任何单个复合赋值运算符的副作用间彼此交织。」
+
+\synsym{assignment-expression}
+  \synprd{\nt{conditional-expression}}
+  \synprd{\nt{logical-or-expression assignment-operator initializer-clause}}
+  \synprd{\nt{throw-expression}}
+\synsym[one of]{assignment-operator}
+  \synprd[]{\tm{= *= /= \%= += -= \tg{}\tg= \tl{}\tl= \&= \^{}= |=}}
+
+\paragraph{}
+简单赋值中，表达式的值替换左操作数所引用对象的值。
+
+\paragraph{}
+如果左操作数不是类类型，表达式的值被隐式转换（第\ref{conv}章）成左操作数的cv非限
+定版本的类型。
+
+\paragraph{}
+如果左操作数为类类型，则类应该是完整类型。类对象的赋值由拷贝/移动赋值运算符定义
+（\ref{class.copy}，\ref{over.ass}）。
+
+\paragraph{}
+「注：对于类对象，赋值通常与初始化不相同（\ref{dcl.init}，\ref{class.ctor}，
+\ref{class.init}，\ref{class.copy}）。」
+
+\paragraph{}
+当赋值运算符的左操作数是一个不能表示表达式值的位域时，所产生的位域值由实现定义。
+
+\paragraph{}
+形如\tm{E1} \nt{op}\tm{=} \tm{E2}的表达式行为，除了\tm{E1}仅计算一次外，等价于
+\tm{E1 = E2} \nt{op} \tm{E2}。在\tm{+=}和\tm{-=}中，\tm{E1}应该要么具有算术类型
+要么具有指向可能cv限定的完整对象类型。在所有情形中，\tm{E1}应该具有算术类型。
+
+\paragraph{}
+如果对象中所存储的值通过另一个以任何方式与第一个对象存储重叠的对象进行读取，则重
+叠应该完全一致，且两对象应该具有相同类型，否则行为未定义。「注：该限制适用于赋值
+操作左右两端间的关系；不是关于赋值目标如何别名的一般陈述。见\ref{basic.lval}。」
+
+\paragraph{}
+一个\nt{braced-init-list}可能出现在以下的右端
+\begin{enumerate}
+  \item{对标量的赋值，这种情况下初始化列表应该具有至多一个元素。\tm{x = \{v\}}的
+    语义，其中\tm{T}是表达式\tm{x}的标题类型，为\tm{x = T\{v\}。\tm{x = \{\}}的
+  语义为\tm{x = T\{\}}。}}
+  \item{类类型对象的赋值，其中初始化列表作为重载解析所选择的赋值运算符函数的参数
+    传入（\ref{over.ass}，\ref{over.match}）。}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  complex<double> z;
+  z = { 1, 2 };       // meaning z.operator=({1,2})
+  z += { 1, 2 };      // meaning z.operator+=({1,2})
+  int a, b;
+  a = b = { 1 };      // meaning a=b=1;
+  a = { 1 } = b;      // syntax error
+\end{lstlisting}」
+
+\sect{逗号运算符}{expr.comma}
+\paragraph{}
+逗号运算符自左向右分组。
+
+\synsym{expression}
+  \synprd{\nt{assignment-expression}}
+  \synprd[]{\nt{expression} \tm{,} \nt{assignment-expression}}
+
+由逗号分隔的一对表达式自左向右求值；左表达式为弃值表达式（第\ref{expr}章）。每一
+个关联于左表达式的值计算以及副作用前序于关联于右表达式的每一个值计算和副作用。结
+果的类型和值为右操作数的类型和值；结果与右操作数具有相同的值范畴，且如果右操作数
+为位域则结果也为位域。如果右操作数为一个临时表达式（\ref{class.temporary}），则
+结果也是一个临时表达式。
+
+\paragraph{}
+在逗号具有特殊语义的上下文中，「例：函数参数列表以及初始化列表中
+（\ref{dcl.init}）。」第\ref{expr}中所描述的逗号运算符只能出现在括号中。「例：
+\begin{lstlisting}
+  f(a, (t=3, t+2), c);
+\end{lstlisting}
+具有三个参数，第二个参数的值为\tm{5}。」
+
+\sect{常表达式}{expr.const}
+\paragraph{}
+某些上下文需要表达式满足本节所细化的额外要求；其他情况下根据表达式是否满足这些要
+求而具有不同语义。假定进行了拷贝消除，满足这些要求的表达式被称为\nt{常表达式}。
+「注：常表达式可以在翻译过程上求值。」
+
+\synsym{constant-expression}
+  \synprd[]{\nt{conditional-expression}}
+
+\paragraph{}
+除非在遵循抽象机规则（\ref{intro.execution}）的情况下，表达式\tm{e}的求值将计算
+以下表达式之一，则表达式\tm{e}是一个\nt{核心常表达式}（\nt{core constant
+expression}）：
+\begin{enumerate}
+  \item{\tm{this}（\ref{expr.prim.this}），除在作为\tm{e}的一部分进行求值的一个
+    constexpr函数或constexpr构造函数中；}
+  \item{除字面类的constexpr构造函数，constexpr函数或平凡析构函数
+    （\ref{class.dtor}）的隐式调用以外的函数调用「注：重载解析
+    （\ref{over.match}）照常适用」；}
+  \item{未定义constexpr函数或未定义constexpr构造函数的调用；}
+  \item{实例化后不满足constexpr函数或constexpr构造函数要求的constexpr函数或
+    constexpr构造函数调用（\ref{dcl.constexpr}）；}
+  \item{超过实现限制的表达式（见附录B）；}
+  \item{具有由第\ref{intro}章到第\ref{cpp}章中指定的未定义行为的操作「注：包括比
+    如有符号整数溢出（\ref{expr}），某些指针算术（\ref{expr.add}），除零
+    （\ref{expr.mul}）或某些移位操作」；}
+  \item{除应用于以下之外的左传到右值转换（\ref{conv.lval}）
+    \begin{enumerate}
+      \item{引用已初始化的完整非volatile常对象的整型或枚举类型非volatile泛左值，
+        使用常表达式初始化，或}
+      \item{引用字符字面值（\ref{lex.string}）的子对象的非volatile泛左值，或}
+      \item{引用使用\tm{constexpr}定义的非volatile对象或引用此对象的不可变子对象
+        的非volatile泛左值，或}
+      \item{引用生命期随\tm{e}的求值而开始的非volatile对象的字面类型非volatile泛
+        左值；}
+    \end{enumerate}}
+  \item{应用于引用联合的非活动成员或其子对象的泛左值的左值到右值转换
+    （\ref{conv.lval}）。}
+  \item{为活动成员可变（如果有）的联合隐式定义的拷贝/移动构造函数或拷贝/移动赋值
+    运算符的调用，除非联合对象的生命期在\tm{e}的求值中开始；}
+  \item{可能改变联合的活动成员的赋值表达式（\ref{expr.ass}）或赋值运算符
+    （\ref{class.copy}）}
+  \item{指向引用类型的变量或数据成员的\nt{id-expression}，除非引用已初始化并
+    \begin{enumerate}
+      \item{要么使用常表达式初始化}
+      \item{要么其生命期在\tm{e}的求值中开始；}
+    \end{enumerate}}
+  \item{在一个\nt{lambda-expression}中，引用\tm{this}或\tm{lambda-expression}之
+    外定义的自动存储期变量的引用，其中引用可能是odr-usr（\ref{basic.def.odr}，
+    \ref{expr.prim.lambda}）；「例：
+    \begin{lstlisting}
+      void g() {
+        const int n = 0;
+        [=] {
+          constexpr int i = n; // OK, n is not odr-used and not captured here
+          constexpr int j = *&n; // ill-formed, &n would be an odr-use of n
+        };
+      }
+    \end{lstlisting}」「注：如果odr-use出现在闭包类型的函数调用运算符的调用中，
+    由于将\nt{id-expression}变换成对应数据成员的访问
+    （\ref{expr.prim.lambda.capture}），该odr-use将不再引用\tm{this}或包含的自
+    动变量。「例：
+    \begin{lstlisting}
+      auto monad = [] (auto v) { return [=] { return v; }; };
+      auto bind = [] (auto m) {
+        return [=] (auto fvm) { return fvm(m() ) ; };
+      };
+
+      // OK to have captures to automatic objects created during constant
+      // expression evaluation.
+      static_assert(bind(monad(2) ) (monad) () == monad(2) () ) ;
+    \end{lstlisting}」」}
+  \item{从类型\nt{cv} \tm{void *}到对象类型指针的转换；}
+  \item{动态转换（\ref{expr.dynamic.cast}）；}
+  \item{\tm{reinterpret\_cast}（\ref{expr.reinterpret.cast}）；}
+  \item{违析构调用（\ref{expr.pseudo}）；}
+  \item{对象的修改（\ref{expr.ass}，\ref{expr.post.incr}，\ref{expr.pre.incr}），
+    除非是应用于引用生命期随\tm{e}的求值而开始的非volatile对象的字面类型的非
+    volatile左值；}
+  \item{一个typeid表达式（\ref{expr.typeid}），其操作数是多态类类型的泛左值；}
+  \item{一个\nt{new-expression}（\ref{expr.new}）；}
+  \item{一个\nt{delete-expression}（\ref{expr.delete}）；}
+  \item{一个关系（\ref{expr.rel}）或等性（\ref{expr.eq}）运算符，其结果未指明；
+    或}
+  \item{一个\nt{throw-expression}（\ref{expr.throw}）。}
+\end{enumerate}
+如果\tm{e}满足核心常表达式的约束，但\tm{e}的求值将对第20章到第23章中所述的含有未
+定义行为的操作进行求值，则\tm{e}是否为核心常表达式未指定。
+「例：
+\begin{lstlisting}
+  int x; // not constant
+  struct A {
+    constexpr A(bool b) : m(b?42:x) { }
+    int m;
+  };
+  constexpr int v = A(true).m;  // OK: constructor call initializes m with the value 42
+  constexpr int w = A(false).m; // error: initializer for m is x, which is non-constant
+
+  constexpr int f1(int k) {
+    constexpr int x = k; // error: x is not initialized by a constant expression
+                         // because lifetime of k began outside the initializer of x
+    return x;
+  }
+  constexpr int f2(int k) {
+    int x = k; // OK: not required to be a constant expression
+               // because x is not constexpr
+    return x;
+  }
+
+  constexpr int incr(int &n) {
+    return ++n;
+  }
+  constexpr int g(int k) {
+    constexpr int x = incr(k); // error: incr(k) is not a core constant expression
+                               // because lifetime of k began outside the expression incr(k)
+    return x;
+  }
+  constexpr int h(int k) {
+    int x = incr(k); // OK: incr(k) is not required to be a core constant expression
+    return x;
+  }
+  constexpr int y = h(1); // OK: initializes y with the value 2
+                          // h(1) is a core constant expression because
+                          // the lifetime of k begins inside h(1)
+\end{lstlisting}」
+
+\paragraph{}
+一个\nt{整型常表达式}为一个整型或无作用域枚举类型的表达式，隐式转换成纯右值，其
+中转换后的表达式为核心常表达式。「注：这样的表达式可以用作位域长度
+（\ref{class.bit}），如果枚举底层类型不固定（\ref{dcl.enum}）则可以用作枚举初始
+化，也可用作对齐（\ref{dcl.align}）。」
+
+\paragraph{}
+类型\tm{T}的\nt{转换常表达式}是一个表达式，隐式转换成类型\tm{T}，其中转换后的表
+达式是一个常表达式，且隐式转换序列仅包含
+\begin{enumerate}
+  \item{自定义转换，}
+  \item{左值到右值转换（\ref{conv.lval}），}
+  \item{数组到指针转换（\ref{conv.array}），}
+  \item{函数到指针转换（\ref{conv.func}），}
+  \item{限定转换（\ref{conv.qual}），}
+  \item{整型提升（\ref{conv.prom}），}
+  \item{除窄化转换（\ref{dcl.init.list}）外的整型转换（\ref{conv.integral}），}
+  \item{从\tm{std::nullptr\_t}的零指针转换（\ref{conv.ptr}），}
+  \item{从\tm{std::nullptr\_t}的零成员指针转换（\ref{conv.mem}），且}
+  \item{函数指针转换（\ref{conv.fctptr}），}
+\end{enumerate}
+并且其中的引用绑定（如果存在）直接绑定。「注：这样的表达式可以用于\tm{new}表达式
+（\ref{expr.new}），case表达式（\ref{stmt.switch}），如果枚举类型的底层类型固定
+（\ref{dcl.enum}）则可用作枚举初始化，作为数组界（\ref{dcl.array}）或无类型模板
+参数（\ref{temp.arg}）。」一个\nt{bool类型上下文转换常表达式}是一个表达式，按上
+下文转换成\tm{bool}（第\ref{conv}章），其中转换表达式是一个常表达式且转换序列仅
+包含以上转换。
+
+\paragraph{}
+一个\nt{常表达式}或者是引用一个实体的核心常表达式泛左值，该实体是常表达式（以下
+定义）允许结果，或者是值满足以下约束的纯右值核心常表达式：
+\begin{enumerate}
+  \item{如果值是类类型对象，引用类型的每一个非静态数据成员引用一个实体，该实体是
+    常表达式所允许的结果，}
+  \item{如果值是指针类型，其包含静态存储期对象的地址，超过此对象结尾的地址
+    （\ref{expr.add}），函数地址或者零指针值，且}
+  \item{如果值是类类型或数组类型对象，每一个子对象满足值的这些约束。}
+\end{enumerate}
+一个实体是一个\nt{常表达式允许的结果}，如果它是一个静态存储期对象，其要么是一个
+临时对象，或是其值满足以上约束的临时对象，或是一个函数。
+
+\paragraph{}
+「注：因本标准不对浮点操作的精度作限制，在翻译过程中求值浮点表达式是否与程序执行
+过程中对同一表达式（或同一值上的同一操作）进行求值所产生相同的结果未指明。
+\footnote{然而实现应该提供一致结果，无论在程序执行和/或翻译过程中是否进行求值。}
+「例：
+\begin{lstlisting}
+  bool f() {
+    char array[1 + int(1 + 0.2 - 0.1 - 0.1)]; // Must be evaluated during translation
+    int size = 1 + int(1 + 0.2 - 0.1 - 0.1);  // May be evaluated at runtime 
+    return sizeof(array) == size;
+  }
+\end{lstlisting}
+\tm{f()}的值为\tm{true}或\tm{false}未指明。」」
+
+\paragraph{}
+如果一个字面类类型表达式用于要求整型常表达式的上下文中，则该表达式按上下文隐式转
+换（第\ref{conv}章）成整型或无作用域枚举类型，并且所选转换函数应该是
+\tm{constexpr}。「例：
+\begin{lstlisting}
+  struct A {
+    constexpr A(int i) : val(i) { }
+    constexpr operator int() const { return val; }
+    constexpr operator long() const { return 42; }
+  private:
+    int val;
+  };
+  template<int> struct X { };
+  constexpr A a = alignof(int);
+  alignas(a) int n;        // error: ambiguous conversion
+  struct B { int n : a; }; // error: ambiguous conversion
+\end{lstlisting}」

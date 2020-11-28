@@ -23,9 +23,9 @@
     引入新行字符）。可接受的源文件字符集由实现定义。任何不在基本源文件字符集
    （5.3）中的字符被替换成指代该字符的\textit{通用字符名}。实现可能使用内部编码
     ，只要源文件中所遇到的实际扩展字符和该源文件中表示为\textit{通用字符名}
-    （如使用\texttt{\bslh uXXXX}记法）的同一扩展字符被等价处理，除原始字符串中
+    （如使用\texttt{\bs uXXXX}记法）的同一扩展字符被等价处理，除原始字符串中
     该替换被恢复原状（5.4）。}
-  \item{每一个反斜杠字符（\bslh）直接跟上新行字符的实例被删除，粘连物理源行形成
+  \item{每一个反斜杠字符（\bs）直接跟上新行字符的实例被删除，粘连物理源行形成
     逻辑源行。任何一个物理源行中只有最后一个反斜杠可以是这种粘连的部分。除了原始
     字符串的的粘连被恢复原状，如果粘连产生匹配\textit{通用字符名}语法的字符序列
     ，则行为未定义。非空及不以新行字符结尾或在任何粘连发生前以反斜杠直接跟上新行
@@ -76,7 +76,7 @@
 % _ { } [ ] # ( ) < > % : ; . ? * + - / ^ & | ~ ! = , \ " '
 \mbox{\qquad \texttt{\_ \{ \} [ ] \# ( ) \textless{} \textgreater{} \% :\ ; .\
 ?\ \textasteriskcentered{} + - / \textasciicircum{} \& \textbar{}
-\textasciitilde{} !\ = , \bslh{} \qdbl{} \qsgl}}
+\textasciitilde{} !\ = , \bs{} \dq{} \sq}}
 
 \paragraph{}
 \textit{通用字符名}结构提供命名其他字符的方法。
@@ -85,10 +85,10 @@
   \synprd{\textit{hexadecimal-digit hexadecimal-digit hexadecimal-digit
     hexadecimal-digit}}
 \synsym{universal-character-name}
-  \synprd{\texttt{\bslh{}u} \textit{hex-quad}}
-  \synprd{\texttt{\bslh{}U} \textit{hex-quad hex-quad}}
-由\textit{通用字符名}\texttt{\bslh UNNNNNNNN}所表示的是ISO/IEC 10646中
-短名为\texttt{NNNNNNNN}的字符；由\texttt{\bslh uNNNN}所表示的是ISO/IEC
+  \synprd{\texttt{\bs{}u} \textit{hex-quad}}
+  \synprd{\texttt{\bs{}U} \textit{hex-quad hex-quad}}
+由\textit{通用字符名}\texttt{\bs UNNNNNNNN}所表示的是ISO/IEC 10646中
+短名为\texttt{NNNNNNNN}的字符；由\texttt{\bs uNNNN}所表示的是ISO/IEC
 10646中短名为\texttt{0000NNNN}的字符。如\textit{通用字符名}的十六进制值对应于
 一个代理码点（范围0xD800-0xDFFF，含），同程序为病态。此外，如果除字符字面值或
 字符串字面值的\textit{c-char-sequence}、\textit{s-char-sequence}或
@@ -125,7 +125,7 @@
 预处理标记是翻译阶段3到6中语言的最小词法元素。预处理标记类别包括头名称、标识符、
 预处理数字、字符字面值（含用户定义字符字面值）、字符串字面值（含用户定义字符串
 字面值）、预处理运算符和标点，以及不匹配其他预处理标记类别的单个非空白字符。如果
-一个\texttt{\qsgl{}}和\texttt{\qdbl{}}字符匹配最后一个类型，
+一个\texttt{\sq{}}和\texttt{\dq{}}字符匹配最后一个类型，
 则行为未定义。预处理标记可由空白分隔；包括注释（5.7）或空白字符（空格、水平制表
 符、空行、垂直制表符和分页），或二者均可。如第19章所述，翻译阶段4的某些情况下，
 空白（或不存在空白）不止具有分隔预处理标记的作用。空白只能作为头名称的一部分或字
@@ -233,7 +233,7 @@
 \sect{头名称}{lex.header}
 \synsym{header-name}
   \synprd{\texttt{<} \textit{h-char-sequence} \texttt{>}}
-  \synprd{\texttt{\qdbl} \textit{h-char-sequence} \texttt{\qdbl}}
+  \synprd{\texttt{\dq} \textit{h-char-sequence} \texttt{\dq}}
 \synsym{h-char-sequence}
   \synprd{\textit{h-char}}
   \synprd{\textit{h-char-sequence} \textit{h-char}}
@@ -243,7 +243,7 @@
   \synprd{\textit{q-char}}
   \synprd{\textit{q-char-sequence} \textit{q-char}}
 \synsym{q-char}
-  \synprd[]{除新行和\texttt{\qdbl}以外的任何源字符集成员}
+  \synprd[]{除新行和\texttt{\dq}以外的任何源字符集成员}
 
 \paragraph{}
 「注：头名称预处理标记只出现在\texttt{\#include}预处理指令中（见5.4）。」两种形
@@ -251,9 +251,9 @@
 
 \paragraph{}
 \textit{q-char-sequence}和\textit{h-char-sequence}中出现的字符
-\texttt{\qsgl}或\texttt{\qdbl}，或字符序列\texttt{/*}或
+\texttt{\sq}或\texttt{\dq}，或字符序列\texttt{/*}或
 \texttt{//}由实现定义的语义条件支持，如同\textit{h-char-sequence}中出现的字符
-\texttt{\qdbl}。\footnote{因此，依赖于实现，类似于转义序列的字符序列可能
+\texttt{\dq}。\footnote{因此，依赖于实现，类似于转义序列的字符序列可能
 产生错误，被解释成对应于转义序列的字符，或有完全不同的意义。}
 
 \sect{预处理数字}{lex.ppnumber}
@@ -262,8 +262,8 @@
   \synprd{\texttt{.} \textit{digit}}
   \synprd{\textit{pp-number digit}}
   \synprd{\textit{pp-number identifier-nondigit}}
-  \synprd{\textit{pp-number} \texttt{\qsgl} \textit{digit}}
-  \synprd{\textit{pp-number} \texttt{\qsgl} \textit{nondigit}}
+  \synprd{\textit{pp-number} \texttt{\sq} \textit{digit}}
+  \synprd{\textit{pp-number} \texttt{\sq} \textit{nondigit}}
   \synprd{\textit{pp-number} \texttt{e} \textit{sign}}
   \synprd{\textit{pp-number} \texttt{E} \textit{sign}}
   \synprd{\textit{pp-number} \texttt{p} \textit{sign}}
@@ -299,7 +299,7 @@ ISO 10646中，表\ref{tab:iso10646allowed}中所示范围内的字符。起始�
 表\ref{tab:iso10646disallowed}中所示范围内的\textit{通用字符名}。大小写字符不同
 。所有字符均有意义。\footnote{在链接器不能接受扩展字符的系统上，
 \textit{通用字符名}的编码可能用来形成有效外部字符。比如，某些未用字符或序列可能
-用来编码\textit{通用字符名}中的\texttt{\bslh u}。扩展字符可能产生长外部
+用来编码\textit{通用字符名}中的\texttt{\bs u}。扩展字符可能产生长外部
 标识符，但是C++不对外部标识符有效字母数作翻译限制。在C++中，大小写字母在所有
 标识符都不同，包括外部标识符。}
 
@@ -497,13 +497,13 @@ C++程序的词法表示包括多个预处理标记，它们在预处理器的�
 \synsym{binary-literal}
   \synprd{\texttt{0b} \textit{binary-digit}}
   \synprd{\texttt{0B} \textit{binary-digit}}
-  \synprd{\textit{binary-literal} \texttt{\qsgl}\textit{$_{opt}$ binary-digit}}
+  \synprd{\textit{binary-literal} \texttt{\sq}\textit{$_{opt}$ binary-digit}}
 \synsym{octal-literal}
   \synprd{\texttt{0}}
-  \synprd{\textit{octal-literal} \texttt{\qsgl}\textit{$_{opt}$ octal-digit}}
+  \synprd{\textit{octal-literal} \texttt{\sq}\textit{$_{opt}$ octal-digit}}
 \synsym{decimal-literal}
   \synprd{\textit{nonzero-digit}}
-  \synprd{\textit{decimal-literal} \texttt{\qsgl}\textit{$_{opt}$ digit}}
+  \synprd{\textit{decimal-literal} \texttt{\sq}\textit{$_{opt}$ digit}}
 \synsym{hexdecimal-literal}
   \synprd{\textit{hexdecimal-prefix hexdecimal-digit-sequence}}
 \synsym{binary-digit}
@@ -517,7 +517,7 @@ C++程序的词法表示包括多个预处理标记，它们在预处理器的�
   \synprd{\texttt{0x 0X}}
 \synsym{hexdecimal-digit-sequence}
   \synprd{\textit{hexdecimal-digit}}
-  \synprd{\textit{hexdecimal-digit-sequence} \texttt{\qsgl}\textit{$_{opt}$
+  \synprd{\textit{hexdecimal-digit-sequence} \texttt{\sq}\textit{$_{opt}$
                   hexdecimal-digit}}
 \synsym[one of]{hexdecimal-digit}
   \synprd{\texttt{0 1 2 3 4 5 6 7 8 9}}
@@ -602,14 +602,14 @@ C++程序的词法表示包括多个预处理标记，它们在预处理器的�
 \ssect{字符字面值}{lex.ccon} % char constant
 \synsym{character-literal}
   \synprd{\textit{encoding-prefix$_{opt}$}
-          \texttt{\qsgl} \textit{c-char-sequence} \texttt{\qsgl}}
+          \texttt{\sq} \textit{c-char-sequence} \texttt{\sq}}
 \synsym[one of]{encoding-prefix}
   \synprd{\texttt{u8 u U L}}
 \synsym{c-char-sequence}
   \synprd{\textit{c-char}}
   \synprd{\textit{c-char-sequence} \textit{c-char}}
 \synsym{c-char}
-  \synprd{除单引号\texttt{\qsgl}、反斜杠\texttt{\bslh}和新行字符以外的源字符集成
+  \synprd{除单引号\texttt{\sq}、反斜杠\texttt{\bs}和新行字符以外的源字符集成
           员}
   \synprd{\textit{escape-sequence}}
   \synprd{\textit{universal-character-name}}
@@ -618,23 +618,23 @@ C++程序的词法表示包括多个预处理标记，它们在预处理器的�
   \synprd{\textit{octal-escape-sequence}}
   \synprd{\textit{hexadecimal-escape-sequence}}
 \synsym[one of]{simple-escape-sequence}
-  \synprd{\texttt{\bslh\qsgl\ \bslh\qdbl\ \bslh?\ \bslh\bslh}}
-  \synprd{\texttt{\bslh a \bslh b \bslh f \bslh n \bslh r \bslh t \bslh v}}
+  \synprd{\texttt{\bs\sq\ \bs\dq\ \bs?\ \bs\bs}}
+  \synprd{\texttt{\bs a \bs b \bs f \bs n \bs r \bs t \bs v}}
 \synsym{octal-escape-sequence}
-  \synprd{\texttt{\bslh} \textit{octal-digit}}
-  \synprd{\texttt{\bslh} \textit{octal-digit octal-digit}}
-  \synprd{\texttt{\bslh} \textit{octal-digit octal-digit octal-digit}}
+  \synprd{\texttt{\bs} \textit{octal-digit}}
+  \synprd{\texttt{\bs} \textit{octal-digit octal-digit}}
+  \synprd{\texttt{\bs} \textit{octal-digit octal-digit octal-digit}}
 \synsym{hexadecimal-escape-sequence}
-  \synprd{\texttt{\bslh x} \textit{hexadecimal-digit}}
+  \synprd{\texttt{\bs x} \textit{hexadecimal-digit}}
   \synprd[]{\textit{hexadecimal-escape-sequence} \textit{hexadecimal-digit}}
 
 \paragraph{}
 字符字面值指单引号括起来的一个或多个字符，如
-\texttt{\qsgl x\qsgl}，前面为可选的\texttt{u8}、
+\texttt{\sq x\sq}，前面为可选的\texttt{u8}、
 \texttt{u}、\texttt{U}或\texttt{L}，如
-\texttt{u8\qsgl w\qsgl}、\texttt{u\qsgl x\
-\qsgl}、\texttt{U\qsgl y\qsgl}或
-\texttt{L\qsgl z\qsgl}。
+\texttt{u8\sq w\sq}、\texttt{u\sq x\
+\sq}、\texttt{U\sq y\sq}或
+\texttt{L\sq z\sq}。
 
 \paragraph{}
 不以\texttt{u8}、\texttt{u}、\texttt{U}或\texttt{L}开头的字符字面值为
@@ -645,7 +645,7 @@ C++程序的词法表示包括多个预处理标记，它们在预处理器的�
 \texttt{int}，且有实现定义值。
 
 \paragraph{}
-以\texttt{u8}开头的字符字面值，如\texttt{u8\qsgl{}w\qsgl}，
+以\texttt{u8}开头的字符字面值，如\texttt{u8\sq{}w\sq}，
 其类型为\texttt{char}，即\textit{UTF-8字符字面值}。UTF-8字符字面值的值等于ISO
 10646中的码点值，如果该码点值可以使用单个UTF-8编码单元表示的话（即如果该字符在
 C0控制和基本拉丁Unicode块中）。如果值不能使用单个UTF-8编码单元表示，则程序为病态
@@ -653,7 +653,7 @@ C0控制和基本拉丁Unicode块中）。如果值不能使用单个UTF-8编码
 
 \paragraph{}
 以字母\texttt{u}开头的字符字面值，如
-\texttt{u\qsgl{}x\qsgl}，
+\texttt{u\sq{}x\sq}，
 其类型为\texttt{char16\_t}。包含单个\textit{c-char}的\texttt{char16\_t}字符
 字面值的值等于其ISO 10646码点值，如果说该码点可以使用单个16位码点单元表示的话。
 （即是一个基本多语言平面码点。）如果该值在16位内不可表示，则程序为病态的。
@@ -661,27 +661,27 @@ C0控制和基本拉丁Unicode块中）。如果值不能使用单个UTF-8编码
 
 \paragraph{}
 以字母\texttt{u}开头的字符字面值，如
-\texttt{u\qsgl{}y\qsgl}，
+\texttt{u\sq{}y\sq}，
 其类型为\texttt{char32\_t}。包含单个\textit{c-char}的\texttt{char32\_t}字符字面
 值的值等于其ISO 10646码点值。包含多个\textit{c-char}的\texttt{char32\_t}字符
 字面值为病态的。
 
 \paragraph{}
 以字母\texttt{L}开头的字符字面值为\textit{宽字符字面值}，比如
-\texttt{L\qsgl
-z\qsgl}。宽字符字面值类型为\texttt{wchar\_t}。\footnote{适用于字符不
+\texttt{L\sq
+z\sq}。宽字符字面值类型为\texttt{wchar\_t}。\footnote{适用于字符不
 能用单个字节表示的字符集。} 包含单个\textit{c-char}的宽字符字面值的值等于执行宽
 字符集中\textit{c-char}编码的数值，除非\textit{c-char}不能用执行宽字符集表示，
 在这种情况下，该值是实现定义的。「注：类型\texttt{wchar\_t}可以表示执行宽字符集
 所有成员（见6.9.1）。」包含多个\textit{c-char}的宽字符字面值的值是实现定义的。
 
 \paragraph{}
-某些非图形字符、单引号\texttt{\qsgl}、双引号\texttt{\qdbl}、
+某些非图形字符、单引号\texttt{\sq}、双引号\texttt{\dq}、
 问号\texttt{?}\footnote{为问号使用转义是为了兼容ISO 2014和ISO C。}和反斜杠
-\texttt{\bslh}可以根据表\ref{tab:escape-seq}表示。双引号\texttt{\qdbl}和问号
-\texttt{?}，可以表示为其自身，也可以表示为转义序列\texttt{\bslh\qdbl}和
-\texttt{\bslh ?}。但单引号\texttt{\qsgl}和反斜杠\texttt{\bslh}应分别由转义序列
-\texttt{\bslh\qsgl}和\texttt{\bslh\bslh}表示。表\ref{tab:escape-seq}中没有列出
+\texttt{\bs}可以根据表\ref{tab:escape-seq}表示。双引号\texttt{\dq}和问号
+\texttt{?}，可以表示为其自身，也可以表示为转义序列\texttt{\bs\dq}和
+\texttt{\bs ?}。但单引号\texttt{\sq}和反斜杠\texttt{\bs}应分别由转义序列
+\texttt{\bs\sq}和\texttt{\bs\bs}表示。表\ref{tab:escape-seq}中没有列出
 反斜杠后跟字符的转义序列是条件支持的，具有实现定义的语义。转义序列指定单个字符。
 
 \begin{table}[h!]
@@ -689,27 +689,27 @@ z\qsgl}。宽字符字面值类型为\texttt{wchar\_t}。\footnote{适用于字�
   \caption{转义序列}
   \begin{tabular}{|lll|}
     \hline
-    new-line        & \texttt{NL(LF)} & \texttt{\bslh n}                      \\
-    horizontal tab  & \texttt{HT}     & \texttt{\bslh t}                      \\
-    vertical tab    & \texttt{VT}     & \texttt{\bslh v}                      \\
-    backspace       & \texttt{BS}     & \texttt{\bslh b}                      \\
-    carriage return & \texttt{CR}     & \texttt{\bslh r}                      \\
-    form feed       & \texttt{FF}     & \texttt{\bslh f}                      \\
-    alert           & \texttt{BEL}    & \texttt{\bslh a}                      \\
-    backslash       & \texttt{\bslh}  & \texttt{\bslh\bslh}                   \\
-    question mark   & \texttt{?}      & \texttt{\bslh ?}                      \\
-    single quote    & \texttt{\qsgl}  & \texttt{\bslh\qsgl}                   \\
-    double quote    & \texttt{\qdbl}  & \texttt{\bslh\qdbl}                   \\
-    octal number    & \textit{ooo}    & \texttt{\bslh}\textit{ooo}            \\
-    hex number      & \textit{hhh}    & \texttt{\bslh x}\textit{hhh}          \\
+    new-line        & \texttt{NL(LF)} & \texttt{\bs n}                      \\
+    horizontal tab  & \texttt{HT}     & \texttt{\bs t}                      \\
+    vertical tab    & \texttt{VT}     & \texttt{\bs v}                      \\
+    backspace       & \texttt{BS}     & \texttt{\bs b}                      \\
+    carriage return & \texttt{CR}     & \texttt{\bs r}                      \\
+    form feed       & \texttt{FF}     & \texttt{\bs f}                      \\
+    alert           & \texttt{BEL}    & \texttt{\bs a}                      \\
+    backslash       & \texttt{\bs}  & \texttt{\bs\bs}                   \\
+    question mark   & \texttt{?}      & \texttt{\bs ?}                      \\
+    single quote    & \texttt{\sq}  & \texttt{\bs\sq}                   \\
+    double quote    & \texttt{\dq}  & \texttt{\bs\dq}                   \\
+    octal number    & \textit{ooo}    & \texttt{\bs}\textit{ooo}            \\
+    hex number      & \textit{hhh}    & \texttt{\bs x}\textit{hhh}          \\
     \hline
   \end{tabular}
   \label{tab:escape-seq}
 \end{table}
 
 \paragraph{}
-转义\texttt{\bslh}\textit{ooo}包含反斜杠，后跟一个、两个或三个八进制数字，用于
-指定所需字符的值。转义\texttt{\bslh}\textit{hhh}由反斜杠和x后跟一个或多个十六
+转义\texttt{\bs}\textit{ooo}包含反斜杠，后跟一个、两个或三个八进制数字，用于
+指定所需字符的值。转义\texttt{\bs}\textit{hhh}由反斜杠和x后跟一个或多个十六
 进制数字组成，用于指定所需字符的值。十六进制序列中的位数没有限制。八进制或十六进
 制数字的序列分别以非八进制数字或非十六进制数字的第一个字符结束。如果字符字面值的
 值不在实现定义的\texttt{char}（对无前缀字符字面值）或\texttt{wchar\_t}（对前缀为
@@ -749,7 +749,7 @@ z\qsgl}。宽字符字面值类型为\texttt{wchar\_t}。\footnote{适用于字�
   \synprd{\texttt{+ -}}
 \synsym{digit-sequence}
   \synprd{\textit{digit}}
-  \synprd{\textit{digit-sequence} \texttt{\qsgl}\textit{$_{opt}$ digit}}
+  \synprd{\textit{digit-sequence} \texttt{\sq}\textit{$_{opt}$ digit}}
 \synsym[one of]{floating-suffix}
   \synprd[]{\texttt{f l F L}}
 
@@ -775,31 +775,31 @@ z\qsgl}。宽字符字面值类型为\texttt{wchar\_t}。\footnote{适用于字�
 \ssect{字符串字面值}{lex.string}
 \synsym{string-literal}
   \synprd{\textit{encoding-prefix$_{opt}$}
-          \texttt{\qdbl}\textit{s-char-sequence$_{opt}$}\texttt{\qdbl}}
+          \texttt{\dq}\textit{s-char-sequence$_{opt}$}\texttt{\dq}}
   \synprd{\textit{encoding-prefix$_{opt}$} \texttt{R} \textit{raw-string}}
 \synsym{s-char-sequence}
   \synprd{\textit{s-char}}
   \synprd{\textit{s-char-sequence s-char}}
 \synsym{s-char}
-  \synprd{除双引号\texttt{\qdbl}、反斜杠\texttt{\bslh}或新行字符以外
+  \synprd{除双引号\texttt{\dq}、反斜杠\texttt{\bs}或新行字符以外
           的源字符集成员}
   \synprd{\textit{escape-sequence}}
   \synprd{\textit{universal-character-name}}
 \synsym{raw-string}
-  \synprd{\texttt{\qdbl} \textit{d-char-sequence$_{opt}$} \texttt{(}
+  \synprd{\texttt{\dq} \textit{d-char-sequence$_{opt}$} \texttt{(}
           \textit{r-char-sequence$_{opt}$} \texttt{)}
-          \textit{d-char-sequence$_{opt}$} \texttt{\qdbl}}
+          \textit{d-char-sequence$_{opt}$} \texttt{\dq}}
 \synsym{r-char-sequence}
   \synprd{\textit{r-char}}
   \synprd{\textit{r-char-sequence r-char}}
 \synsym{r-char}
   \synprd{除右括号\texttt{)}后跟初始\textit{d-char-sequence}（可空）再跟上双引号
-          \texttt{\qdbl}的源字符集成员。}
+          \texttt{\dq}的源字符集成员。}
 \synsym{d-char-sequence}
   \synprd{\textit{d-char}}
   \synprd{\textit{d-char-sequence d-char}}
 \synsym{d-char}
-  \synprd{除空格、左括号\texttt{(}、右括号\texttt{)}、反斜杠\texttt{\bslh}和表示
+  \synprd{除空格、左括号\texttt{(}、右括号\texttt{)}、反斜杠\texttt{\bs}和表示
           水平制表、垂直制表、换页和新}
   \synprd[]{行的控制字符以外的基本源字符集成员。}
 
@@ -807,16 +807,16 @@ z\qsgl}。宽字符字面值类型为\texttt{wchar\_t}。\footnote{适用于字�
 \textit{字符串字面值}指双引号包围的字符序列（第5.13.3节定义），可选前缀
 \texttt{R}、\texttt{u8}、\texttt{u8R}、\texttt{u}、\texttt{uR}、\texttt{U}、
 \texttt{UR}、\texttt{L}或\texttt{LR}，比如
-\texttt{\qdbl{}\ldots\qdbl}、
-\texttt{R\qdbl{}(\ldots)\qdbl}、
-\texttt{u8\qdbl{}\ldots\qdbl}、
-\texttt{u8R\qdbl{}**(\ldots)**\qdbl}、
-\texttt{u\qdbl{}\ldots\qdbl}、
-\texttt{uR\qdbl{}*\textasciitilde(\ldots)*\textasciitilde\qdbl}、
-\texttt{U\qdbl{}\ldots\qdbl}、
-\texttt{UR\qdbl{}zzz(\ldots)zzz\qdbl}、
-\texttt{L\qdbl{}\ldots\qdbl}或
-\texttt{LR\qdbl{}(\ldots)\qdbl}。
+\texttt{\dq{}\ldots\dq}、
+\texttt{R\dq{}(\ldots)\dq}、
+\texttt{u8\dq{}\ldots\dq}、
+\texttt{u8R\dq{}**(\ldots)**\dq}、
+\texttt{u\dq{}\ldots\dq}、
+\texttt{uR\dq{}*\textasciitilde(\ldots)*\textasciitilde\dq}、
+\texttt{U\dq{}\ldots\dq}、
+\texttt{UR\dq{}zzz(\ldots)zzz\dq}、
+\texttt{L\dq{}\ldots\dq}或
+\texttt{LR\dq{}(\ldots)\dq}。
 
 \paragraph{}
 前缀中有\texttt{R}的\textit{字符串字面值}为\textit{原始字符串字面值}。
@@ -826,8 +826,8 @@ z\qsgl}。宽字符字面值类型为\texttt{wchar\_t}。\footnote{适用于字�
 
 \paragraph{}
 「注：\textit{原始字符串}中字符\texttt{'('}和\texttt{')'}是允许的。因此
-\texttt{R\qdbl{}delimiter((a|b))delimiter\qdbl}等价于
-\texttt{\qdbl{}(a|b)\qdbl}。」
+\texttt{R\dq{}delimiter((a|b))delimiter\dq}等价于
+\texttt{\dq{}(a|b)\dq}。」
 
 \paragraph{}
 「注：源文件原始字符串中的新行会在执行字符串字面值中产生新行。假定以下例子中的行
@@ -847,13 +847,13 @@ z\qsgl}。宽字符字面值类型为\texttt{wchar\_t}。\footnote{适用于字�
   a"
   )a"
 \end{lstlisting}
-等价于\texttt{\qdbl\bslh n)\bslh\bslh\bslh na\bslh\qdbl\bslh n\qdbl}。
+等价于\texttt{\dq\bs n)\bs\bs\bs na\bs\dq\bs n\dq}。
 原始字符串
 \begin{lstlisting}
   R"(x = "\"y\"")"
 \end{lstlisting}
-等价于\texttt{\qdbl x = \bslh\qdbl\bslh\bslh\bslh\qdbl y\bslh\bslh\bslh\qdbl
-\bslh\qdbl\qdbl}。」
+等价于\texttt{\dq x = \bs\dq\bs\bs\bs\dq y\bs\bs\bs\dq
+\bs\dq\dq}。」
 
 \paragraph{}
 在第6阶段后，不以\textit{encoding-prefix}开头的\textit{原始字符串}为
@@ -861,7 +861,7 @@ z\qsgl}。宽字符字面值类型为\texttt{wchar\_t}。\footnote{适用于字�
 
 \paragraph{}
 以\texttt{u8}开头的\textit{字符串字面值}，如
-\texttt{u8\qdbl{}asdf\qdbl}，为\textit{UTF-8字符串字面值}。
+\texttt{u8\dq{}asdf\dq}，为\textit{UTF-8字符串字面值}。
 
 \paragraph{}
 普通字符串字面值和UTF-8字符串字面值也称为窄字符串字面值。窄字符串字面值具有类型
@@ -874,20 +874,20 @@ z\qsgl}。宽字符字面值类型为\texttt{wchar\_t}。\footnote{适用于字�
 
 \paragraph{}
 以\texttt{u}开头的\textit{字符串字面值}，如
-\texttt{u\qdbl{}asdf\qdbl}，指\texttt{char16\_t}字符串字面值。
+\texttt{u\dq{}asdf\dq}，指\texttt{char16\_t}字符串字面值。
 \texttt{char16\_t}字符串字面值具有类型``\textit{n}个\texttt{const char16\_t}的
 数组''，这里的\textit{n}为如下定义的字符串大小；该数组使用给定字符初始化。单个
 \textit{c-char}可能产生多于一个的代理对形式的\texttt{char16\_t}字符。
 
 \paragraph{}
 以\texttt{U}开头的\textit{字符串字面值}为\texttt{char32\_t}字符串字面值，
-比如\texttt{U\qdbl{}asdf\qdbl}。\texttt{char32\_t}字符串字面值
+比如\texttt{U\dq{}asdf\dq}。\texttt{char32\_t}字符串字面值
 具有类型``\texttt{n}个\texttt{const char32\_t}的数组''，这里的\textit{n}指如下
 定义的字符串的大小；该数组以给定字符初始化。
 
 \paragraph{}
 以\texttt{L}开头的\textit{字符串字面值}为\textit{宽字符串字面值}，比如
-\texttt{L\qdbl{}asdf\qdbl}。宽字符串字面值具有类型``\textit{n}个
+\texttt{L\dq{}asdf\dq}。宽字符串字面值具有类型``\textit{n}个
 \texttt{const wchar\_t}的数组''，这里\textit{n}指如下定义的字符串的大小；该数组
 经给定字符初始化。
 
@@ -909,15 +909,15 @@ z\qsgl}。宽字符字面值类型为\texttt{wchar\_t}。\footnote{适用于字�
     \multicolumn{2}{|c}{Source} & Means &
     \multicolumn{2}{c}{Source} & Means &
     \multicolumn{2}{c}{Source} & Means  \\
-    \texttt{u\qdbl a\qdbl} & \texttt{u\qdbl b\qdbl} & \texttt{u\qdbl ab\qdbl} &
-    \texttt{U\qdbl a\qdbl} & \texttt{U\qdbl b\qdbl} & \texttt{U\qdbl ab\qdbl} &
-    \texttt{L\qdbl a\qdbl} & \texttt{L\qdbl b\qdbl} & \texttt{L\qdbl ab\qdbl} \\
-    \texttt{u\qdbl a\qdbl} & \texttt{ \qdbl b\qdbl} & \texttt{u\qdbl ab\qdbl} &
-    \texttt{U\qdbl a\qdbl} & \texttt{ \qdbl b\qdbl} & \texttt{U\qdbl ab\qdbl} &
-    \texttt{L\qdbl a\qdbl} & \texttt{ \qdbl b\qdbl} & \texttt{L\qdbl ab\qdbl} \\
-    \texttt{ \qdbl a\qdbl} & \texttt{u\qdbl b\qdbl} & \texttt{u\qdbl ab\qdbl} &
-    \texttt{ \qdbl a\qdbl} & \texttt{U\qdbl b\qdbl} & \texttt{U\qdbl ab\qdbl} &
-    \texttt{ \qdbl a\qdbl} & \texttt{L\qdbl b\qdbl} & \texttt{L\qdbl ab\qdbl} \\
+    \texttt{u\dq a\dq} & \texttt{u\dq b\dq} & \texttt{u\dq ab\dq} &
+    \texttt{U\dq a\dq} & \texttt{U\dq b\dq} & \texttt{U\dq ab\dq} &
+    \texttt{L\dq a\dq} & \texttt{L\dq b\dq} & \texttt{L\dq ab\dq} \\
+    \texttt{u\dq a\dq} & \texttt{ \dq b\dq} & \texttt{u\dq ab\dq} &
+    \texttt{U\dq a\dq} & \texttt{ \dq b\dq} & \texttt{U\dq ab\dq} &
+    \texttt{L\dq a\dq} & \texttt{ \dq b\dq} & \texttt{L\dq ab\dq} \\
+    \texttt{ \dq a\dq} & \texttt{u\dq b\dq} & \texttt{u\dq ab\dq} &
+    \texttt{ \dq a\dq} & \texttt{U\dq b\dq} & \texttt{U\dq ab\dq} &
+    \texttt{ \dq a\dq} & \texttt{L\dq b\dq} & \texttt{L\dq ab\dq} \\
     \hline
   \end{tabular}
   \label{tab:str-lit-concat}
@@ -928,28 +928,28 @@ z\qsgl}。宽字符字面值类型为\texttt{wchar\_t}。\footnote{适用于字�
 \begin{lstlisting}
 	"\xA" "B"
 \end{lstlisting}
-在连接后包含两个字符\texttt{\qsgl\bslh xA\qsgl}和\texttt{\qsgl B\qsgl}（而不是单
-个十六进制字符\texttt{\qsgl\bslh xAB\qsgl}。」
+在连接后包含两个字符\texttt{\sq\bs xA\sq}和\texttt{\sq B\sq}（而不是单
+个十六进制字符\texttt{\sq\bs xAB\sq}。」
 
 \paragraph{}
-翻译阶段7中，在必要的连接完成后，\texttt{\qsgl\bslh 0\qsgl}被填充到每一个字符串
+翻译阶段7中，在必要的连接完成后，\texttt{\sq\bs 0\sq}被填充到每一个字符串
 字面值，使得扫描字符串的程序能找到其结尾。
 
 \paragraph{}
 非原始字符串字面值中的转义序列和\textit{通用字符名}与字符字面值（5.13.3）中具有
-相同涵义，除了单引号\texttt{\qsgl}可由其自身或由转义\texttt{\bslh\qsgl}表示，双
-引号应该使用\textit{\bslh}转义，且\texttt{char16\_t}字符串字面值中的
+相同涵义，除了单引号\texttt{\sq}可由其自身或由转义\texttt{\bs\sq}表示，双
+引号应该使用\textit{\bs}转义，且\texttt{char16\_t}字符串字面值中的
 \textit{通用字符名}可能产生代理对。在窄字符字面值中，一个\textit{通用字符名}可能
 由于\textit{多字节编码}映射到多于一个\texttt{char}元素。\texttt{char32\_t}或宽字
 符字面值的大小为转义序列，\textit{通用字符名}和其他字符总数，加上结尾的
-\texttt{U\qsgl\bslh 0\qsgl}或\texttt{L\qsgl\bslh 0\qsgl}。\texttt{char16\_t}字符
+\texttt{U\sq\bs 0\sq}或\texttt{L\sq\bs 0\sq}。\texttt{char16\_t}字符
 字面值的大小为转义序列，\textit{通用字符名}和其他字符总数，对每一个需要代理对加
-上一，再加上结尾的\texttt{u\qsgl\bslh 0\qsgl}。「注：\texttt{char16\_t}字符字面
+上一，再加上结尾的\texttt{u\sq\bs 0\sq}。「注：\texttt{char16\_t}字符字面
 值的大小为代码单元总数，而不是字符总数。」在\texttt{char32\_t}和
 \texttt{char16\_t}字符串字面值里，任何\textit{通用字符名}应该在\texttt{0x0}到
 \texttt{0x10FFFF}的范围内。窄字符串字面值的大小为转义序列和其他字符总数，对每一
 个多字节编码的\textit{通用字符名}至少加一，再加上结尾的
-\texttt{\qsgl\bslh 0\qsgl}。
+\texttt{\sq\bs 0\sq}。
 
 \paragraph{}
 对\textit{字符串字面值}求值产生一个静态存储期字符串字面值对象，使用给定的字符初
@@ -1017,16 +1017,16 @@ z\qsgl}。宽字符字面值类型为\texttt{wchar\_t}。\footnote{适用于字�
 如果\textit{L}为\textit{user-defined-integer-literal}，设\textit{n}为不带
 \textit{ud-suffix}的字面值。如果\textit{S}包含具有参数类型\texttt{unsigned long
 long}的字面值运算符，字面值\textit{L}被当成形如                               \\
-\mbox{\qquad \texttt{operator \qdbl\qdbl}\ \
+\mbox{\qquad \texttt{operator \dq\dq}\ \
   \textit{X}\texttt{(}\textit{n}\texttt{ULL)}}                                \\
 的调用。否则，\textit{S}应该包含原始字面值运算符或字面值模板（16.5.8），但不是两
 者均有。如果\textit{S}包含原始字面值运算符，字面值\textit{L}被当成形如        \\
-\mbox{\qquad \texttt{operator \qdbl\qdbl}\ \
-  \textit{X}\texttt{(\qdbl}\textit{n}\texttt{\qdbl)}}                         \\
+\mbox{\qquad \texttt{operator \dq\dq}\ \
+  \textit{X}\texttt{(\dq}\textit{n}\texttt{\dq)}}                         \\
 的调用。否则（\textit{S}包含字面值运算符模板），\textit{L}被当成形如          \\
-\mbox{\qquad \texttt{operator \qdbl\qdbl}\ \ \textit{X}\texttt{<}
-  \textit{\qsgl c$_1$\qsgl}\texttt{,} \textit{\qsgl c$_2$\qsgl}\texttt{,} \ldots
-  \textit{\qsgl c$_k$\qsgl}\texttt{>()}}                                      \\
+\mbox{\qquad \texttt{operator \dq\dq}\ \ \textit{X}\texttt{<}
+  \textit{\sq c$_1$\sq}\texttt{,} \textit{\sq c$_2$\sq}\texttt{,} \ldots
+  \textit{\sq c$_k$\sq}\texttt{>()}}                                      \\
 的调用，这里的\textit{n}为源字符序列\textit{c$_1$c$_2$\ldots c$_k$}。「注：序列
 \textit{c$_1$c$_2$\ldots c$_k$}只能包含基本源字符集成员。」
 
@@ -1034,16 +1034,16 @@ long}的字面值运算符，字面值\textit{L}被当成形如                 
 如果\textit{L}是一个\textit{user-defined-floating-literal}，设\textit{f}为其不带
 \textit{ud-suffix}的字面值。如果\textit{S}包含参数类型为\texttt{long double}的字
 面值运算符，则字面值\textit{L}被当成形如                                      \\
-\mbox{\qquad \texttt{operator \qdbl\qdbl}\ \
+\mbox{\qquad \texttt{operator \dq\dq}\ \
   \textit{X}\texttt{(}\textit{f}\texttt{L)}}                                  \\
 的调用。否则，\textit{S}应该包含原始字面值运算符或字面值运算符模板（16.5.8），但
 不能两者都有。如果\textit{S}包含原始字面值运算符，则\textit{字面值L}被当成形如\\
-\mbox{\qquad \texttt{operator \qdbl\qdbl}\ \
-  \textit{X}\texttt{(\qdbl}\textit{f}\texttt{\qdbl)}}                         \\
+\mbox{\qquad \texttt{operator \dq\dq}\ \
+  \textit{X}\texttt{(\dq}\textit{f}\texttt{\dq)}}                         \\
 的调用。否则（\textit{S}包含字面值运算符模板），\textit{L}被当成形如          \\
-\mbox{\qquad \texttt{operator \qdbl\qdbl}\ \ \textit{X}\texttt{<}
-  \textit{\qsgl c$_1$\qsgl}\texttt{,} \textit{\qsgl c$_2$\qsgl}\texttt{,} \ldots
-  \textit{\qsgl c$_k$\qsgl}\texttt{>()}}                                      \\
+\mbox{\qquad \texttt{operator \dq\dq}\ \ \textit{X}\texttt{<}
+  \textit{\sq c$_1$\sq}\texttt{,} \textit{\sq c$_2$\sq}\texttt{,} \ldots
+  \textit{\sq c$_k$\sq}\texttt{>()}}                                      \\
 的调用，这里的\textit{f}为源字符序列\textit{c$_1$c$_2$\ldots c$_k$}。「注：序列
 \textit{c$_1$c$_2$\ldots c$_k$}只能包含基本源字符集成员。」
 
@@ -1051,7 +1051,7 @@ long}的字面值运算符，字面值\textit{L}被当成形如                 
 如果\textit{L}是一个\textit{user-defined-string-literal}，设\textit{str}为它的没
 有\textit{ud-suffix}的字面值，且设\textit{len}为\textit{str}中代码单元的个数（即
 不含结尾零字符的长度）。字面值\textit{L}被当作形如                            \\
-\mbox{\qquad\texttt{operator \qdbl\qdbl}\
+\mbox{\qquad\texttt{operator \dq\dq}\
   \textit{X}\texttt{(}\textit{str, len}\texttt{)}}                            \\
 的调用。
 
@@ -1059,7 +1059,7 @@ long}的字面值运算符，字面值\textit{L}被当成形如                 
 如果\textit{L}是一个\textit{user-defined-character-literal}，设\textit{ch}为它的
 没有\textit{ud-suffix}的字面值。\textit{S}应该包含一个字面值运算符，具有唯一的类
 型为\textit{ch}的参数且\textit{L}被当作形如                                   \\
-\mbox{\qquad\texttt{operator \qdbl\qdbl}\
+\mbox{\qquad\texttt{operator \dq\dq}\
   \textit{X}\texttt{(}\textit{ch}\texttt{)}}                                  \\
 的调用。
 

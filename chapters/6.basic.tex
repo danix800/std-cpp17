@@ -1041,9 +1041,9 @@ injected-class-name（第12章）声明点紧跟类定义的左括号。
 \paragraph{}
 如果一个\textit{pseudo-destructor-name}（8.2.4）包含一个
 \textit{nested-name-specifier}，该\textit{type-names}作为在
-\textit{nested-names-specifier}所指代的作用域中的类型进行查询。类似的，形如：
-\mbox{\qquad\textit{nested-name-specifier$_{opt}$ class-name::$\sim$class-name}}
-\\
+\textit{nested-names-specifier}所指代的作用域中的类型进行查询。类似的，形如： \\
+\mbox{\qquad\textit{nested-name-specifier\tsub{opt}
+  class-name::$\sim$class-name}} \\
 的\textit{qualified-id}，第二个类名在第一个类名所在作用域内查询。「例：
 \begin{lstlisting}
   struct C {

@@ -50,8 +50,8 @@
 
 \sect{本文档结构}{intro.structure}
 \paragraph{}
-第15章至第19章描述C++语言。该描述包括第4.3节中所述形式的详细语法规范。为方便起见，
-附件A重复了所有语法规范。
+第5章至第19章描述C++语言。包括第4.3节中所述形式的详细语法规范。为方便起见，附件A
+重复了所有语法规范。
 
 \paragraph{}
 第21章至第33章和附件D（库章节）描述了C++标准库。 该描述包括以第20章中所述形式构成
@@ -70,11 +70,11 @@
 
 \sect{语法记号}{syntax}
 \paragraph{}
-本文档所用语法记号中，语法类别由斜体\textit{italic}表示，字面值和字符使用等宽
-\texttt{width}字体表示。可选型在单独行列出，除少数情况下，一长串可选型集用
-``one of''标记。如果可选型太长而无法放在一行上，则文本将从第一行缩进的后续行上继续。
-可选的结束符或非结束符号由下标“opt”表示，如 \\
-  \synprd{\texttt{\{} \textit{expression$_{opt}$} \texttt{\}}}
+本文档所用语法记号中，语法类别由斜体（\textit{italic}）表示，字面值和字符使用等
+宽（\texttt{constant width}）字体表示。可选型在单独行列出，除少数情况下，一长串
+可选型集用``one of''标记。如果可选型太长而无法放在一行上，则文本将从第一行缩进的
+后续行上继续。可选的结束符或非结束符号由下标``\textit{\tsub{opt}}''表示，如 \\
+  \synprd{\texttt{\{} \textit{expression\tsub{opt}} \texttt{\}}}
 表示括号包含的可选表达式。
 
 \paragraph{}
@@ -531,9 +531,9 @@ volatile泛左值计算时认为副作用完成，即使由调用（如I/O本身
         \item{\textit{B}是\texttt{std::kill\_dependency}（32.4）的任何特例化的调
           用，或}
         \item{\textit{A}是内置逻辑\texttt{AND}（\&\&，见8.14）或逻辑\texttt{OR}
-          （||，见8.15）运算符的左操作数，或}
-        \item{\textit{A}是条件运算符（\texttt{?:}，见8.16）的左操作数，或}
-        \item{\textit{A}是内置逗号运算符（\texttt{,}）（8.19）的左操作数；}
+          （||，见8.15）运算符的剩余操作数，或}
+        \item{\textit{A}是条件运算符（\texttt{?:}，见8.16）的剩余操作数，或}
+        \item{\textit{A}是内置逗号运算符（\texttt{,}）（8.19）的剩余操作数；}
       \end{enumerate}
       或}
   \item{\textit{A}写入标量对象或位域\textit{M}，\textit{B}从\textit{M}中读

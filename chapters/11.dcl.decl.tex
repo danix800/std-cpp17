@@ -1,22 +1,1050 @@
 %% 11.dcl.decl
 
 \chptr{声明子}{dcl.decl}
+\paragraph{}
+在一个声明中，声明子声明单个变量，函数或类型。出现在声明中的
+\nt{init-declarator-list}是逗号分隔的声明子列表，每一个都可以有初始化。
+
+\synsym{init-declarator-list}
+  \synprd{\nt{init-declarator}}
+  \synprd{\nt{init-declarator-list} \tm{,} \nt{init-declarator}}
+\synsym{init-declarator}
+  \synprd[]{\nt{declarator initializer\tsub{opt}}}
+
+\paragraph{}
+\nt{simple-declaration}的三个成分为属性（\ref{dcl.attr}），说明符（
+\nt{decl-specifier-seq}；\ref{dcl.spec}）和声明子（\nt{init-declarator-list}）。
+说明符表明所声明实体的类型，存储类或其他属性。声明子指明这些实体的名并（可选地）
+使用运算符修改说明符的类型，比如\tm{*}（指向）和\tm{()}（函数返回）。也可以在声
+明子中指定初始值；初始化在\ref{dcl.init}和\ref{class.init}中讨论。
+
+\paragraph{}
+声明中的每一个\nt{init-declarator}如同其本身是一个声明一样进行独立分析。「注：带
+有多个声明子的声明通常等价于对应的具有单个声明子的声明序列。即
+\begin{lstlisting}
+  T D1, D2, ... Dn;
+\end{lstlisting}
+通常等价于
+\begin{lstlisting}
+  T D1; TD2; ... T Dn;
+\end{lstlisting}
+其中\tm{T}是一个\nt{decl-specifier-seq}，每一个\tm{Di}是一个\nt{init-declarator}
+。一个例外是当声明子之一所引入的名字隐藏了\nt{decl-specifier}所用的类型名，因此
+当同一\nt{decl-specifier}用于后续声明时，它们不再具有相同的语义，比如
+\begin{lstlisting}
+  struct S { ... };
+  S S, T;             // declare two instances of struct S
+\end{lstlisting}
+不等价于
+\begin{lstlisting}
+  struct S { ... };
+  S S;
+  S T;                // error
+\end{lstlisting}
+另一个例外是当\tm{T}为\tm{auto}（\ref{dcl.spec.auto}）时，比如：
+\begin{lstlisting}
+  auto i = 1, j = 2.0; // error: deduced types for i and j do not match
+\end{lstlisting}
+与之相对的是
+\begin{lstlisting}
+  auto i = 1;         // OK: i deduced to have type int
+  auto j = 2.0;       // OK: j deduced to have type double
+\end{lstlisting}」
+
+\paragraph{}
+声明子语法为
+
+\synsym{declarator}
+  \synprd{\nt{ptr-declarator}}
+  \synprd{\nt{noptr-declarator parameters-and-qualifiers trailing-return-type}}
+\synsym{ptr-declarator}
+  \synprd{\nt{noptr-declarator}}
+  \synprd{\nt{ptr-operator ptr-declarator}}
+\synsym{noptr-declarator}
+  \synprd{\nt{declarator-id attribute-specifier-seq\tsub{opt}}}
+  \synprd{\nt{noptr-declarator parameters-and-qualifiers}}
+  \synprd{\nt{noptr-declarator} \tm{[} \nt{constant-expression\tsub{opt}} \tm{]}
+    \nt{attribute-specifier-seq\tsub{opt}}}
+  \synprd{\tm{(} \nt{ptr-declarator} \tm{)}}
+\synsym{parameters-and-qualifiers}
+  \synprd{\tm{(} \nt{parameter-declaration-clause} \tm{)}
+    \nt{cv-qualifier-seq\tsub{opt}}}
+  \synprd{\qquad\nt{ref-qualifier\tsub{opt}
+    noexcept-specifier\tsub{opt} attribute-specifier-seq\tsub{opt}}}
+\synsym{trailing-return-type}
+  \synprd{\tm{->} \nt{type-id}}
+\synsym{ptr-operator}
+  \synprd{\tm{*} \nt{attribute-specifier-seq\tsub{opt} cv-qualifier-seq\tsub{opt}}}
+  \synprd{\tm{\&} \nt{attribute-specifier-seq\tsub{opt}}}
+  \synprd{\tm{\&\&} \nt{attribute-specifier-seq\tsub{opt}}}
+  \synprd{\nt{nested-name-specifier} \tm{*} \nt{attribute-specifier-seq\tsub{opt}
+    cv-qualifier-seq\tsub{opt}}}
+\synsym{cv-qualifier-seq}
+  \synprd{\nt{cv-qualifier cv-qualifier-seq\tsub{opt}}}
+\synsym{cv-qualifier}
+  \synprd{\tm{const}}
+  \synprd{\tm{volatile}}
+\synsym{ref-qualifier}
+  \synprd{\tm{\&}}
+  \synprd{\tm{\&\&}}
+\synsym{declarator-id}
+  \synprd[]{\tm{...}\nt{\tsub{opt} id-expression}}
 
 \sect{类型名}{dcl.name}
+\paragraph{}
+为显式指定类型转换和作为\tm{sizeof}，\tm{alignof}，\tm{new}和\tm{typeid}的参数，
+应该指定类型名。可以通过\nt{type-id}来指定，其语法上是该类型的变量或函数的声明，
+在声明中实体的名字被忽略。
+
+\synsym{type-id}
+  \synprd{\nt{type-specifier-seq abstract-declarator\tsub{opt}}}
+\synsym{defining-type-id}
+  \synprd{\nt{defining-type-specifier-seq abstract-declarator\tsub{opt}}}
+\synsym{abstract-declarator}
+  \synprd{\nt{ptr-abstract-declarator}}
+  \synprd{\nt{noptr-abstract-declarator\tsub{opt} parameters-and-qualifiers
+    trailing-return-type}}
+  \synprd{\nt{abstract-pack-declarator}}
+\synsym{ptr-abstract-declarator}
+  \synprd{\nt{noptr-abstract-declarator}}
+  \synprd{\nt{ptr-operator ptr-abstract-declarator\tsub{opt}}}
+\synsym{noptr-abstract-declarator}
+  \synprd{\nt{noptr-abstract-declarator\tsub{opt} parameters-and-qualifiers}}
+  \synprd{\nt{noptr-abstract-declarator\tsub{opt}} \tm{[}
+    \nt{constant-expression\tsub{opt}} \tm{]}
+    \nt{attribute-specifier-seq\tsub{opt}}}
+  \synprd{\tm{(} \nt{ptr-abstract-declarator} \tm{)}}
+\synsym{abstract-pack-declarator}
+  \synprd{\nt{noptr-abstract-pack-declarator}}
+  \synprd{\nt{ptr-operator abstract-pack-declarator}}
+\synsym{noptr-abstract-pack-declarator}
+  \synprd{\nt{noptr-abstract-pack-declarator parameters-and-qualifiers}}
+  \synprd{\nt{noptr-abstract-pack-declarator} \tm{[}
+    \nt{constant-expression\tsub{opt}} \tm{]}
+    \nt{attribute-specifier-seq\tsub{opt}}}
+  \synprd[]{\tm{...}}
+
+当结构是声明中的声明子时，唯一识别\nt{abstract-declarator}中标识符出现的位置是可
+能的。此时所命名类型与假想标识符的类型相同。「例：
+\begin{lstlisting}
+  int               // int i
+  int *             // int *pi
+  int *[3]          // int *p[3]
+  int (*)[3]        // int (*p3i)[3]
+  int *()           // int *f()
+  int (*)(double)   // int (*pf)(double)
+\end{lstlisting}
+分别命名类型``\tm{int}''，``\tm{int}指针''，``3个\tm{int}指针的数组''，``指向3个
+\tm{int}的数组的指针''，``返回\tm{int}指针的（无参数）函数''和``返回\tm{int}的
+（\tm{double}）函数指针''。」
+
+\paragraph{}
+类型也可以用\tm{typedef}（\ref{dcl.typedef}）来命名（通常更容易）。
 
 \sect{歧义解析}{dcl.ambig.res}
+\paragraph{}
+\ref{stmt.ambig}中所提到的函数式转换和声明之间的相似性所引起的歧义也可能在声明的
+上下文中出现。这该上下文中，选择出现在参数名有冗余括号集合的函数式声明和带有函数
+式转换作为初始化的对象声明之间。正如\ref{stmt.ambig}中所提到的歧义性，解析所要做
+的就是将任何可能是声明的结构当作是声明。「注：一个声明可以通过在参数外加括号来显
+式去歧义。通过拷贝初始化或列表初始化语法，或通过非函数式风格的转换可以避免歧义。」
+「例：
+\begin{lstlisting}
+  struct S {
+    S(int);
+  };
+  void foo(double a) {
+    S w(int(a));    // function declaration
+    S x(int());     // function declaration
+    S y((int(a)));  // object declaration
+    S y((int) a);   // object declaration
+    S z = int(a);   // object declaration
+  }
+\end{lstlisting}」
 
-\sect{声明子意义}{dcl.meaning}
+\paragraph{}
+函数式转换和\nt{type-id}之间可能引起歧义。解析方式是任何在其语法上下文中可能是一
+个\nt{type-id}的结构应该被当作是一个\nt{type-id}。「例：
+\begin{lstlisting}
+  template <class T> struct X {};
+  template <int N> struct Y {};
+  X<int()> a;                 // type-id
+  X<int(1)> b;                // expression (ill-formed)
+  Y<int()> c;                 // type-id (ill-formed)
+  Y<int(1)> d;                // expression
+  void foo(signed char a) {
+    sizeof(int());            // type-id (ill-formed)
+    sizeof(int(a));           // expression
+    sizeof(int(unsigned(a))); // type-id (ill-formed)
+
+    (int())+1;                // type-id (ill-formed)
+    (int(a))+1;               // expression
+    (int(unsigned(a)))+1;     // type-id (ill-formed)
+  }
+\end{lstlisting}」
+
+\paragraph{}
+当\nt{type-name}嵌套于括号中时，\nt{parameter-declaration-clause}会引起另一个歧
+义。在这种情况下，选择出现在函数指针类型的参数的声明和带有\nt{declarator-id}外的
+冗余括号的参数声明之间。解析方式是将\nt{type-name}当作一个
+\nt{simple-type-specifier}而不是一个\nt{declarator-id}。「例：
+\begin{lstlisting}
+  class C { };
+  void f(int(C)) { }    // void f(int(*fp) (C c) ) { }
+                        // not: void f(int C) { }
+  int g(C);
+  void foo() {
+    f(1);               // error: cannot convert 1 to function pointer
+    f(g);               // OK
+  }
+\end{lstlisting}
+另一个例子，
+\begin{lstlisting}
+  class C { };
+  void h(int *(C[10])); // void h(int *(*_fp)(C _parm[10]));
+                        // not: void h(int *C[10]);
+\end{lstlisting}」
+
+\sect{声明子语义}{dcl.meaning}
+\paragraph{}
+一个声明子包含恰好一个\nt{declarator-id}；它命名所声明的标识符。一个出现在
+\nt{declarator-id}中的\nt{unqualified-id}应该是一个简单\nt{identifier}，除非是某
+些特殊函数（\ref{class.ctor}，\ref{class.conv}，\ref{class.dtor}，
+\ref{over.over}）的声明或模板特例化或实例化声明（\ref{temp.spec}）。当
+\nt{declarator-id}是限定的，声明应该引用之前声明的类或命名空间成员（由限定符所引
+用）（或在命名空间的情况，该命名空间的内联命名空间集的元素
+（\ref{namespace.def}））或引用其特例化；成员不应该仅由\nt{declarator-id}的
+\nt{nested-name-specifier}所提名的类或命名空间作用域中的一个
+\nt{using-declaration}引入。限定\nt{declarator-id}的\nt{nested-name-specifier}不
+应该以\nt{decltype-specifier}开始。「注：如果限定符是一个\tm{::}全局作用域解析运
+算符，则\nt{declarator-id}引用全局命名空间作用域中声明的一个名字。」跟在一个
+\nt{declarator-id}之后的可选\nt{attribute-specifier-seq}应用于所声明的实体。
+
+\paragraph{}
+一个\tm{static}，\tm{thread\_local}，\tm{extern}，\tm{mutable}，\tm{friend}，
+\tm{inline}，\tm{virtual}，\tm{constexpr}，\tm{explicit}或\tm{typedef}说明符直接
+应用于\nt{init-declarator-list}或\nt{member-declarator-list}中的每一个
+\nt{declarator-id}；为每一个\nt{declarator-id}所指定的类型依赖于
+\nt{decl-specifier-seq}及其\nt{declarator}。
+
+\paragraph{}
+因此，特定标识符的声明形式为                                                  \\
+\mbox{\qquad\tm{T D}}                                                         \\
+其中\tm{T}的形式为\nt{attribute-specifier-seq\tsub{opt} decl-specifier-seq}，
+\tm{D}是一个声明子。以下是确定由这样的声明为包含的\nt{declarator-id}所指定的类型
+的递归过程。
+
+\paragraph{}
+首先，\nt{decl-specifier-seq}确定类型，在声明                                 \\
+\mbox{\qquad\tm{T D}}                                                         \\
+中，\nt{decl-specifier-seq} \tm{T}确定类型\tm{T}。「例：在声明
+\begin{lstlisting}
+  int unsigned i;
+\end{lstlisting}
+中类型说明符\tm{int unsigned}确定类型``\tm{unsigned int}''
+（\ref{dcl.type.simple}）。」
+
+\paragraph{}
+在声明\nt{attribute-specifier-seq\tsub{opt}} \tm{T D}中，其中\tm{D}是未修饰标识
+符，该标识符类型为``\tm{T}''。
+
+\paragraph{}
+在声明\tm{T D}中，其中\tm{D}形式为                                            \\
+\mbox{\qquad\tm{( D1 )}}                                                      \\
+包含的\nt{declarator-id}的类型与声明                                          \\
+\mbox{\qquad\tm{T D1}}                                                        \\
+中包含的\nt{declarator-id}相同。括号不改变内嵌的\nt{declarator-id}的类型，但可以
+改变复杂声明子的绑定。
+
 \ssect{指针}{dcl.ptr}
+\paragraph{}
+在声明\tm{T D}中，其中\tm{D}的形式为                                          \\
+\mbox{\qquad\tm{*} \nt{attribute-specifier-seq\tsub{opt}
+  cv-qualifier-seq\tsub{opt}} \tm{D1}}                                        \\
+声明\tm{T D1}中的标识符类型为``\nt{derived-declarator-type-list} \tm{T}''，则
+\tm{D}的标识符类型为``指向\tm{T}的\nt{derived-declarator-type-list
+cv-qualifier-seq}指针''。\nt{cv-qualifier}应用于指针而不是所指向的对象。类似的，
+可选的\nt{attribute-specifier-seq}（\ref{dcl.attr.grammar}）应用于指针而不是所指
+向的对象。
+
+\paragraph{}
+「例：声明
+\begin{lstlisting}
+  const int ci = 10, *pc = &ci, *const cpc = pc, **ppc;
+  int i, *p, *const cp = &i;
+\end{lstlisting}
+声明了\tm{ci}，一个整型常量；\tm{pc}，一个整型常量指针；\tm{cpc}，一个整型常量的
+常量指针；\tm{ppc}，一个整型常量指针的指针；\tm{i}，一个整数；\tm{p}，一个整型指
+针；以及\tm{cp}，一个整型常量指针。\tm{ci}，\tm{cpc}和\tm{cp}的值在初始化后不能
+修改。\tm{pc}的值可以修改，\tm{cp}所指向的对象也是。一些正确操作的例子为
+\begin{lstlisting}
+  i = ci;
+  *cp = ci;
+  pc++;
+  pc = cpc;
+  pc = p;
+  ppc = &pc;
+\end{lstlisting}
+病态操作例子有
+\begin{lstlisting}
+  ci = 1;     // error
+  ci++;       // error
+  *pc = 2;    // error
+  cp = &ci;   // error
+  cpc++;      // error
+  p = pc;     // error
+  ppc = &p;   // error
+\end{lstlisting}
+以上每一个都不可接受，因其要么改变了声明为\tm{const}的变量的值，要么通过之后的cv
+未限定指针允许修改其值，比如：
+\begin{lstlisting}
+  *ppc = &ci; // OK, but would make p point to ci because of previous error
+  *p = 5;     // clobber ci
+\end{lstlisting}」
+
+\paragraph{}
+参见\ref{expr.ass}和\ref{dcl.init}。
+
+\paragraph{}
+「注：形成引用类型的指针是病态的；见\ref{dcl.ref}。如果函数类型具有
+\nt{cv-qualifier}或\nt{ref-qualifier}则形成函数指针类型是病态的；见\ref{dcl.fct}
+。因不能对位域（\ref{class.bit}）取地址，指针永远不会指向位域。」
+
 \ssect{引用}{dcl.ref}
+\paragraph{}
+在声明\tm{T D}中，\tm{D}具有以下形式之一                                      \\
+\mbox{\qquad\tm{\&} \nt{attribute-specifier-seq\tsub{opt}} \tm{D1}}           \\
+\mbox{\qquad\tm{\&\&} \nt{attribute-specifier-seq\tsub{opt}} \tm{D1}}         \\
+并且声明\tm{T D1}中的标识符类型为``\nt{derived-declarator-type-list} \tm{T}''，
+则\tm{D}的标识符类型为``\tm{T}的\nt{derived-declarator-type-list}的引用''。可选
+的\nt{attribute-specifier-seq}应用于引用类型。cv限定的引用是病态的，除非当cv限定
+符是通过使用\nt{typedef-name}（\ref{dcl.typedef}，\ref{temp.param}）或
+\nt{decltype-specifier}（\ref{dcl.type.simple}）引入的，此时cv限定符将被忽略。
+「例：
+\begin{lstlisting}
+  typedef int& A;
+  const A aref = 3; // ill-formed; lvalue reference to non-const initialized
+                    // with rvalue
+\end{lstlisting}
+\tm{aref}的类型为``\tm{int}的左值引用''，而不是``\tm{const int}的左值引用''。」
+「注：引用可以理解为对象的名字。」指定类型``\nt{cv} \tm{void}的引用''的声明子是
+病态的。
+
+\paragraph{}
+使用\tm{\&}声明的引用类型被称为\nt{左值引用}，使用\tm{\&\&}声明的引用类型被称为
+\nt{右值引用}。左值引用与右值引用是不同的类型。除显式注明，它们在语义上是等价的
+且统称引用。
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  void f(double& a) { a += 3.14; }
+  // ...
+  double d = 0;
+  f(d);
+\end{lstlisting}
+声明\tm{a}为\tm{f}的引用参数，因此调用\tm{f(d)}将\tm{3.14}加到\tm{d}上。
+\begin{lstlisting}
+  int v[20];
+  // ...
+  int& g(int i) { return v[i]; }
+  // ...
+  g(3) = 7;
+\end{lstlisting}
+声明函数\tm{g()}为返回整型引用，因此\tm{g(3)=7}将\tm{7}赋给数组\tm{v}的第四个元
+素。另一个例子为，
+\begin{lstlisting}
+  struct link {
+    link* next;
+  };
+
+  link* first;
+
+  void h(link*& p) { // p is a reference to pointer
+    p->next = first;
+    first = p;
+    p = 0;
+  }
+
+  void k() {
+    link* q = new link;
+    h(q);
+  }
+\end{lstlisting}
+声明\tm{p}为\tm{link}的指针的引用，因此\tm{h(q)}将\tm{q}的值设置为零。见
+\ref{dcl.int.ref}。」
+
+\paragraph{}
+未指定引用是否需要存储（\ref{basic.stc}）。
+
+\paragraph{}
+不应该存在引用的引用，没有引用的数组，且没有引用的指针。引用的声明应该包含初始化
+（\ref{dcl.init.ref}），除非声明包含显式\tm{extern}说明符（\ref{dcl.spec}），是
+类定义中的类成员（\ref{class.mem}）声明或是一个参数或返回类型（\ref{dcl.fct}）的
+声明；见\ref{basic.def}。引用应该初始化为引用一个有效对象或函数。「注：特别是，
+良构程序不能包含空引用，因为唯一能创建这种引用的方法就是将其绑定到通过空指针解引
+用获取的``对象''，而这会引用未定义行为。如\ref{class.bit}中所述，引用不能直接绑
+定到位域。」
+
+\paragraph{}
+如果一个\nt{typedef-name}（\ref{dcl.typedef}，\ref{temp.param}）或一个
+\nt{decltype-specifier}（\ref{dcl.type.simple}）代表引用类型\tm{T}的类型\tm{TR}，
+则创建类型``\nt{cv} \tm{TR}的左值引用''将创建类型``\tm{T}的左值引用''，而创建类
+型``\nt{cv} \tm{TR}的右值引用''将创建类型\tm{TR}。「注：该规则称为引用塌陷
+（reference collapsing）。」
+「例：
+\begin{lstlisting}
+  int i;
+  typedef int& LRI;
+  typedef int&& RRI;
+
+  LRI& r1 = i;            // r1 has the type int&
+  const LRI& r2 = i;      // r2 has the type int&
+  const LRI&& r3 = i;     // r3 has the type int&
+
+  RRI& r4 = i;            // r4 has the type int&
+  RRI&& r5 = 5;           // r5 has the type int&&
+
+  decltype(r2) & r6 = i;  // r6 has the type int&
+  decltype(r2) && r7 = i; // r7 has the type int&
+\end{lstlisting}」
+
+\paragraph{}
+「注：如果函数类型具有\nt{cv-qualifier}或\nt{ref-qualifier}则形成函数类型的引用
+是病态的；见\ref{dcl.fct}。」
+
 \ssect{成员指针}{dcl.mptr}
+\paragraph{}
+在声明\tm{T D}中，\tm{D}的形式为                                              \\
+\mbox{\qquad\nt{nested-name-specifier} \tm{*}
+  \nt{attribute-specifier-seq\tsub{opt} cv-qualifier-seq\tsub{opt} \tm{D1}}}  \\
+\nt{nested-name-specifier}代表一个类，声明\tm{T D1}中的标识符类型为``
+\nt{derived-declarator-type-list} \tm{T}''，则\tm{D}的标识符类型为
+``类型\tm{T}的类\nt{nested-name-specifier}的成员\nt{derived-declarator-type-list
+cv-qualifier-seq}指针''。可选的\nt{attribute-specifier-seq}
+（\ref{dcl.attr.grammar}）应用于成员指针。
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  struct X {
+    void f(int);
+    int a;
+  };
+
+  struct Y;
+
+  int X::* pmi = &X::a;
+  void (X::* pmf)(int) = &X::f;
+  double X::* pmd;
+  char Y::* pmc;
+\end{lstlisting}
+声明\tm{pmi}，\tm{pmf}，\tm{pmd}和\tm{pmc}分别为类型\tm{int}的\tm{X}的成员指针，
+类型\tm{void(int)}的\tm{X}的成员指针，类型\tm{double}的\tm{X}的成员指针和类型
+\tm{char}的\tm{Y}的成员指针。即使\tm{X}没有类型\tm{double}的成员，\tm{pmd}的声明
+也是良态的。类似的，即使\tm{Y}是不完整类型，\tm{pmc}的声明也是良态的。\tm{pmi}和
+\tm{pmc}可以按如下使用：
+\begin{lstlisting}
+  X obj;
+  // ...
+  obj.*pmi = 7;   // assign 7 to an integer member of obj
+  (obj.*pmf)(7);  // call a function member of obj with the argument 7
+\end{lstlisting}」
+
+\paragraph{}
+成员指针不应该指向一个类的静态成员（\ref{class.static}），引用类型成员，或
+``\nt{cv} \tm{void}''。 
+
+「注：见\ref{expr.unary}和\ref{expr.mptr.oper}。类型``成员指针''不同于类型
+``指针''，即，成员指针只能使用成员指针声明子语法来声明，而不是指针声明子语法。
+C++中也不存在``成员引用''类型。」
+
 \ssect{数组}{dcl.array}
+\paragraph{}
+在声明\tm{T D}中，\tm{D}的形式为                                              \\
+\mbox{\qquad\tm{D1 [} \nt{constant-expr\tsub{opt}} \tm{]}
+  \nt{attribute-specifier-seq\tsub{opt}}}                                     \\
+声明\tm{T D1}中的标识符类型为``\nt{derived-declarator-type-list} \tm{T}''，则
+\tm{D}的标识符类型为数组类型；如果\tm{D}的标识符类型包含\tm{auto}
+\nt{type-specifier}，则程序为病态。\tm{T}被称为数组的\nt{元素类型}；该类型不应该
+是引用类型，\nt{cv} \tm{void}，函数类型或抽象类类型。如果存在
+\nt{constant-expression}（\ref{expr.const}），则它应该被转换成类型为
+\tm{std::size t}的常表达式，且其值应该大于等于零。常表达式指定数组的\nt{边界}
+（元素个数）。如果常表达式的值为\tm{N}，则数组具有\tm{N}个标为为\tm{0}到\tm{N-1}
+的元素，\tm{D}的标识符类型为``\tm{N}个\tm{T}的\nt{derived-declarator-type-list}
+数组''。数组类型对象包含连续分配的\tm{N}个类型\tm{T}的子对象的非空集。除以下注明
+外，如果省略了常表达式，则\tm{D}的标识符类型为``\tm{T}的未知边界的
+\nt{derived-declarator-type-list}数组''，这是一个不完整对象类型。类型``\tm{N}个
+\tm{T}的\nt{derived-declarator-type-list}数组''不同于类型``\tm{T}的未知边界的
+\nt{derived-declarator-type-list}数组''，见\ref{basic.types}。任何形如``\tm{N}个
+\tm{T}的\nt{cv-qualifier-seq}数组''的类型被调整成``\tm{N}个\nt{cv-qualifier-seq}
+\tm{T}的数组''，对``\nt{T}的未知边界的数组''也类似。可选的
+\nt{attribute-specifier-seq}应用于数组。「例：
+\begin{lstlisting}
+  typedef int A[5], AA[2][3];
+  typedef const A CA;          // type is “array of 5 const int”
+  typedef const AA CAA;        // type is “array of 2 array of 3 const int”
+\end{lstlisting}」「注：``\tm{N}个\nt{cv-qualifier-seq} \tm{T}的数组''具有cv限定
+类型；见\ref{basic.type.qualifier}。」
+
+\paragraph{}
+当多个``...的数组''规范相邻的时候则创建多维数组；只有指定数组边界的第一个常表达
+式可以忽略。除允许不完整对象类型声明之外，某些情况下函数参数声明（\ref{dcl.fct}）
+中可以省略数组边界。当声明子后跟着初始化（\ref{dcl.init}）或当静态数据成员声明后
+跟\nt{brace-or-equal-initializer}（\ref{class.mem}）时，数组边界也可以省略。以上
+两种情形中，数组边界由所提供的初始元素个数（比如\tm{N}）决定
+（\ref{dcl.init.aggr}），而\tm{D}的标识符类型为``\tm{N}个\tm{T}的数组''。更进一
+步，如果在同一作用域中已经存在一个指定了边界的该实体的声明，则省略边界与之前声明
+的相同，类静态数据成员的定义也类似。
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  float fa[17], *afp[17];
+\end{lstlisting}
+声明了一个\tm{float}数的数组，一个指向\tm{float}数的指针数组。另一个例子是，
+\begin{lstlisting}
+  static int x3d[3][5][7];
+\end{lstlisting}
+声明了一个整型的静态三维数组，其阶为3\ttim{}5\ttim{}7。详细来讲，\tm{x3d}是具有
+三个元素的数组；每一个都是五个数组作为元素的数组；后者的每一个都是七个整型元素的
+数组。表达式\tm{x3d}，\tm{x3d[i]}，\tm{x3d[i][j]}，\tm{x3d[i][j][k]}中的任一个都
+可以合理地出现在表达式中。最后，
+\begin{lstlisting}
+  extern int x[10];
+  struct S {
+    static int y[10];
+  };
+
+  int x[];                // OK: bound is 10
+  int S::y[];             // OK: bound is 10
+
+  void f() {
+    extern int x[];
+    int i = sizeof(x);    // error: incomplete object type
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：影响数组类型表达式的转换在\ref{conv.array}中描述。数组类型对象不能被修改，
+见\ref{basic.lval}。」
+
+\paragraph{}
+「注：除了为类而声明（\ref{over.sub}），下标运算符\tm{[]}解释为\tm{E1[E2]}与
+\tm{*((E1)+(E2))}等价（\ref{expr.sub}）。由于应用于\tm{+}的转换规则，如果\tm{E1}
+是数组而\tm{E2}是整数，则\tm{E1[E2]}引用\tm{E1}的第\tm{E2}个元素。因此，尽管其非
+对称形式，下标是可交换操作。」 
+
+\paragraph{}
+「注：多维数组遵循一致的规则。如果\tm{E}是一个\nt{n}维数组，阶为
+\nt{i}\ttim\nt{j}\ttim...\ttim\nt{k}，则出现在受限于数组到指针转换
+（\ref{conv.array}）的表达式中的\tm{E}被转换成指向一个(n-1)维数组的指针，其阶为
+\nt{j}\ttim...\ttim\nt{k}。如果\tm{*}运算符由于下标或显式或隐式地应用于该指针，
+则结果为所指向的(n-1)维数组，其本身也立即被转换成一个指针。「例：考虑
+\begin{lstlisting}
+  int x[3][5];
+\end{lstlisting}
+这里\tm{x}是整型的3\ttim5数组。当\tm{x}出现在表达式中时，其被转换成指向（3个当中
+的首个）五元素的整型数组。在表达式\tm{x[i]}（等价于\tm{*(x+i)}）中，\tm{x}首先被
+转换成所描述的指针；随后\tm{x+i}被转换成\tm{x}的类型，即将\tm{i}乘以指针所指向的
+对象的长度，也就是五个整型对象。结果相加并应用间接以产生一个数组（五个整数），随
+后被转换成指向第一个元素的指针。如果存在另一个下标则应用同样的参数；此时结果是一
+个整数。」」
+
+\paragraph{}
+「注：此时可知C++中的数组是按行主序进行存储（最后一个下标变化最快），且声明中的
+第一个下标帮助确定数组所需要的存储量，但不参与下标计算。」
+
 \ssect{函数}{dcl.fct}
+\paragraph{}
+在声明\tm{T D}中，\tm{D}的形式为                                              \\
+\mbox{\qquad\tm{D1 (} \nt{parameter-declaration-clause} \tm{)}
+  \nt{cv-qualifier-seq\tsub{opt}}}                                            \\
+\mbox{\qquad\qquad\nt{ref-qualifier\tsub{opt} noexcept-specifier\tsub{opt}
+  attribute-specifier-seq\tsub{opt}}}                                         \\
+声明\tm{T D1}中所包含的\nt{declarator-id}的类型为
+``\nt{derived-declarator-type-list} \tm{T}''，\tm{D}中的\nt{declarator-id}的类型
+为``返回\tm{T}的\nt{(parameter-declaration-clause) cv-qualifier-seq\tsub{opt}
+ref-qualifier\tsub{opt}} \nt{derived-declarator-type-list}
+\tm{noexcept}\nt{\tsub{opt}}函数''，其中可选的\tm{noexcept}当且仅当异常规范
+（\ref{except.spec}）为不抛异常才存在。可选的\nt{attribute-specifier-seq}应用于
+函数类型。
+
+\paragraph{}
+在声明\tm{T D}中，\tm{D}的形式为                                              \\
+\mbox{\qquad\tm{D1 (} \nt{parameter-declaration-clause} \tm{)}
+  \nt{cv-qualifier-seq\tsub{opt}}}                                            \\
+\mbox{\qquad\qquad\nt{ref-qualifier\tsub{opt} noexcept-specifier\tsub{opt}
+  attribute-specifier-seq\tsub{opt} trailing-return-type}}                    \\
+声明\tm{T D1}中包含的\nt{declarator-id}的类型为``\nt{derived-declarator-list}
+\tm{T}''，\tm{T}应该是唯一的\nt{type-specifier} \tm{auto}。\tm{D}中的
+\nt{declarator-id}的类型为``返回\tm{U}的\nt{(parameter-declaration-clause)
+cv-qualifier-seq\tsub{opt} ref-qualifier\tsub{opt}}
+\nt{derived-declarator-type-list} \tm{noexcept}\nt{\tsub{opt}}函数''，其中可选的
+\tm{noexcept}当且仅当异常规范（\ref{except.spec}）为不抛异常才存在。可选的
+\nt{attribute-specifier-seq}应用于函数类型。
+
+\paragraph{}
+两种形式的类型均为\nt{函数类型}。\footnote{如语法所示，cv限定符是函数返回类型的
+重要成分。}
+
+\synsym{parameter-declaration-clause}
+  \synprd{\nt{parameter-declaration-list\tsub{opt}} \tm{...}\nt{\tsub{opt}}}
+  \synprd{\nt{parameter-declaration-list} \tm{, ...}}
+\synsym{parameter-declaration-list}
+  \synprd{\nt{parameter-declaration}}
+  \synprd{\nt{parameter-declaration-list} \tm{,} \nt{parameter-declaration}}
+\synsym{parameter-declaration}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} decl-specifier-seq declarator}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} decl-specifier-seq declarator}
+    \tm{=} \nt{initializer-clause}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} decl-specifier-seq
+    abstract-declarator\tsub{opt}}}
+  \synprd[]{\nt{attribute-specifier-seq\tsub{opt} decl-specifier-seq
+    abstract-declarator\tsub{opt}} \tm{=} \nt{initializer-clause}}
+
+\nt{parameter-declaration}中的可选\nt{attribute-specifier-seq}应用于参数。
+
+\paragraph{}
+\nt{parameter-declaration-clause}确定函数调用时可以指定的参数及其处理方式。
+「注：\nt{parameter-declaration-clause}用于转换函数调用时指定的参数；
+见\ref{expr.call}。」如果\nt{parameter-declaration-clause}为空，则函数无参数。包
+含单个非依赖类型\tm{void}的无名参数的参数列表等价于空的参数类型列表。除了这种特
+殊情形，参数不应该具有\nt{cv} \tm{void}类型。如果
+\nt{parameter-declaration-clause}以省略号或函数参数包（\ref{temp.variadic}）结尾
+则实参数目应该等于或大于没有缺省实参且不是函数参数包的形参数目。当语法正确且
+``\tm{...}''不是\nt{abstract-declarator}的一部分时，``\tm{, ...}''是``\tm{...}''
+的同义词。「例：声明
+\begin{lstlisting}
+  int printf(const char*, ...);
+\end{lstlisting}
+声明一个函数，该函数可以使用可变数目和类型的参数来调用。
+\begin{lstlisting}
+  printf("hello world");
+  printf("a=%d b=%d", a, b);
+\end{lstlisting}
+然而，第一个参数必须是可以转换成\tm{const char*}的类型。」「注：标准头
+\tm{<cstdarg>}包含使用省略号的方式传递的参数的访问机制（\ref{expr.call}，
+21.10）。」
+
+\paragraph{}
+单个名字可以用于单个作用域中的多个不同函数；即函数重载（第\ref{over}章）。一个函
+数的所有声明的返回类型和参数类型列表应该完全匹配。函数的类型使用以下的规则确定。
+每一个参数的类型（包括函数参数包）由其自身的\nt{decl-specifier-seq}和
+\nt{declarator}来确定。在确定每一个参数的类型后，任何类型为``\tm{T}的数组''或函
+数类型\tm{T}的参数被调整为``指向\tm{T}的指针''。在生成参数类型列表之后，在形成函
+数类型时任何修改参数类型的顶层\nt{cv-qualifier}被删除。产生的变换后的参数类型列
+表和省略号或函数参数包的存在或不存在构成函数的\nt{parameter-type-list}。「注：该
+变换不影响参数类型。比如，\tm{int(*)(const int p, decltype(p)*)}和
+\tm{int(*)(int, const int*)}是等价类型。」
+
+\paragraph{}
+带有\nt{cv-qualifier-seq}或\nt{ref-qualifier}的函数类型（包括由\nt{typedef-name}
+（\ref{dcl.typedef}，\ref{temp.param}）所命名的类型）应该仅作为
+\begin{enumerate}
+  \item{非静态成员函数的函数类型，}
+  \item{成员指针所引用的函数类型，}
+  \item{函数typedef声明或\nt{alias-declaration}的顶层函数类型，}
+  \item{\nt{type-parameter}（\ref{temp.param}）的缺省参数中的\nt{type-id}，或}
+  \item{\nt{type-parameter}（\ref{temp.arg.type}）的\nt{template-argument}中的
+    \nt{type-id}。}
+\end{enumerate}
+出现。「例：
+\begin{lstlisting}
+  typedef int FIC(int) const;
+  FIC f;              // ill-formed: does not declare a member function
+  struct S {
+    FIC f;            // OK
+  };
+  FIC S::*pm = &S::f; // OK
+\end{lstlisting}」
+
+\paragraph{}
+函数声明子中的\nt{cv-qualifier-seq}的效果与在函数顶层添加cv限定不一样。在后者当
+中，cv限定符被忽略。「注：具有\nt{cv-qualifier-seq}的函数类型不是一个cv限定类型；
+没有cv限定的函数类型。」「例：
+\begin{lstlisting}
+  typedef void F();
+  struct S {
+    const F f; // OK: equivalent to: void f();
+  };
+\end{lstlisting}」
+
+\paragraph{}
+返回类型，参数类型列表，\nt{ref-qualifier}，\nt{cv-qualifier-seq}以及异常规范，
+但不包括缺省参数（\ref{dcl.fct.default}），是函数类型的一部分。「注：函数类型在
+函数指针，函数引用以及成员函数的赋值和初始化时进行检查。」
+
+\paragraph{}
+「例：声明
+\begin{lstlisting}
+  int fseek(FILE*, long, int);
+\end{lstlisting}
+声明一个函数，具有三个指定类型的参数，并返回\tm{int}（\ref{dcl.type}）。」
+
+\paragraph{}
+函数不应该具有数组或函数作为返回类型，尽管可以返回此类指针或引用。不应该存在函数
+的数组，尽管可以有函数指针的数组。
+
+\paragraph{}
+类型不应该在返回或参数类型中定义。在函数定义的上下文中，除非函数被删除
+（\ref{dcl.fct.def.delete}），函数定义的参数的类型或返回类型不应该是不完整（可能
+cv限定）类类型。
+
+\paragraph{}
+函数类型的typedef可以用于声明函数，但不能用于定义函数（\ref{dcl.fct.def}）。
+「例：
+\begin{lstlisting}
+  typedef void F();
+  F fv;             // OK: equivalent to void fv();
+  F fv { }          // ill-formed
+  void fv() { }     // OK: definition of fv
+\end{lstlisting}」
+
+\paragraph{}
+可以可选的提供一个标识符作为参数名；如果存在于定义（\ref{dcl.fct.def}）中则命名
+一个参数。「注：特别是，参数名在函数定义中也是可选的，且函数的不同声明和定义中用
+于参数的名字不一定要相同。如果参数名存在于非定义的函数声明中，则它不能用于其函数
+声明子之外的地方，因为这是其潜在作用域的区间（\ref{basic.scope.proto}）。」
+
+\paragraph{}
+「例：声明
+\begin{lstlisting}
+  int i,
+      *pi,
+      f(),
+      *fpi(int),
+      (*pif)(const char*, const char*),
+      (*fpif(int))(int);
+\end{lstlisting}
+声明了一个整数\tm{i}，整型指针\tm{pi}，无参数且返回整型的函数\tm{f}，带有一个整
+型参数且返回整型指针的函数\tm{fpi}，带有两个常字符指针作为参数且返回整型的函数指
+针\tm{pif}，带有一个整型参数且返回带有一个整型参数并返回整型的函数指针作为参数的
+函数\tm{fpif}。比较\tm{fpi}和\tm{pif}特别有用。\tm{*fpi(int)}的绑定是
+\tm{*(fpi(int))}，因此该声明表明且一个表达式中的相同的结构也要求函数\tm{fpi}的调
+用随后使用（指针）结果的间接产生一个整数。在声明子
+\tm{(*pif)(const char*, const char*)}中，额外的括号是必须的，以此表明通过函数指
+针的间接产生一个函数，随后被调用。」「注：typedef和\nt{trailing-return-type}在函
+数返回类型很复杂时是很方便的。比如，以上的函数\tm{fpif}可以声明为
+\begin{lstlisting}
+  typedef int IFUNC(int);
+  IFUNC* fpif(int);
+\end{lstlisting}
+或
+\begin{lstlisting}
+  auto fpif(int)->int(*)(int);
+\end{lstlisting}
+\nt{trailing-return-type}对于在\nt{declarator-id}之前指定更复杂时是最有用的：
+\begin{lstlisting}
+  template <class T, class U> auto add(T t, U u) -> decltype(t + u);
+\end{lstlisting}
+而不是
+\begin{lstlisting}
+  template <class T, class U> decltype((*(T*)0) + (*(U*)0)) add(T t, U u);
+\end{lstlisting}」
+
+\paragraph{}
+一个\nt{非模板函数}指不是函数模板特例化的函数。「注：函数模板不是函数。」
+
+\paragraph{}
+包含省略号的\nt{declarator-id}或\nt{abstract-declarator}应该仅用于一个
+\nt{parameter-declaration}。这样的\nt{parameter-declaration}是一个参数包
+（\ref{temp.variadic}）。当其是\nt{parameter-declaration-clause}的一部分时，参数
+包是函数参数包（\ref{temp.variadic}）。「注：否则，\nt{parameter-declaration}是
+\nt{template-parameter-list}的一部分，且参数包是一个模板参数包；见
+\ref{temp.param}。」函数参数包是一个包展开（\ref{temp.variadic}）。「例：
+\begin{lstlisting}
+  template<typename... T> void f(T (* ...t)(int, int));
+
+  int add(int, int);
+  float subtract(int, int);
+
+  void g() {
+    f(add, subtract);
+  }
+\end{lstlisting}」
+
+\paragraph{}
+当省略号出现在之前没有逗号的\nt{parameter-declaration-clause}结尾时存在语法歧义。
+在这种情况下，如果参数类型要么命名未展开的模板参数包，要么包含\tm{auto}，则省略
+号被分析为\nt{abstract-declarator}的一部分；否则被分析为
+\nt{parameter-declaration-clause}的一部分。\footnote{你可以通过引入逗号（使用省
+略号分析为\nt{parameter-declaration-clause}的一部分）或通过为参数引入名字（使得
+省略号分析为\nt{declarator-id}的一部分）来去歧义。}
+
 \ssect{缺省参数}{dcl.fct.default}
+\paragraph{}
+如果在\nt{parameter-declaration}中指定了\nt{initializer-clause}则该
+\nt{initializer-clause}被用作一个缺省参数。当结尾参数缺失时，缺省参数将被用于调
+用中。
+
+\paragraph{}
+「例：声明
+\begin{lstlisting}
+  void point(int = 3, int = 4);
+\end{lstlisting}
+声明一个函数，可使用零个，一个或两个\tm{int}类型的参数来调用。可以用任意以下之一
+调用：
+\begin{lstlisting}
+  point(1,2); point(1); point();
+\end{lstlisting}
+后两个分别等价于\tm{point(1,4)}和\tm{point(3,4)}。」
+
+\paragraph{}
+缺省参数只能在函数声明或\nt{lambda-declarator}的
+\nt{parameter-declaration-clause}或一个\nt{template-parameter}
+（\ref{temp.param}）中指定；在后者中，\nt{initializer-clause}应该是一个
+\nt{assignment-expression}。不应该为参数包指定缺省参数。如果其在
+\nt{parameter-declaration-clause}中指定，则它不应该出现在
+\nt{parameter-declaration}的\nt{declarator}或\nt{abstract-declarator}中。
+\footnote{这意味着缺省参数不能出现在（比如）函数指针，函数引用声明或\tm{typedef}
+声明中。}
+
+\paragraph{}
+对非模板函数，缺省参数可以在同一作用域中之后的函数声明中加入。不同作用域中的声明
+具有完全不同的缺省参数集。即，内部作用域中的声明不会获取外部作用域中声明的缺省参
+数，反之亦然。在一个给定函数声明中。每一个跟在缺省参数之后的参数在该声明或之前的
+声明中也应该有缺省参数或都是一个函数参数包。缺省参数不应该被后续声明重新定义（即
+使是用相同的值）。「例：
+\begin{lstlisting}
+  void g(int = 0, ...);   // OK, ellipsis is not a parameter so it can follow
+                          // a parameter with a default argument
+  void f(int, int);
+  void f(int, int = 7);
+  void h() {
+    f(3);                 // OK, calls f(3, 7)
+    void f(int = 1, int); // error: does not use default from surrounding scope
+  }
+  void m() {
+    void f(int, int);     // has no defaults
+    f(4);                 // error: wrong number of arguments
+    void f(int, int = 5); // OK
+    f(4);                 // OK, calls f(4, 5);
+    void f(int, int = 5); // error: cannot redefine, even to same value
+  }
+  void n() {
+    f(6);                 // OK, calls f(6, 7)
+  }
+\end{lstlisting}」对不同翻译单元中定义的给定内联函数，在翻译单元结束处累积的缺少
+参数集合应该相同；见\ref{basic.def.odr}。如果一个友元函数指定一个缺省参数表达式，
+则该声明应该是一个定义且应该是该翻译单元中该函数或函数模板的唯一声明。
+
+\paragraph{}
+缺省参数与该参数类型的变量声明中的初始化具有相同的语义约束，使用拷贝初始化语义
+（\ref{dcl.init}）。在缺省参数出现的地方，缺省参数的名字被绑定并进行语义检查。类
+模板的成员函数和函数模板中的缺省参数的名字查询和语义约束检查在\ref{temp.inst}中
+描述。「例：在以下代码中，\tm{g}使用值\tm{f(2)}来调用：
+\begin{lstlisting}
+  int a = 1;
+  int f(int);
+  int g(int x = f(a));  // default argument: f(::a)
+
+  void h() {
+    a = 2;
+    {
+      int a = 3;
+      g();              // g(f(::a))
+    }
+  }
+\end{lstlisting}」「注：在成员函数声明中，缺省参数中的名字如
+\ref{basic.lookup.unqual}中所述进行查询。应用于缺省参数中的名字的访问检查在第
+\ref{class.access}章中描述。」
+
+\paragraph{}
+除了类模板的成员函数外，出现在类定义之外的成员函数定义中的缺省参数被加到类定义中
+成员函数声明所提供的缺省参数集合中；如果一个缺省构造函数（\ref{class.ctor}），拷
+贝或移动构造函数，或拷贝/移动赋值运算符（\ref{class.copy}）如此声明的话则程序为
+病态。类模板的成员函数的缺省参数应该在类模板中成员函数的首次声明中指定。「例：
+\begin{lstlisting}
+  class C {
+    void f(int i = 3);
+    void g(int i, int j = 99);
+  };
+  void C::f(int i = 3) {}         // error: default argument already specified
+                                  // in class scope
+  void C::g(int i = 88, int j) {} // in this translation unit, C::g can be
+                                  // called with no argument
+\end{lstlisting}」
+
+\paragraph{}
+局部变量不应该出现在缺省参数的潜在求值表达式中。「例：
+\begin{lstlisting}
+  void f() {
+    int i;
+    extern void g(int x = i);          // error
+    extern void h(int x = sizeof(i) ); // OK
+    // ...
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：关键字\tm{this}不应该出现在成员函数的缺省参数中；见\ref{expr.prim.this}。
+「例：
+\begin{lstlisting}
+  class A {
+    void f(A* p = this) { }           // error
+  };
+\end{lstlisting}」」
+
+\paragraph{}
+缺省实参在函数的每一次不带对应于该形参的实参调用时进行求值。形参不应该以潜在求值
+表达式出现在缺省参数中。缺省实参声明之前声明的函数形参处于作用域中且隐藏命名空间
+和类成员。「例：
+\begin{lstlisting}
+  int a;
+  int f(int a, int b = a);        // error: parameter a used as default argument 
+  typedef int I;
+  int g(float I, int b = I(2));    // error: parameter I found
+  int h(int a, int b = sizeof(a)); // OK, unevaluated operand
+\end{lstlisting}」一个非静态成员不应该出现在缺省实参中，除非它作为一个类成员访问
+表达式（\ref{expr.ref}）的\nt{id-expression}出现或用于形成成员指针
+（\ref{expr.unary.op}）。「例：以下例子中的声明\tm{X::mem1()}是病态的，因为没有
+为用作初始化的非静态成员\tm{X::a}提供对象。
+\begin{lstlisting}
+  int b;
+  class X {
+    int a;
+    int mem1(int i = a); // error: non-static member a used as default argument
+    int mem2(int i = b); // OK; use X::b 
+    static int b;
+  };
+\end{lstlisting}
+但是声明\tm{X::mem2()}是有意义的，因为访问静态成员\tm{X::b}不需要对象。类，对象
+和成员在第\ref{class}章中描述。」缺省实参不是函数类型的一部分。「例：
+\begin{lstlisting}
+  int f(int = 0);
+
+  void h() {
+    int j = f(1);
+    int k = f();        // OK, means f(0)
+  }
+
+  int (*p1)(int) = &f;
+  int (*p2)() = &f;    // error: type mismatch
+\end{lstlisting}」当一个函数的声明通过\nt{using-declaration}
+（\ref{namespace.udecl}）的方式引入，任何关联于该声明的缺省实参信息也就知道了。
+如果该函数之后在命名空间中使用额外缺省参数进行重声明，则额外的参数在重声明之后
+\nt{using-declaration}处于作用域中的地方也知道了。
+
+\paragraph{}
+虚函数调用（\ref{class.virtual}）使用由代表对象的静态类型指针或引用所确定的虚函
+数声明中的缺省参数。派生类中的一个重写函数不需要其所重写的函数的缺省参数。「例：
+\begin{lstlisting}
+  struct A {
+    virtual void f(int a = 7);
+  };
+  struct B : public A {
+    void f(int a);
+  };
+  void m() {
+  B* pb = new B;
+  A* pa = pb;
+    pa->f(); // OK, calls pa->B::f(7)
+    pb->f(); // error: wrong number of arguments for B::f()
+  }
+\end{lstlisting}」
 
 \sect{函数定义}{dcl.fct.def}
 \ssect{总体情况}{dcl.fct.def.general}
+\paragraph{}
+函数定义具有形式
+
+\synsym{function-definition}
+  \synprd{\nt{attribute-specified-seq\tsub{opt} decl-specifier-seq\tsub{opt}
+    declarator virt-specifier-seq\tsub{opt} function-body}}
+\synsym{function-body}
+  \synprd{\nt{ctor-initializer\tsub{opt} compound-statement}}
+  \synprd{\nt{function-try-block}}
+  \synprd{\tm{= default ;}}
+  \synprd[]{\tm{= delete ;}}
+
+任何函数体的非正式引用应该解释为非终结符\nt{function-body}的引用。
+\nt{function-definition}中的\nt{attribute-specifier-seq}应用于函数。只有当其是一
+个\nt{member-declaration}（\ref{class.mem}）时，\nt{virt-specifier-seq}才能是
+\nt{function-definition}的一部分。
+
+\paragraph{}
+在\nt{function-definition}中，\tm{void} \nt{declarator} \tm{;}或\nt{declarator}
+\tm{;}应该是\ref{dcl.fct}中所述的结构良好的函数声明。函数应该仅在命名空间或类作
+用域中定义。
+
+\paragraph{}
+「例：一个简单的完整函数定义示例为
+\begin{lstlisting}
+  int max(int a, int b, int c) {
+    int m = (a > b) ? a : b;
+    return (m > c) ? m : c;
+  }
+\end{lstlisting}
+此处\tm{int}为\nt{decl-specifier-seq}；\tm{max(int a, int b, int c)}是声明子；
+\tm{\{ /* ... */ \}}是函数体。」
+
+\paragraph{}
+\nt{ctor-initializer}仅用于构造函数；见\ref{class.ctor}和\ref{class.init}。
+
+\paragraph{}
+「注：一个\nt{cv-qualifier-seq}影响成员函数体中的\tm{this}的类型；见
+\ref{dcl.ref}。」
+
+\paragraph{}
+「注：未使用参数不需要命名。比如，
+\begin{lstlisting}
+  void print(int a, int) {
+    std::printf("a = %d\n", a);
+  }
+\end{lstlisting}」
+
+\paragraph{}
+在\nt{function-body}中，一个\nt{函数局部预定义变量}代表隐式定义的静态存储期块作
+用域对象（\ref{basic.scope.block}）。
+
+\paragraph{}
+函数局部预定义变量\tm{\_\_func\_\_}定义为如同提供了形如                       \\
+\mbox{\qquad\tm{static const char \_\_func\_\_[] =
+  \dq}\nt{function-name}\tm{\dq;}}                                            \\
+形式的定义，其中\nt{function-name}为实现定义字符串。这样的变量是否具有不同于程序
+中任何其他对象的地址是未指定的。\footnote{允许实现提供额外带有实现保留名
+（\ref{lex.name}）的预定义变量。如果预定义变量不是odr使用的
+（\ref{basic.def.odr}），则其字符串值不一定要存在于程序镜像中。}「例：
+\begin{lstlisting}
+  struct S {
+    S() : s(__func__) { }           // OK
+    const char* s;
+  };
+  void f(const char* s = __func__); // error: __func__ is undeclared
+\end{lstlisting}」
+
 \ssect{显式缺省函数}{dcl.fct.def.default}
+\paragraph{}
+形如                                                                          \\
+\mbox{\qquad\nt{attribute-specifier-seq\tsub{opt} decl-specifier-seq\tsub{opt}
+  declarator virt-specifier-seq\tsub{opt}} \tm{= default ;}}                  \\
+的函数定义被称为\nt{显式缺省}定义。显式缺省的函数应该
+\begin{enumerate}
+  \item{是一个特殊成员函数，}
+  \item{与隐式声明具有相同的函数类型（除了可能不同于\nt{ref-qualifier}或不同于拷
+    贝构造函数或拷贝赋值运算符的时候，参数类型可能是``非常量\tm{T}的引用''，其中
+    \tm{T}与成员函数的类同名），且}
+  \item{不具有缺省参数。}
+\end{enumerate}
+
+\paragraph{}
+只有在可能隐式声明为\tm{constexpr}时未定义为删除的显式缺省函数才可以声明为
+\nt{constexpr}。如果函数在首次声明时为显式缺省，且如果该隐式声明可能是时，其被隐
+式当作是\tm{constexpr}。
+
+\paragraph{}
+<++>
+
+\paragraph{}
+<++>
+
+\paragraph{}
+<++>
+
+\paragraph{}
+测试
+
 \ssect{删除定义}{dcl.fct.def.delete}
 
 \sect{结构化绑定声明}{dcl.struct.bind}

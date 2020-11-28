@@ -106,9 +106,7 @@
 6.9.1       basic.fundamental
 6.9.2       basic.compound
 6.9.3       basic.type.qualifier
-1           tab:cvrel
 6.10        basic.lval
-1           fig:valuecat
 6.11        basic.align
 7           conv
 7.1         conv.lval
@@ -176,7 +174,7 @@
 8.19        expr.comma
 8.20        expr.const
 9           stmt.stmt
-9.1         stmt.lable
+9.1         stmt.label
 9.2         stmt.expr
 9.3         stmt.block
 9.4         stmt.select
@@ -217,7 +215,7 @@
 10.3.2      namespace.alias
 10.3.3      namespace.udecl
 10.3.4      namespace.udir
-10.4        dcl.asam
+10.4        dcl.asm
 10.5        dcl.link
 10.6        dcl.attr
 10.6.1      dcl.attr.grammar
@@ -277,7 +275,7 @@
 14.6        class.paths
 14.7        class.access.nest
 15          special
-15.1        class.ctro
+15.1        class.ctor
 15.2        class.temporary
 15.3        class.conv
 15.3.1      class.conv.ctor
@@ -365,7 +363,7 @@
 17.6.4.1    temp.point
 17.6.4.2    temp.dep.candidate
 17.6.5      temp.inject
-17.7        templ.spec
+17.7        temp.spec
 17.7.1      temp.inst
 17.7.2      temp.explicit
 17.7.3      temp.expl.spec

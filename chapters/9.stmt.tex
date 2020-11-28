@@ -1,29 +1,612 @@
 %% 9. stmt
 
 \chptr{语句}{stmt.stmt}
+\paragraph{}
+除非指明，语句按顺序执行。
 
-\sect{标号语句}{stmt.lable}
+\synsym{statement}
+  \synprd{\nt{labeled-statement}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} expression-statement}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} compound-statement}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} selection-statement}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} iteration-statement}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} jump-statement}}
+  \synprd{\nt{declaration-statement}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} try-block}}
+\synsym{init-statement}
+  \synprd{\nt{expression-statement}}
+  \synprd{\nt{simple-declaration}}
+\synsym{condition}
+  \synprd{\nt{expression}}
+  \synprd[]{\nt{attribute-specifier-seq\tsub{opt} decl-specifier-seq declarator
+    brace-or-equal-initializer}}
+
+可选的\nt{attribute-specifier-seq}适用于对应的语句。
+
+\paragraph{}
+\nt{condition}的条件对\nt{selection-statement}和\tm{for}，\tm{while}语句均适用
+\ref{stmt.iter}。\nt{declarator}不应该指定函数或数组。\nt{decl-specifier-seq}不
+应该定义类或枚举。如果\tm{auto} \nt{type-specifier}出现在\nt{decl-specifier-seq}
+中，则所声明的标识符类型如\ref{dcl.spec.auto}中所述由初始化推导出来。
+
+\paragraph{}
+\nt{condition}中的声明所引入的名字（无论是条件的\nt{decl-specifier-seq}还是
+\nt{declarator}所引入）处于其声明点开始直到条件控制的子语句结束点的作用域中。如
+果名字在条件所控制子语句的最外层块中重声明，则声明该名字的声明是病态的。「例：
+\begin{lstlisting}
+  if (int x = f() ) {
+    int x; // ill-formed, redeclaration of x
+  }
+  else {
+    int x; // ill-formed, redeclaration of x
+  }
+\end{lstlisting}
+
+\paragraph{}
+由除\tm{switch}语句中的声明初始化的\nt{condition}的值为所声明变量按上下文转换成
+\tm{bool}（第\ref{conv}章）后的值。如果该转换是病态的，则程序是病态的。如果具有
+整型或枚举类型，\tm{switch}语句中初始化声明的\nt{condition}的值为声明变量的值，
+否则，值为隐式转换成整型或枚举类型的变量的值。除\tm{switch}语句之外，表达式
+\nt{condition}的值为表达式的值按条件转换成\tm{bool}；如果转换为病态，则程序为病
+态的。条件的值将仅作为``条件''而引用，其使用无歧义。
+
+\paragraph{}
+如果\nt{condition}可以语法上即解析为表达式也可以解析为块作用域名的声明，则其解析
+为声明。
+
+\paragraph{}
+在\nt{condition}的\nt{decl-specifier-seq}中，每一个\nt{decl-specifier}应该为
+\nt{type-specifier}或\tm{constexpr}。
+
+\sect{标号语句}{stmt.label}
+\paragraph{}
+语句可以加标号。
+
+\synsym{labeled-statement}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} identifier} \tm{:}
+    \nt{statement}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt}} \tm{case}
+    \nt{constant-expression} \tm{:} \nt{statement}}
+  \synprd[]{\nt{attribute-specifier-seq\tsub{opt}} \tm{default :}
+    \nt{statement}}
+
+可选的\nt{attribute-specifier-seq}适用于标号。\nt{标识符标号}声明一个标识符。标
+识符标号的唯一用途是作为\tm{goto}的目标。标号的作用域是其所出现的函数。在函数内，
+标号不应该重新定义。标号在其声明前可以用于\tm{goto}语句。标号自有其命名空间，不
+干涉其他标识符。「注：标号可能与同一作用域或包含作用域中的\nt{template-parameter}
+中的另一声明具有相同的名字。未限定名查询（\ref{basic.lookup.unqual}）忽略标号。」
+
+\paragraph{}
+case标号与缺省标号应该仅出现在switch语句。
 
 \sect{表达式语句}{stmt.expr}
+\paragraph{}
+表达式语句形式为
+
+\synsym{expression-statement}
+  \synprd[]{\nt{expression\tsub{opt}} \tm{;}}
+
+表达式是一个弃值表达式（第\ref{expr}章）。表达式语句的所有副作用在下一条语句执行
+前完成。不含表达式的表达式语句称为\nt{空语句}（\nt{null statement}）。「注：大部
+分语句是表达式语句-常规赋值或函数调用。空语句可用于复合语句的\tm{\}}前带有一个标
+号，或为迭代语句提供一个空语句，如\tm{while}语句（\ref{stmt.while}）。」
 
 \sect{复合语句和块}{stmt.block}
+\paragraph{}
+为使在要求单条语句的地方使用多条语句，提供了复合语句（等价地称作``块''）。
+
+\synsym{compound-statement}
+  \synprd{\tm{\{} \nt{statement-seq\tsub{ope}} \tm{\}}}
+\synsym{statement-seq}
+  \synprd{\nt{statement}}
+  \synprd[]{\nt{statement-seq statement}}
+
+复合语句定义了块作用域（\ref{basic.scope}）。「注：声明是一个语句
+（\ref{stmt.block}）。」
 
 \sect{选择语句}{stmt.select}
+\paragraph{}
+选择语句选择多个控制流中的一条。
+
+\synsym{selection-statement}
+  \synprd{\tm{if constexpr}\nt{\tsub{opt}} \tm{(} \nt{init-statement\tsub{opt}
+    condition} \tm{)} \nt{statement}}
+  \synprd{\tm{if constexpr}\nt{\tsub{opt}} \tm{(} \nt{init-statement\tsub{opt}
+    condition} \tm{)} \nt{statement} \tm{else} \nt{statement}}
+  \synprd[]{\tm{switch (} \nt{init-statement\tsub{opt} condition} \tm{)}
+    \nt{statement}}
+
+参见\ref{dcl.meaning}中关于条件中的可选\nt{attribute-specifier-seq}。「注：一个
+\nt{init-statement}以分号结束。」在第\ref{stmt}章中，术语\nt{子语句}引用语法记号
+中包含的\nt{语句}。\nt{selection-statement}中的子语句（\tm{else}形式的\tm{if}语
+句中的每一个子语句）隐式定义了一个块作用域（\ref{basic.scope}）。如果选择语句中
+的子语句是单个语句而不是复合语句，则如同该语句被重写成包含原语句的复合语句。
+「例：
+\begin{lstlisting}
+  if (x)
+    int i;
+\end{lstlisting}
+可以等价重写成
+\begin{lstlisting}
+  if (x) {
+    int i;
+  }
+\end{lstlisting}
+因此在\tm{if}语句之后，\tm{i}将不再存在于作用域中。」
+
 \ssect{if语句}{stmt.if}
+\paragraph{}
+如果条件（\ref{stmt.select}）产生\tm{true}则执行第一个子语句。如果选择语句的
+\tm{else}部分存在且条件产生\tm{false}，则执行第二个子语句。如果第一个子语句由标
+号到达，则不对条件进行求值，不执行第二个子语句。在\tm{if}语句的第二种形式（含
+\tm{else}）中，如果第一个子语句也是一个\tm{if}语句则该内部\tm{if}语句应该包含一
+个\tm{else}部分。\footnote{换句话说，\tm{else}关联于最近的无else的\tm{if}。}
+
+\paragraph{}
+如果\tm{if}语句形式为\tm{if constexpr}，则条件的值应该按上下文转换成\tm{bool}类
+型的常表达式；这种形式被称为\nt{constexpr if}语句。如果被转换的条件为\tm{false}，
+则第一个子语句为\nt{弃值语句}，否则第二个语句（如果存在）为弃值语句。在包含的模
+板实体实例化过程中（第\ref{temp}章），如果在实例化后条件不是值依赖，则弃值子语句
+（如存在）不实例化。「注：弃值语句中的odr使用（\ref{basic.def.odr}）不需要定义实
+体。」出现在这样的\tm{if}语句中的\tm{case}或\tm{default}标号应该关联于同一
+\tm{if}语句中的\tm{switch}语句（\ref{stmt.switch}）。在一个constexpr if语句的子
+语句中声明的label（\ref{stmt.label}）应该仅通过同一子语句中的语句
+（\ref{stmt.goto}）来引用。「例：
+\begin{lstlisting}
+  template<typename T, typename ... Rest> void g(T&& p, Rest&& ... rs) {
+    // ... handle p
+
+    if constexpr (sizeof... (rs) > 0)
+      g(rs...); // never instantiated with an empty argument list
+  }
+
+  extern int x; // no definition of x required
+
+  int f() {
+    if constexpr (true)
+      return 0;
+    else if (x)
+      return x;
+    else
+      return -x;
+  }
+\end{lstlisting}」
+
+\paragraph{}
+形如                                                                          \\
+\mbox{\qquad \tm{if constexpr}\nt{\tsub{opt}} \tm{(} \nt{init-statement
+  condition} \tm{)} \nt{statement}}                                           \\
+的\tm{if}语句等价于                                                           \\
+\mbox{\qquad \tm{\{}}                                                         \\
+\mbox{\qquad\qquad \nt{init-statement}}                                       \\
+\mbox{\qquad\qquad \tm{if constexpr}\nt{\tsub{opt}} \tm{(} \nt{condition}
+  \tm{)} \nt{statement}}                                                      \\
+\mbox{\qquad \tm{\}}}                                                         \\
+形如                                                                          \\
+\mbox{\qquad \tm{if constexpr}\nt{\tsub{opt}} \tm{(} \nt{init-statement
+  condition} \tm{)} \nt{statement} \tm{else} \nt{statement}}                  \\
+的\tm{if}语句等价于                                                           \\
+\mbox{\qquad \tm{\{}}                                                         \\
+\mbox{\qquad \qquad \nt{init-statement}}                                      \\
+\mbox{\qquad \qquad \tm{if constexpr}\nt{\tsub{opt}} \tm{(} \nt{condition}
+  \tm{)} \nt{statement} \tm{else} \nt{statement}}                             \\
+\mbox{\qquad \tm{\}}}                                                         \\
+除了在\nt{init-statement}中声明的名字与\nt{condition}中声明的名字有相同的声明区
+域。
+
 \ssect{switch语句}{stmt.switch}
+\paragraph{}
+\tm{switch}语句使得控制流按照条件的值转移到多个语句中的一个。
+
+\paragraph{}
+条件应该为整型，枚举类型或类类型。如果为类类型，则条件按上下文隐式转换（第
+\ref{conv}章）成整型或枚举类型。如果类型（可能转换过）受限于整型提升
+（\ref{conv.prom}），则条件按上下文转换成提升类型。\tm{switch}语句中的任何语句可
+以使用一个或多个case加标号：                                                  \\
+\mbox{\qquad \tm{case} \nt{constant-expression} \tm{:}}                       \\
+其中的\nt{constant-expression}应该具有switch条件的调整类型的转换后常表达式
+（\ref{expr.const}）。同一个switch中两个case常量在转换后不应该有相同值。
+
+\paragraph{}
+一个\tm{switch}语句中应该具有最多一个形如                                     \\
+\mbox{\qquad \tm{default :}}                                                  \\
+的标号。
+
+\paragraph{}
+switch语句可以嵌套；\tm{case}或\tm{default}标号关联于包含它的最小switch。
+
+\paragraph{}
+执行\tm{switch}语句时，对其条件进行求值并与每一个case常量进行比较。如果其中一个
+case常量等于条件的值，控制流转移到匹配的case标号后面的语句。如果没有case常量匹配
+条件，且存在一个\tm{default}标号，则控制流转移到default标号所标的语句。如果没有
+匹配的case且没有\tm{default}则没有switch中的语句会被执行。
+
+\paragraph{}
+\tm{case}和\tm{default}标号本身不改变控制流，即控制流在标号间畅通无阻。要从
+switch中跳出，见\tm{break}，\ref{stmt.break}。「注：通常，作为switch主体的子语句
+是复合的，且\tm{case}和\tm{default}出现在（复合）子语句中的顶层语句上，但不是必
+须的。声明可以出现在\tm{switch}语句的子语句中。」
+
+\paragraph{}
+一个形如                                                                      \\
+\mbox{\qquad\tm{switch (} \nt{init-statement condition} \tm{)}
+  \nt{statement}}                                                             \\
+的\tm{switch}语句等价于                                                       \\
+\mbox{\qquad \tm{\{}}                                                         \\
+\mbox{\qquad\qquad \nt{init-statement}}                                       \\
+\mbox{\qquad\qquad \tm{switch (} \nt{condition} \tm{)} \nt{statement}}        \\
+\mbox{\qquad \tm{\}}}                                                         \\
+除了在\nt{init-statement}中声明的名字与\nt{condition}中声明的名字具有相同的声明
+区域。
 
 \sect{迭代语句}{stmt.iter}
+\paragraph{}
+迭代语句指明循环。
+
+\synsym{iteration-statement}
+  \synprd{\tm{while (} \nt{condition} \tm{)} \nt{statement}}
+  \synprd{\tm{do} \nt{statement} \tm{while (} \nt{expression}}
+  \synprd{\tm{for (} \nt{init-statement condition\tsub{opt}} \tm{;}
+  \nt{expression\tsub{opt}} \tm{)} \nt{statement}}
+  \synprd{\tm{for (} \nt{for-range-declaration} \tm{:}
+    \nt{for-range-initializer} \tm{)} \nt{statement}}
+\synsym{for-range-declaration}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} decl-specifier-seq declarator}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} decl-specifier-seq
+    ref-qualifier\tsub{opt}} \tm{[} \nt{identifier-list} \tm{]}}
+\synsym{for-range-initializer}
+  \synprd[]{\nt{expr-or-braced-init-list}}
+
+见\ref{dcl.meaning}关于\nt{for-range-declaration}中可选的
+\nt{attribute-specifier-seq}。「注：一个\nt{init-statement}以分号结束。」
+
+\paragraph{}
+\nt{iteration-statement}中的子语句隐式定义作用域（\ref{basic.scope}），在每一次
+循环时进入并退出。
+
+如果迭代语句中的子语句是单语句而不是一个\nt{compound-statement}，则如同被重写成
+包含原语句的复合语句一样。「例：
+\begin{lstlisting}
+  while (--x >= 0)
+    int i;
+\end{lstlisting}
+可以等价重写成
+\begin{lstlisting}
+  while (--x >= 0) {
+    int i;
+  }
+\end{lstlisting}
+因此在\tm{while}语句后，\tm{i}不在处于作用域中。」
+
+\paragraph{}
+如果\nt{for-range-declaration}或\nt{init-statement}中引入的名字在子语句的最外层
+块作用域中重声明，则程序为病态。「例：
+\begin{lstlisting}
+  void f() {
+    for (int i = 0; i < 10; ++i)
+      int i = 0;      // error: redeclaration
+    for (int i : { 1, 2, 3 })
+      int i = 1;      // error: redeclaration
+  }
+\end{lstlisting}
+
 \ssect{while语句}{stmt.while}
+\paragraph{}
+在\tm{while}语句中，子语句重复执行直到条件（\ref{stmt.select}）的值变成
+\tm{false}。测试在子语句的每一次执行之前开始。
+
+\paragraph{}
+当\tm{while}语句的条件是一个声明时，所声明变量的作用域从其声明点
+（\ref{basic.scope.pdecl}）扩展到\tm{while}语句的结尾。形如                   \\
+\mbox{\qquad \tm{while (T t = x)} \nt{statement}}                             \\
+的\tm{while}语句等价于                                                        \\
+\mbox{\qquad \tm{label:}}                                                     \\
+\mbox{\qquad \tm{\}} // start of condition scope}                             \\
+\mbox{\qquad\qquad \tm{T t = x;}}                                             \\
+\mbox{\qquad\qquad \tm{if (t) \{}}                                            \\
+\mbox{\qquad\qquad \nt{statement}}                                            \\
+\mbox{\qquad\qquad \tm{goto label;}}                                          \\
+\mbox{\qquad\qquad \tm{\}}}                                                   \\
+\mbox{\qquad \tm{\}} // end of condition scope}                               \\
+条件中创建的变量在每次迭代中销毁并创建。「例：
+\begin{lstlisting}
+  struct A {
+    int val;
+    A(int i) : val(i) { }
+    ~ A() { }
+    operator bool() { return val ! = 0; }
+  };
+  int i = 1;
+  while (A a = i) {
+    // ...
+    i = 0;
+  }
+\end{lstlisting}
+在while循环中，每个构造函数和析构函数都被调两次，一次当条件成功一次当条件失败。」
+
 \ssect{do语句}{stmt.do}
+\paragraph{}
+表达式按上下文转换成\tm{bool}（第\ref{conv}章）；如果该转换是病态的，则程序为病
+态的。
+
+\paragraph{}
+在\tm{do}语句中，子语句重复执行直到表达式的值成为\tm{false}。测试在语句执行之后
+开始。
+
 \ssect{for语句}{stmt.for}
+\paragraph{}
+\tm{for}语句                                                                  \\
+\mbox{\qquad \tm{for (} \nt{init-statement condition\tsub{opt}} \tm{;}
+  \nt{expression\tsub{opt}} \tm{)} \nt{statement}}                            \\
+等价于                                                                        \\
+\mbox{\qquad \tm{\{}}                                                         \\
+\mbox{\qquad\qquad \nt{init-statement}}                                       \\
+\mbox{\qquad\qquad \tm{while (} \nt{condition} \tm{) \{}}                     \\
+\mbox{\qquad\qquad\qquad \nt{statement}}                                      \\
+\mbox{\qquad\qquad\qquad \nt{expression} \tm{;}}                              \\
+\mbox{\qquad\qquad \tm{\}}}                                                   \\
+\mbox{\qquad \tm{\}}}                                                         \\
+除了\nt{init-statement}中声明的名字与\nt{condition}中声明的名字处于相同的声明区
+域，且除了\nt{statement}中的\tm{continue}（不包含于另一迭代语句中）在重新求值条
+件前执行表达式。「注：因此第一条语句指明循环的初始化；条件（\ref{stmt.select}）
+指定测试，前序于每次迭代，使得当条件为\tm{false}时退出循环；表达式通常指定后序于
+迭代的自增。」
+
+\paragraph{}
+\nt{condition}和\nt{expression}都可以忽略。缺失的\nt{condition}使得隐含的
+\tm{while}语句等价于\tm{while(true)}。
+
+\paragraph{}
+如果\nt{init-statement}是一个声明，所声明名字的作用域扩展到\tm{for}语句的结尾。
+「例：
+\begin{lstlisting}
+  int i = 42;
+  int a[10];
+  for (int i = 0; i < 10; i++)
+    a[i] = i;
+
+  int j = i;    // j = 42
+\end{lstlisting}」
+
 \ssect{基于范围的for语句}{stmt.ranged}
+\paragraph{}
+基于范围的\tm{for}语句                                                        \\
+\mbox{\qquad \tm{for (} \nt{for-range-declaration} \tm{:}
+\nt{for-range-initializer} \tm{)} \nt{statement}}                             \\
+等价于                                                                        \\
+\mbox{\qquad \tm{\{}}                                                         \\
+\mbox{\qquad\qquad \tm{auto \&\&\_\_range =} \nt{for-range-initializer} \tm{;}} \\
+\mbox{\qquad\qquad \tm{auto \_\_begin =} \nt{begin-expr} \tm{;}} \\
+\mbox{\qquad\qquad \tm{auto \_\_end =} \nt{end-expr} \tm{;}} \\
+\mbox{\qquad\qquad \tm{for ( ; \_\_begin != \_\_end; ++\_\_begin ) \{}} \\
+\mbox{\qquad\qquad\qquad \nt{for-range-declaration} \tm{= *\_\_begin;}} \\
+\mbox{\qquad\qquad\qquad \nt{statement}} \\
+\mbox{\qquad\qquad \tm{\}}} \\
+\mbox{\qquad \tm{\}}} \\
+其中
+\begin{enumerate}
+  \item{如果\nt{for-range-initializer}是一个表达式，则其当作如同被括号包含（因此
+    逗号运算符不能重解析为两个\nt{init-declarator}的分隔符）；}
+  \item{\tm{\_\_range}，\tm{\_\_begin}和\tm{\_\_end}仅为展示而定义；且}
+  \item{\nt{begin-expr}和\nt{end-expr}按以下确定：
+    \begin{enumerate}
+      \item{如果\nt{for-range-initializer}是数组类型\tm{R}的表达式，
+        \nt{begin-expr}和\nt{end-expr}分别为\tm{\_\_range}和
+        \tm{\_\_range + \_\_bound}，其中\tm{\_\_bound}为数组边界。如果\tm{R}是
+        未知边界数组或不完整类型的数组，则程序为病态。}
+      \item{如果\nt{for-range-initializer}是一个类类型\tm{C}的表达式，则
+        \nt{unqualified-id}的\tm{begin}和\tm{end}在\tm{C}的作用域中查询，如同
+        类成员查询（\ref{basic.lookup.classref}）一样，且如果任一个（或二者）
+        找到至少一个声明，\nt{begin-expr}和\nt{end-expr}分别是
+        \tm{\_\_range.begin()}和\tm{\_\_range.end()}；}
+      \item{否则，\nt{begin-expr}和\nt{end-expr}分别为
+        \tm{\_\_begin(\_\_range)}和\tm{\_\_end(\_\_range)}，其中\tm{begin}和
+        \tm{end}在关联的命名空间（\ref{basic.lookup.argdep}）中查询。「注：不进行
+        普通未限定查询（\ref{basic.lookup.unqual}）。」}
+    \end{enumerate}}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  int array[5] = { 1, 2, 3, 4, 5 };
+  for (int& x : array)
+    x *= 2;
+\end{lstlisting}」
+
+\paragraph{}
+在\nt{for-range-declaration}的\nt{decl-specifier-seq}中，每一个
+\nt{decl-specifier}应该是一个\nt{type-specifier}或\tm{constexpr}。
+\nt{decl-specifier-seq}不应该定义类或枚举。
 
 \sect{跳转语句}{stmt.jump}
+\paragraph{}
+跳转语句无条件转换控制条件。
+
+\synsym{jump-statement}
+  \synprd{\tm{break ;}}
+  \synprd{\tm{continue ;}}
+  \synprd{\tm{return} \nt{expr-or-braced-init-list\tsub{opt}} \tm{;}}
+  \synprd[]{\tm{goto} \nt{identifier} \tm{;}}
+
+在一个作用域结束处（无论如何实现），在该作用域中构建的自动存储期对象
+（\ref{basic.stc.auto}）以其构建的相反顺序销毁。「注：对临时变量，见
+\ref{class.temporary}。」转换出循环，块或转回以越过一个初始化的自动存储期变量涉
+及到自动存储期对象的析构，这些变量处于转换发出点而不是转移目标点。
+（见\ref{stmt.dcl}关于入块转移）。「注：然而，程序可以在不销毁自动存储期类对象的
+情况下被终止（比如调用\tm{std::exit()}或\tm{std::abort()}（21.5））。」
+
 \ssect{break语句}{stmt.break}
+\paragraph{}
+\tm{break}语句应该仅出现在\nt{iteration-statement}或\tm{switch}语句中，且终止包
+含的最小包含\nt{iteration-statement}或\tm{switch}语句；控制流跳过跟随的终止语句
+（如果有）。
+
 \ssect{continue语句}{stmt.continue}
+\paragraph{}
+\tm{continue}语句应该仅出现在\nt{iteration-statement}且将控制流跳过最小包含的
+\nt{iteration-statement}的循环连接部分，即到达循环结束部分。更准确的说，以下每一
+个语句中
+\begin{table}[!h]
+  \centering
+  \begin{tabular}{lll}
+    \tm{while (foo) \{}\hspace{5em} & \tm{do \{}\hspace{7em} &
+        \tm{for (;;) \{} \hspace{7em}                                         \\
+      \quad \tm{\{} & \quad \tm{\{}        & \quad \tm{\{}                    \\
+      \qquad // ... & \qquad // ...        & \qquad // ...                    \\
+      \quad \tm{\}} & \quad \tm{\}}        & \quad \tm{\}}                    \\
+    \tm{contin: ;}  & \tm{contin: ;}       & \tm{contin: ;}                   \\
+    \tm{\}}         & \tm{\} while (foo);} & \tm{\}}
+  \end{tabular}
+\end{table}                                                                   \\
+不在一个包含的迭代语句中的\tm{continue}等价于\tm{goto contin}。
+
 \ssect{return语句}{stmt.return}
+\paragraph{}
+函数通过\tm{return}语句返回到其调用者。
+
+\paragraph{}
+返回语句的\nt{expr-or-braced-init-list}被称为其操作数。不带操作数的返回语句应该
+仅用于返回类型为\nt{cv} \tm{void}的函数，一个构造函数（\ref{class.ctor}），或一
+个析构函数（\ref{class.dtor}）。带\tm{void}类型操作数的返回语句应该仅用于返回类
+型为\nt{cv} \tm{void}的函数。带有任何其他操作数的返回语句应该仅用于返回类型不是
+\nt{cv} \tm{void}的函数；返回语句使用操作数通过拷贝初始化（\ref{dcl.init}）来初
+始化函数调用的泛左值结果或纯右值结果对象（显式或隐式）。「注：返回语句可以涉及拷
+贝构造函数以进行操作数的拷贝或移动，如果其不是纯右值或如果其类型不同于函数的返回
+类型。如果返回一个自动存储期变量（\ref{class.copy}），关联于返回语句的拷贝操作可
+能消除或转换成移动操作。」「例：
+\begin{lstlisting}
+  std::pair<std::string,int> f(const char* p, int x) {
+    return {p,x};
+  }
+\end{lstlisting}」
+经过构造函数，析构函数或返回类型为\nt{cv} \tm{void}的函数结尾处等价于一个无操作
+数的\tm{return}。否则，经过除\tm{main}函数（\ref{basic.start.main}）的函数结尾处
+将产生未定义行为。
+
+\paragraph{}
+调用结果的拷贝初始化前序于在返回语句的操作数所建立的全表达式结果处的临时变量的析
+构，而这些临时变量的析构也前序于包含返回语句的块中的局部变量的析构。
+
 \ssect{goto语句}{stmt.goto}
+\paragraph{}
+\tm{goto}语句无条件的将控制流转换到标识符所标识的语句。标识符应该是当前函数中的
+一个标号（\ref{stmt.label}）。
 
 \sect{声明语句}{stmt.dcl}
+\paragraph{}
+声明语句向块中引入一个或多个标识符；其具有以下形式
+
+\synsym{declaration-statement}
+  \synprd[]{\nt{block-declaration}}
+
+如果声明引入的标识符先前在一个外层块中声明过，则外层块在块的后续部分中被隐藏，在
+这之后恢复其作用。
+
+\paragraph{}
+自动存储期变量（\ref{basic.stc.auto}）在其\nt{declaration-statement}每次执行时初
+始化。块中声明的自动存储期变量在块退出时销毁（\ref{stmt.jump}）。
+
+\paragraph{}
+转移进入一个块是可能的，但不是以跳过带初始化的声明的方式进行。从一个自动存储期变
+量不在的作用域的点跳入\footnote{从\tm{switch}语句的条件跳转到\tm{case}标号被当成
+是这种跳转。} 其在的作用域中是病态的，除非变量是标量类型，带平凡缺省构造函数和析
+构函数的类类型，这些类型的cv限定版本，或前面提到的类型的数组，且不带初始化声明
+（\ref{dcl.init}）。「例：
+\begin{lstlisting}
+  void f() {
+    // ...
+    goto lx; // ill-formed: jump into scope of a
+    // ...
+  ly:
+    X a = 1;
+    // ...
+  lx:
+    goto ly; // OK, jump implies destructor call for a followed by
+             // construction again immediately following label ly
+\end{lstlisting}
+
+\paragraph{}
+静态存储期（\ref{basic.stc.static}）或线程存储期（\ref{basic.stc.thread}）块作用
+域变量的动态初始化在控制流第一次越过其声明的时候进行；这样的变量在其初始化完成时
+被当作已初始化。如果初始化因抛出异常而终止，则初始化未完成，因此在下一次控制进行
+声明处时会再次尝试。如果控制在变量正在初始化时并发进入声明，则并发执行应该等待初
+始化的完成。\footnote{实现不能在初始化执行时引入任何死锁。死锁仍然可以由程序逻辑
+引入；实现只需要避免由其自身的同步操作而引入死锁。}如果控制在变量初始化正在初始
+化时递归地重新进入声明，则行为未定义。「例：
+\begin{lstlisting}
+  int foo(int i) {
+    static int s = foo(2*i); // recursive call - undefined
+    return i+1;
+  }
+\end{lstlisting}」
+
+\paragraph{}
+静态或线程存储期块作用域对象的析构函数当且仅当它被构造了才会被执行。「注：
+\ref{basic.start.term}描述的静态或线程存储期块作用域对象销毁的顺序。」
 
 \sect{歧义解析}{stmt.ambig}
+\paragraph{}
+\nt{expression-statement}和\nt{declaration}之间在语法上存在歧义：以函数式显式转
+换（\ref{expr.type.conv}）作为最左操作数的\nt{expression-statement}可与第一声明
+子以\tm{(}开头的\nt{declaration}不可区分。在这些情况下\nt{statement}是一个
+\nt{declaration}。
+
+\paragraph{}
+「注：如果\nt{statement}语法上不是一个\nt{declaration}，则不存在歧义，因此本规则
+不适用。整个\nt{statement}可能需要检查以确定是否是这种情况。这解决了许多示例的语
+义。「例：假定\nt{T}是一个\nt{simple-type-specifier}（\ref{dcl.type}），
+\begin{lstlisting}
+  T(a)->m = 7;  // expression-statement
+  T(a)++;       // expression-statement
+  T(a,5)<<c;    // expression-statement
+
+  T(*d)(int);       // declaration
+  T(e)[5];          // declaration
+  T(f) = { 1, 2 };  // declaration
+  T(*g)(double(3)); // declaration
+\end{lstlisting}
+以上最后一个例子中，\tm{g}，是指向\tm{T}的指针，被初始化成\tm{double(3)}。因为语
+义原因这当然是病态的，但这不影响语法分析。」
+
+剩余情形是\nt{declaration}。「例：
+\begin{lstlisting}
+  class T {
+    // ...
+  public:
+    T() ;
+    T(int) ;
+    T(int, int) ;
+  };
+  T(a);         // declaration
+  T(*b)();      // declaration
+  T(c)=7;       // declaration
+  T(d),e,f=3;   // declaration
+  extern int h;
+  T(g)(h,2);    // declaration
+\end{lstlisting}」」
+
+\paragraph{}
+该歧义解析是纯语法上的；即出现在这样的语句中的名字的语义，除是否为\nt{type-name}
+以外，通常不会用于歧义解析或被歧义解析改变。类模板按需实例化以确定限定名是否为
+\nt{type-name}。歧义解析在语法分析之前，且被解析为声明的语句可能是病态声明。如果
+分析过程中，模板参数中的名字绑定到不同于尝试性分析中可能的绑定，则程序为病态。无
+需诊断。「注：这只能在名字由之前的声明所声明过时才会出现。」「例：
+\begin{lstlisting}
+  struct T1 {
+    T1 operator()(int x) { return T1(x); }
+    int operator=(int x) { return x; }
+    T1(int) { }
+  };
+
+  struct T2 { T2(int) { } };
+
+  int a, (*(*b) (T2) ) (int) , c, d;
+
+  void f() {
+    // disambiguation requires this to be parsed as a declaration:
+    T1(a) = 3,
+    T2(4),                  // T2 will be declared as a variable of type T1,
+                            // but this will not
+    (*(*b)(T2(c)))(int(d)); // allow the last part of the declaration to parse
+                            // properly, since it depends on T2 being a type-name
+  }
+\end{lstlisting}」

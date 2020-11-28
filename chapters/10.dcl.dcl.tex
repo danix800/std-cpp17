@@ -1,61 +1,2750 @@
 %% 10. dcl.dcl
 
 \chptr{声明}{dcl.dcl}
+\paragraph{}
+声明通常指明名字如何解释。声明具有以下形式
+
+\synsym{declaration-seq}
+  \synprd{\nt{declaration}}
+  \synprd{\nt{declaration-seq declaration}}
+\synsym{declaration}
+  \synprd{\nt{block-declaration}}
+  \synprd{\nt{nodeclspec-function-declaration}}
+  \synprd{\nt{function-definition}}
+  \synprd{\nt{template-declaration}}
+  \synprd{\nt{deduction-guide}}
+  \synprd{\nt{explicit-instantiation}}
+  \synprd{\nt{explicit-specialization}}
+  \synprd{\nt{linkage-specification}}
+  \synprd{\nt{namespace-definition}}
+  \synprd{\nt{empty-declaration}}
+  \synprd{\nt{attribute-declaration}}
+\synsym{block-declaration}
+  \synprd{\nt{simple-declaration}}
+  \synprd{\nt{asm-definition}}
+  \synprd{\nt{namespace-alias-definition}}
+  \synprd{\nt{using-declaration}}
+  \synprd{\nt{using-directive}}
+  \synprd{\nt{static\_assert-declaration}}
+  \synprd{\nt{alias-declaration}}
+  \synprd{\nt{opaque-enum-declaration}}
+\synsym{nodeclspec-function-declaration}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} declarator} \tm{;}}
+\synsym{alias-declaration}
+  \synprd{\tm{using} \nt{identifier attribute-specifier-seq\tsub{opt}} \tm{=}
+    \nt{defining-type-id} \tm{;}}
+\synsym{simple-declaration}
+  \synprd{\nt{decl-specifier-seq init-declarator-list\tsub{opt}} \tm{;}}
+  \synprd{\nt{attribute-specifier-seq decl-specifier-seq init-declarator-list}
+    \tm{;}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} decl-specifier-seq
+    ref-qualifier\tsub{opt}} \tm{[} \nt{identifier-list} \tm{]} \nt{initializer}
+    \tm{;}}
+\synsym{static\_assert-declaration}
+  \synprd{\tm{static\_assert (} \nt{constant-expression} \tm{) ;}}
+  \synprd{\tm{static\_assert (} \nt{constant-expression} \tm{,}
+    \nt{string-literal} \tm{) ;}}
+\synsym{empty-declaration}
+  \synprd{\tm{;}}
+\synsym{attribute-declaration}
+  \synprd{\nt{attribute-specifier-seq} \tm{;}}
+
+「注：\nt{asm-definition}在\ref{dcl.asm}中描述，\nt{linkage-specification}在
+\ref{dcl.link}中描述。\nt{function-definition}在\ref{dcl.fct.def}中描述，
+\nt{template-declaration}和\nt{deduction-guide}在第\ref{temp}章中描述。
+\nt{namespace-definition}在\ref{namespace.def}中描述，\nt{using-declaration}在
+\ref{namespace.udecl}中描述，\nt{using-directive}在\ref{namespace.udir}中描述。」
+
+\paragraph{}
+形如                                                                          \\
+\mbox{\qquad\nt{attribute-specification-seq\tsub{opt}
+  decl-specifier-seq\tsub{opt} init-declarator-list\tsub{opt}} \tm{;}}        \\
+的\nt{simple-declaration}或\nt{nodeclspec-function-declaration}被分成三个部分。
+属性在\ref{dcl.attr}中描述。\nt{decl-specifier}，\nt{decl-specifier-seq}中的主要
+组成部分，在第\ref{dcl.decl}章中描述。\nt{attribute-specifier-seq}适用于
+\nt{init-declarator-list}的\nt{declarator}所声明每一个实体。「注：在一个声明的实
+体中，适用于该实体的属性可能出现在声明的开始和该声明的\nt{declarator-id}之后。」
+「例：
+\begin{lstlisting}
+  [[noreturn]] void f [[noreturn] (); // OK
+\end{lstlisting}」
+
+\paragraph{}
+除非另有说明，\nt{attribute-declaration}的语义由实现定义。
+
+\paragraph{}
+声明出现在作用域中（\ref{basic.scope}）；作用域规则在\ref{basic.lookup}中总结。
+声明函数或定义类，命名空间，模板或函数的声明也有一个或多个嵌套于其内的作用域。这
+些嵌套作用域相应的可以有声明嵌套于其内。除非另有说明，第\ref{dcl.dcl}章中关于声
+明或其子组件中包含的组件的表达只引用那些不嵌套于嵌套在声明的作用域中声明的组件。
+
+\paragraph{}
+在\nt{simple-declaration}中，可选的\nt{init-declarator-list}只有在声明一个类（第
+\ref{class}章）或枚举（\ref{dcl.enum}）的时候可以省略，即当
+\nt{decl-specifier-seq}包含一个\nt{class-specifier}，一个带有\nt{class-key}
+（\ref{class.name}）的\nt{elaborated-type-specifier}或一个\nt{enum-specifier}。
+在这些情况下且当一个\nt{class-specifier}或\nt{enum-specifier}存在于
+\nt{decl-specifier-seq}中时，这些说明符中的标识符存在于声明所声明的名字中（根据
+语法，作为\nt{class-name}，\nt{enum-name}或\nt{enumerator}）。在这些情况下，
+\nt{decl-specifier-seq}应向程序中引入一个或多个名字，或应该重新声明一个之前的声
+明引入的名字。「例：
+\begin{lstlisting}
+  enum { };          // ill-formed
+  typedef class { }; // ill-formed
+\end{lstlisting}」
+
+\paragraph{}
+在一个\nt{static\_assert-declaration}中，\nt{constant-expression}应该是按上下文
+转换到\tm{bool}类型的常表达式（\ref{expr.const}）。如果这样转换的表达式的值为
+\tm{true}，则声明无效果。否则程序为病态，且如果提供，则产生的诊断消息
+（\ref{intro.compliance}）应该包含\nt{string-literal}的文本，除了不在基本源字符
+集（\ref{lex.charset}）中的字符不需要出现在诊断消息中。「例：
+\begin{lstlisting}
+  static_assert(char(-1) < 0, “this library requires plain 'char' to be signed”);
+\end{lstlisting}」
+
+\paragraph{}
+\nt{empty-declaration}无效果。
+
+\paragraph{}
+带有\nt{identifier-list}的\nt{simple-declaration}被称为\nt{结构化绑定声明}
+（\nt{structured binding declaration}（\ref{dcl.struct.bind}））。
+\nt{decl-specifier-seq}应该仅包含\nt{type-specifier} \tm{auto}
+（\ref{dcl.spec.auto}）和\nt{cv-qualifier}。\nt{initializer}应该具有形式为
+``\tm{=} \nt{assignment-expression}''，``\tm{\{} \nt{assignment-expression}
+\tm{\}}''或``\tm{(} \nt{assignment-expression} \tm{)}''，
+其中\nt{assignment-expression}为数组或非联合类类型。
+
+\paragraph{}
+\nt{init-declarator-list}中的每一个\nt{init-declarator}包含仅一个
+\nt{declarator-id}，作为由该\nt{init-declarator}声明的名字，因此是声明所声明的名
+字之一。\nt{decl-specifier-seq}中的\nt{defining-type-specifier}（\ref{dcl.type}）
+和\nt{init-declarator}的递归声明子结构描述一个类型（\ref{dcl.meaning}），该类型
+随后关联于\nt{init-declarator}所声明的名字。
+
+\paragraph{}
+如果\nt{decl-specifier-seq}包含\tm{typedef}说明符，则该声明称为\nt{类型定义声明}
+且每一个\nt{init-declarator}的名字被定义成\nt{typedef-name}，同义于其关联类型
+（\ref{dcl.typedef}）。如果\nt{decl-specifier-seq}不包含\tm{typedef}说明符，且关
+联于名字的类型为函数类型（\ref{dcl.fct}），则声明被称为\nt{函数声明}，否则称为
+\nt{对象声明}。
+
+\paragraph{}
+除声明的通过形式中所有的语法成分被加到函数声明中以构成\nt{function-definition}。
+但是，除非包含\tm{extern}说明符且没有初始化（\ref{basic.def}），对象声明也是一个
+定义。定义使得适当大小的内存为其保存并进行适当的初始化（\ref{dcl.init}）。
+
+\paragraph{}
+一个\nt{nodeclspec-function-declaration}应该定义一个构造函数，析构函数或转换函数
+\footnote{不再支持C语言的``隐式int''。}「注：一个
+\nt{nodeclspec-function-declaration}只能用在\nt{template-declaration}
+（第\ref{temp}章），\nt{explicit-instantiation}（\ref{temp.explicit}）或
+\nt{explicit-specialization}（\ref{temp.expl.spec}）中。」
 
 \sect{说明符}{dcl.spec}
+\paragraph{}
+可用于声明中的说明符有
+
+\synsym{decl-specifier}
+  \synprd{\nt{storage-class-specifier}}
+  \synprd{\nt{defining-type-specifier}}
+  \synprd{\nt{function-specifier}}
+  \synprd{\tm{friend}}
+  \synprd{\tm{typedef}}
+  \synprd{\tm{constexpr}}
+  \synprd{\tm{inline}}
+\synsym{decl-specifier-seq}
+  \synprd{\nt{decl-specifier attribute-specifier-seq\tsub{opt}}}
+  \synprd[]{\nt{decl-specifier decl-specifier-seq}}
+
+\nt{decl-specifier-seq}中可选的\nt{attribute-specifier-seq}适用于之前的
+\nt{decl-specifier}（\ref{dcl.meaning}）所确定的类型。
+\nt{attribute-specifier-seq}只影响其所出现在的声明的类型，而不是相同类型所涉及到
+的其他声明。
+
+\paragraph{}
+在完整的\nt{decl-specifier-seq}中每一个\nt{decl-specifier}应该只出现一次，除了
+\tm{long}可以出现两次。
+
+\paragraph{}
+如果在分析\nt{decl-specifier-seq}时遇到\nt{type-name}，且当且仅当没有除
+\nt{decl-specifier-seq}之外的\nt{cv-qualifier}之外的\nt{defining-type-specifier}
+则将其作为\nt{decl-specifier-seq}的一部分进行解释。该序列应该是自包含的，如下所
+述。「例：
+\begin{lstlisting}
+  typedef char* Pc;
+  static Pc;        // error: name missing
+\end{lstlisting}
+这里，声明\tm{static Pc}是病态的，因没有为类型\tm{Pc}的静态变量指定名字。为取得
+变量\tm{Pc}，必须存在\nt{type-specifier}（除\tm{const}或\tm{volatile}）以指明
+\nt{typedef-name} \tm{Pc}是（重）声明的名字，而不是\nt{decl-specifier}序列的一部
+分。比如，
+\begin{lstlisting}
+  void f(const Pc);     // void f(char* const) (not const char*)
+  void g(const int Pc); // void g(const int)
+\end{lstlisting}」
+
+\paragraph{}
+「注：因为\tm{signed}，\tm{unsigned}，\tm{long}和\tm{short}缺省意味着\tm{int}，
+\nt{type-name}出现在这些说明符之一的后面被当成（重）声明的名字。「例：
+\begin{lstlisting}
+  void h(unsigned Pc);      // void h(unsigned int)
+  void k(unsigned int Pc);  // void k(unsigned int)
+\end{lstlisting}」」
+
 \ssect{存储类说明符}{dcl.stc}
+\paragraph{}
+存储类说明符包括
+
+\synsym{storage-class-specifier}
+  \synprd{\tm{static}}
+  \synprd{\tm{thread\_local}}
+  \synprd{\tm{extern}}
+  \synprd[]{\tm{mutable}}
+
+至多一个\nt{storage-class-specifier}可以出现在给定的\nt{decl-specifier-seq}中，
+除了\tm{thread\_local}可以与\tm{static}或\tm{extern}一起出现。如果
+\tm{thread\_local}出现在任何变量声明中，则其应该出现在该实体的所有声明中。如果一
+个\nt{storage-class-specifier}出现在一个\nt{decl-specifier-seq}，则不能有
+\tm{typedef}说明符存在于同一\nt{decl-specifier-seq}和\nt{init-declarator-list}，
+否则声明的\nt{member-declarator-list}不应该为空（除非是在一个具名的命名空间或全
+局命名空间中声明的匿名联合，其应该声明为\tm{static}（\ref{class.union.anon}））。
+\nt{storage-class-specifier}应用于列表中每一个\nt{init-declarator}所声明的名字，
+而不是由其他声明符所声明的任何名字。除\tm{thread\_local}以外的
+\nt{storage-class-specifier}不应该在显式特例化（\ref{temp.expl.spec}）或显式实例
+化（\ref{temp.explicit}）指令中指定。
+
+\paragraph{}
+「注：块作用域中未使用\nt{storage-class-specifier}声明或声明为函数参数的变量具有
+缺省的自动存储期（\ref{basic.stc.auto}）。」
+
+\paragraph{}
+\tm{thread\_local}说明符表明命名实体具有线程存储期（\ref{basic.stc.thread}）。其
+应该仅用于命名空间或块作用域中变量的名字以及静态数据成员的名字。当
+\tm{thread\_local}应用于块作用域变量时，如果没有其他\nt{storage-class-specifier}
+出现在\nt{decl-specifier-seq}时则应用\nt{storage-class-specifier} \tm{static}。
+
+\paragraph{}
+\tm{static}说明符仅可以应用于变量名和函数以及匿名联合（\ref{class.union.anon}）。
+在块内函数声明可以没有\tm{static}，也没有任何\tm{static}函数参数。变量声明中使用
+的\tm{static}说明符声明变量为静态存储期（\ref{basic.stc.static}），除非同时有
+\tm{thread\_local}说明符，即声明变量具有线程存储期（\ref{basic.stc.thread}）。一
+个\tm{static}说明符可以用于类成员声明；\ref{class.static}描述了其效果。对于使用
+\tm{static}说明符所声明名字的链接，见\ref{basic.link}。
+
+\paragraph{}
+\tm{extern}说明符仅可以用于变量或函数的名字。\tm{extern}说明符不能用于类成员或函
+数参数的声明中。对于使用\tm{extern}说明符所声明名字的链接，见\ref{basic.link}。
+「注：\tm{extern}关键字也可以用于\nt{explicit-instantiation}和
+\nt{linkage-specification}，但在这种上下文中不可以用于
+\nt{storage-class-specifier}。」
+
+\paragraph{}
+给定实体的连续声明所蕴含的链接应该一致。即，在给定作用域中，声明相同变量名字的每
+个声明或相同的重载函数名应该蕴含相同的链接。然而，给定的重载函数集中的每一个函数
+可以具有不同链接，「例：
+\begin{lstlisting}
+  static char* f(); // f() has internal linkage
+  char* f()         // f() still has internal linkage
+    { /* ... */ }
+
+  char* g();        // g() has external linkage
+  static char* g()  // error: inconsistent linkage
+    { /* ... */ }
+
+  void h();
+  inline void h();  // external linkage
+
+  inline void l();
+  void l();         // external linkage
+
+  inline void m();
+  extern void m();  // external linkage
+
+  static void n();
+  inline void n();  // internal linkage
+
+  static int a;     // a has internal linkage
+  int a;            // error: two definitions
+
+  static int b;     // b has internal linkage
+  extern int b;     // b still has internal linkage
+
+  int c;            // c has external linkage
+  static int c;     // error: inconsistent linkage
+
+  extern int d;     // d has external linkage
+  static int d;     // error: inconsistent linkage
+\end{lstlisting}」
+
+\paragraph{}
+声明但未定义类的名字可以用于\tm{extern}声明中。这种声明仅可以用于不需要完整类类
+型的方式中。「例：
+\begin{lstlisting}
+  struct S;
+  extern S a;
+  extern S f();
+  extern void g(S);
+
+  void h() {
+    g(a);         // error: S is incomplete
+    f();          // error: S is incomplete
+  }
+\end{lstlisting}」
+
+\paragraph{}
+\tm{mutable}说明符应该仅出现在非静态数据成员声明中（\ref{class.mem}），其类型即
+不是const限定也不是引用类型。「例：
+\begin{lstlisting}
+  class X {
+    mutable const int* p;  // OK
+    mutable int* const q;  // ill-formed
+  }
+\end{lstlisting}」
+
+\paragraph{}
+类成员\tm{mutable}说明符取消应用于包含类对象的\tm{const}说明符，并且即使对象的剩
+余部分是\tm{const}（\ref{dcl.type.cv}）也允许可变类成员的修改。
+
 \ssect{函数说明符}{dcl.fct.spec}
+\paragraph{}
+\nt{function-specifier}只能用于函数声明。
+
+\synsym{function-specifier}
+  \synprd{\nt{virtual}}
+  \synprd[]{\nt{explicit}}
+
+\paragraph{}
+\tm{virtual}说明符应该只用于非静态类成员函数的初始声明；见\ref{class.virtual}。
+
+\paragraph{}
+\tm{explicit}说明符应该只用于构造函数的声明或其类定义的转换函数中；见
+\ref{class.conv.ctor}和\ref{class.conv.fct}。
+
 \ssect{typedef说明符}{dcl.typedef}
+\paragraph{}
+包含\nt{decl-specifier} \tm{typedef}的声明将声明之后可以用于命名基本
+（\ref{basic.fundamental}）或复合类型（\ref{basic.compound}）的标识符。
+\tm{typedef}说明符不应该绑定在带有除\nt{defining-type-specifier}以外的任何类型说
+明符的\nt{decl-specifier-seq}，并且其即不应该用在
+\nt{parameter-declaration}（\ref{dcl.fct}）的\nt{decl-specifier-seq}也不应该用在
+\nt{function-definition}（\ref{dcl.fct.def}）的\nt{decl-specifier-seq}中。如果
+\tm{typedef}说明出现在无\nt{declarator}的声明中，则程序为病态。
+
+\synsym{typdef-name}
+  \synprd{\nt{identifier}}
+
+使用\tm{typedef}说明符声明的名字成为\nt{typedef-name}。在其声明的作用域中，一个
+\nt{typedef-name}语法上等价于一个关键字且按第\ref{dcl.decl}章所述的方式命名关联
+于标识符的类型。因此一个\nt{typedef-name}是另一个类型的同义词。\nt{typedef-name}
+不会按类声明（\ref{class.name}）或枚举声明的方式引入新类型。「例：在
+\begin{lstlisting}
+  typedef int MILES, *KLICKSP;
+\end{lstlisting}
+之后，构造
+\begin{lstlisting}
+  MILES distance;
+  extern KLICKSP metricp;
+\end{lstlisting}
+都是正确的声明；\tm{distance}的类型为\tm{int}，\tm{metricp}的类型为``指向
+\tm{int}的指针''。」
+
+\paragraph{}
+\nt{typedef-name}也可以由\nt{alias-declaration}引入。跟在\tm{using}关键字之后的
+\nt{identifier}成为\nt{typedef-name}且跟在\nt{identifier}之后的可选
+\nt{attribute-specifier-seq}应用于该\nt{typedef-name}。这样的\nt{typedef-name}
+与由\tm{typedef}说明引入具有相同语义。特别是，其不定义新类型。「例：
+\begin{lstlisting}
+  using handler_t = void (*) (int);
+  extern handler_t ignore;
+  extern void (*ignore)(int);       // redeclare ignore
+  using cell = pair<void*, cell*>;  // ill-formed
+\end{lstlisting}」如果\nt{alias-declaration}是一个\nt{template-declaration}的
+\nt{declaration}，则\nt{defining-type-id}的\nt{defining-type-specifier-seq}不应
+该定义类或枚举。
+
+\paragraph{}
+在给定的非类作用域中，\tm{typedef}说明符可以用于重定义该作用域中声明的任何类型的
+名字以引用其已经引用的类型。「例：
+\begin{lstlisting}
+  typedef struct s { /* ... */ } s;
+  typedef int I;
+  typedef int I;
+  typedef I I;
+\end{lstlisting}」
+
+\paragraph{}
+在给定的类作用域中，\nt{typedef}说明符可以用于重定义该作用域中声明的任何非
+\nt{typedef-name}的类名以引用其已经引用的类型。「例：
+\begin{lstlisting}
+struct S {
+  typedef struct A { } A; // OK
+  typedef struct B B;     // OK
+  typedef A A;            // error
+};
+\end{lstlisting}」
+
+\paragraph{}
+如果\tm{typedef}说明符用于重新定义给定作用域中可以使用一个
+\nt{elaborated-type-specifier}引用的实体，则该实体可以继续使用
+\nt{elaborated-type-specifier}引用或作为枚举或类中的枚举名或类名。「例：
+\begin{lstlisting}
+  struct S;
+  typedef struct S S;
+  int main() {
+    struct S* p;      // OK
+  }
+  struct S { };       // OK
+\end{lstlisting}」
+
+\paragraph{}
+在给定的作用域中，\tm{typedef}说明符不应该用于重定义该作用域中定义的引用不同类型
+的类型名。「例：
+\begin{lstlisting}
+  class complex { /* ... */ };
+  typedef int complex; // error: redefinition
+\end{lstlisting}」
+
+\paragraph{}
+类似的，在给定作用域中，类或枚举不应该使用相同的名字声明为该作用域中声明的
+\nt{typedef-name}且引用不是类或枚举本身的类型。「例：
+\begin{lstlisting}
+  typedef int complex;
+  class complex { /* ... */ }; // error: redefinition
+\end{lstlisting}」
+
+\paragraph{}
+「注：命名类类型的\nt{typedef-name}或其cv限定版本也是一个
+\nt{class-name}（\ref{class.name}）。如果\nt{typedef-name}用于标识
+\nt{elaborated-type-specifier}（\ref{dcl.type.elab}），类定义（第\ref{class}章）
+，构造函数声明（\ref{class.ctor}）或析构函数声明（\ref{class.dtor}）的主体，则程
+序为病态。」「例：
+\begin{lstlisting}
+  struct S {
+    S();
+    ~S();
+  };
+
+  typedef struct S T;
+
+  S a = T();        // OK
+  struct T * p;     // error
+\end{lstlisting}」
+
+\paragraph{}
+如果typedef声明定义一个无名类（或枚举），则声明所声明为该类类型（或枚举类型）的
+第一个\nt{typedef-name}仅因链接目的（\ref{basic.link}）而被用于表示类类型（或枚
+举类型）。「例：
+\begin{lstlisting}
+  typedef struct { } *ps, S;  // S is the class name for linkage purposes
+\end{lstlisting}」
+
 \ssect{friend说明符}{dcl.friend}
+\paragraph{}
+\tm{friend}说明符用于指定类成员访问；见\ref{class.friends}
+
 \ssect{constexpr说明符}{dcl.constexpr}
+\paragraph{}
+\tm{constexpr}说明符应该只用于变量或变量模板定义，或函数或函数模板声明。带有
+\tm{constexpr}说明符的函数或静态数据成员为隐式内联函数或变量（\ref{dcl.inline}）
+。如果任何函数或函数模板声明具有\tm{constexpr}说明符，则其所有声明都应该包含
+\tm{constexpr}说明符。「注：相对于\tm{constexpr}说明符，显式特例化可以区分模板声
+明。」「注：函数参数不能使用\tm{constexpr}声明。」「例：
+\begin{lstlisting}
+  constexpr void square(int &x);  // OK: declaration
+  constexpr int bufsz = 1024;     // OK: definition
+  constexpr struct pixel {        // error: pixel is a type
+    int x;
+    int y;
+    constexpr pixel(int);         // OK: declaration
+  };
+  constexpr pixel::pixel(int a)
+    : x(a), y(x)                  // OK: definition
+    { square(x); }
+  constexpr pixel small(2);     // error: square not defined, so small(2)
+                                // not constant (8.20) so constexpr not satisfied
+
+  constexpr void square(int &x) { // OK: definition
+    x *= x;
+  }
+  constexpr pixel large(4);     // OK: square defined
+  int next(constexpr int x) {   // error: not for parameters
+    return x + 1;
+  }
+  extern constexpr int memsz;   // error: not a definition
+\end{lstlisting}」
+
+\paragraph{}
+用于非构造函数的函数声明的\tm{constexpr}说明符声明该函数为\nt{constexpr}函数。类
+似的，用于构造函数声明的\tm{constexpr}说明符声明该构造函数为\nt{constexpr}构造函
+数。
+
+\paragraph{}
+constexpr函数定义应满足以下需求：
+\begin{enumerate}
+  \item{不应该是虚函数（\ref{class.virtual}）；}
+  \item{其返回类型应该为字面类型；}
+  \item{每一个参数类型应该是字面类型；}
+  \item{其\nt{function-body}应该是\tm{= delete}，\tm{= default}，或是不包含以下
+    的\nt{compound-statement}
+    \begin{enumerate}
+      \item{\nt{asm-definition}，}
+      \item{\tm{goto}语句，}
+      \item{标识符标号（\ref{stmt.label}），}
+      \item{\nt{try-block}，或}
+      \item{非字面类型，静态或线程存储期或不进行初始化的变量定义。}
+    \end{enumerate}}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  constexpr int square(int x)
+    { return x * x; }         // OK
+  constexpr long long_max()
+    { return 2147483647; }    // OK
+  constexpr int abs(int x) {
+    if (x < 0)
+      x = -x;
+    return x;                 // OK
+  }
+
+  constexpr int first(int n) {
+    static int value = n; // error: variable is uninitialized
+    return value;
+  }
+  constexpr int uninit() {
+    int a; // error: variable has static storage duration
+    return a;
+  }
+  constexpr int prev(int x)
+    { return --x; }               // OK
+  constexpr int g(int x, int n) { // OK
+    int r = 1;
+    while (--n > 0) r *= x;
+    return r;
+  }
+\end{lstlisting}」
+
+\paragraph{}
+constexpr构造函数的定义应该满足以下要求：
+\begin{enumerate}
+  \item{类不应该具有任何虚基类；}
+  \item{每一个参数类型应该是字面类型；}
+  \item{其\nt{function-body}不应该是\nt{function-try-block}。}
+\end{enumerate}
+此外，要么其\nt{function-body}应该是\tm{= delete}，要么它应该满足以下要求：
+\begin{enumerate}
+  \item{要么其\nt{function-body}应该是\tm{= delete}，要么其\nt{function-body}的
+    \nt{compound-statement}应该满足constexpr函数的\nt{function-body}的要求；}
+  \item{每一个非可变非静态数据成员和基类子对象应该被初始化
+    （\ref{class.base.init}）；}
+  \item{如果类是一个具有可变成员的联合（\ref{class.union}），应恰有一个被初始化
+    ；}
+  \item{如果类是类联合（union-like）类，但不是联合，对于其具有可变成员的每一个匿
+    名联合成员，应恰有一个被初始化；}
+  \item{对非代理构造函数，选择用于初始化非静态数据成员和基类子对象的每一个构造函
+    数应该是constexpr构造函数；}
+  \item{对代理构造函数，目标构造函数应该是一个constexpr构造函数。}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  struct Length {
+    constexpr explicit Length(int i = 0) : val(i) { }
+  private:
+    int val;
+  };
+\end{lstlisting}」
+
+\paragraph{}
+对即不是缺省也不是模板的constexpr函数或constexpr构造函数，如果没有使得函数或构造
+函数调用是一个核心常表达式（\ref{expr.const}）的求值子表达式的变量存在，或对于构
+造函数，对某些对象（\ref{basic.start.static}）的常量初始化，则程序为病态，无需诊
+断。「例：
+\begin{lstlisting}
+  constexpr int f(bool b)
+    { return b ? throw 0 : 0; }         // OK
+  constexpr int f() { return f(true); } // ill-formed, no diagnostic required
+
+  struct B {
+    constexpr B(int x) : i(0) { }        // x is unused
+    int i;
+  };
+
+  int global;
+
+  struct D : B {
+    constexpr D() : B(global) { } // ill-formed, no diagnostic required
+                                  // lvalue-to-rvalue conversion on non-constant
+                                  // global
+  };
+\end{lstlisting}」
+
+\paragraph{}
+如果constexpr函数模板或类模板的成员函数的初始化模板特例化不能满足constexpr函数或
+constexpr构造函数的要求，则该特例化仍然是一个constexpr函数或constexpr构造函数，
+即使这种函数的构造不能出现在常表达式中。如果当作非模板函数或构造函数时，没有模板
+特例化满足constexpr函数或constexpr构造函数的要求，则模板为病态，无需诊断。
+
+\paragraph{}
+constexpr函数的调用在除以下之外的所有方面产生与等价非constexpr函数调用相同
+\begin{enumerate}
+  \item{constexpr函数的调用可以出现在常表达式中（\ref{expr.const}）且}
+  \item{常表达式中拷贝消除是必须的（\ref{class.copy}）。}
+\end{enumerate}
+
+\paragraph{}
+\tm{constexpr}说明符对constexpr函数或constexpr构造函数的类型无影响。「例：
+\begin{lstlisting}
+  constexpr int bar(int x, int y) // OK
+    { return x + y + x*y; }
+  // ...
+  int bar(int x, int y)           // error: redefinition of bar
+    { return x * 2 + 3 * y; }
+\end{lstlisting}」
+
+\paragraph{}
+用于对象声明的\tm{constexpr}说明符声明对象为\tm{const}。这样的对象应该具有字面类
+型且应该被初始化。在任何\tm{constexpr}变量声明中，初始化的全表达式应该是一个常表
+达式（\ref{expr.const}）。「例：
+\begin{lstlisting}
+  struct pixel {
+    int x, y;
+  };
+  constexpr pixel ur = { 1294, 1024 };  // OK
+  constexpr pixel origin;               // error: initializer missing
+\end{lstlisting}」
+
 \ssect{inline说明符}{dcl.inline}
+\paragraph{}
+\tm{inline}说明符只能用于变量或函数声明或定义。
+
+\paragraph{}
+带有\tm{inline}说明符的函数声明（\ref{dcl.fct}，\ref{class.mfct}，
+\ref{class.friends}）声明一个\nt{内联函数}。内联说明符暗示实现在调用点相对常规函
+数调用首选函数体替换。在调用点不要求实现进行这种内联替换；但是即使省略内联替换，
+本节中指明的内联函数其他规则也应遵守。
+
+\paragraph{}
+使用\tm{inline}说明符的变量声明将声明一个\nt{内联变量}。
+
+\paragraph{}
+类定义中定义的函数为内联函数。
+
+\paragraph{}
+\tm{inline}说明符不应该出现在块作用域声明中。\footnote{\tm{inline}关键字对函数的
+链接无影响。} 如果\tm{inline}说明符用于友元函数声明中，该声明应该是一个定义或者
+函数之前已声明为内联。
+
+\paragraph{}
+内联函数或变量应该在odr使用的每一个翻译单元定义且在每一种情况下定义都应该完全相
+同（\ref{basic.def.odr}）。「注：在翻译单元中，调用内联函数或使用内联变量可能在
+定义出现之前遇到。」如果在翻译单元中函数或变量定义出现在其第一次声明为内联之前出
+现，则程序为病态。如果在一个翻译单元中，外部链接函数或变量被声明为内联，则在其出
+现的所有翻译单元中都应该被声明为内联；无需诊断。在所有翻译单元中，外部链接内联函
+数或变量应该具有相同地址。「注：内联函数中，外部链接的静态局部变量总是引用同一对
+象。外部链接的内联函数体内定义的类型在每一个翻译单元中都是同一类型。」
+
 \ssect{类型说明符}{dcl.type}
+\paragraph{}
+类型说明符为
+
+\synsym{type-specifier}
+  \synprd{\nt{simple-type-specifier}}
+  \synprd{\nt{elaborated-type-specifier}}
+  \synprd{\nt{typename-specifier}}
+  \synprd{\nt{cv-qualifier}}
+\synsym{type-specifier-seq}
+  \synprd{\nt{type-specifier attribute-specifier-seq\tsub{opt}}}
+  \synprd{\nt{type-specifier type-specifier-seq}}
+\synsym{defining-type-specifier}
+  \synprd{\nt{type-specifier}}
+  \synprd{\nt{class-specifier}}
+  \synprd{\nt{enum-specifier}}
+\synsym{defining-type-specifier-seq}
+  \synprd{\nt{defining-type-specifier attribute-specifier-seq\tsub{opt}}}
+  \synprd[]{\nt{defining-type-specifier defining-type-specifier-seq}}
+
+\nt{type-specifier-seq}或\nt{defining-type-specifier-seq}中可选的
+\nt{attribute-specifier-seq}应用于之前的\nt{type-specifier}或
+\nt{defining-type-specifier}（\ref{dcl.meaning}）所指代的类型。
+\nt{attribute-specifier-seq}仅影响其所出现的类型，而不是相同类型相关的其他声明。
+
+\paragraph{}
+作为通用规则，至多允许一个\nt{defining-type-specifier}出现在\nt{declaration}的完
+整\nt{decl-specifier-seq}或\nt{defining-type-specifier-seq}中，且允许至多一个
+\nt{type-specifier}出现在\nt{type-specifier-seq}中。该规则的例外如下：
+\begin{enumerate}
+  \item{\tm{const}可与除其自身的任何类型说明符组合。}
+  \item{\tm{volatile}可与除其自身的任何类型说明符组合。}
+  \item{\tm{signed}或\tm{unsigned}可与\tm{char}，\tm{long}，\tm{short}或\tm{int}
+    组合。}
+  \item{\tm{short}或\tm{long}可与\tm{int}组合。}
+  \item{\tm{long}可与\tm{double}组合。}
+  \item{\tm{long}可与\tm{long}组合。}
+\end{enumerate}
+
+\paragraph{}
+除构造函数，析构函数或转换函数声明中，至少一个非\nt{cv-qualifier}的
+\tm{defining-type-specifier}应该出现在完整的\nt{type-specifier-seq}或完整的
+\nt{decl-specifier-seq}中。\footnote{对缺少\nt{type-specifier}或仅有
+\nt{cv-qualifier}的\nt{type-specifier}的\nt{decl-specifier-seq}，不存在特殊规定。
+C的``隐式int''规则不再支持。}
+
+\paragraph{}
+「注：\nt{enum-specifier}，\nt{class-specifier}和\nt{typename-specifier}分别在
+\ref{dcl.enum}，第\ref{class}章和\ref{temp.res}中描述。\nt{type-specifier}的剩余
+部分在本节剩余部分中讨论。」
+
 \sssect{cv限定符}{dcl.type.cv}
+\paragraph{}
+存在\tm{const}和\tm{volatile}两个\nt{cv-qualifier}。每个\nt{cv-qualifier}在
+\nt{cv-qualifier-seq}中应该出现至多一次。如果\nt{cv-qualifier}出现在
+\nt{decl-specifier-seq}中，则声明中该\nt{init-declarator-list}或
+\nt{member-declarator-list}不能为空。「注：\ref{basic.type-qualifier}和
+\ref{dcl.fct}描述cv限定符如何影响对象和函数类型。」冗余的cv限定将被忽略。「注：
+比如可以通过typedef引入。」
+
+\paragraph{}
+「注：声明变量为\tm{const}可能影响其链接（\ref{dcl.spec}）和其在常表达式
+\ref{expr.const}中的可用性。如\ref{dcl.init}中所述，const限定对象或子对象的定义
+必须指明初始化或受限于缺省初始化。」
+
+\paragraph{}
+cv限定类型的指针或引用不要求实际指向或引用cv限定对象，但其被当作如此；一个const
+限定访问路径不能用于修改对象，即使所引用对象是一个非const对象且可以通过其他访问
+路径进行修改。「注：cv限定符由类型系统支持，使得不使用转换
+（\ref{expr.const.cast}）则不能撤消。」
+
+\paragraph{}
+除声明为\tm{mutable}（\ref{dcl.stc}）的任何类成员可以修改外，任何在其生命期内修
+改\tm{const}对象的尝试都将导致未定义行为。「例：
+\begin{lstlisting}
+  const int ci = 3;   // cv-qualified (initialized as required)
+  ci = 4;             // ill-formed: attempt to modify const
+
+  int i = 2;          // not cv-qualified
+  const int* cip;     // pointer to const int
+  cip = &i;           // OK: cv-qualified access path to unqualified
+  *cip = 4;           // ill-formed: attempt to modify through ptr to const
+
+  int* ip;
+  ip = const_cast<int*>(cip); // cast needed to convert const int* to int*
+  *ip = 4;                    // defined: *ip points to i, a non- const object
+
+  const int* ciq = new const int (3); // initialized as required
+  int* iq = const_cast<int*>(ciq);    // cast required
+  *iq = 4;                            // undefined: modifies a const object
+\end{lstlisting}
+另一个例子是，
+\begin{lstlisting}
+  struct X {
+    mutable int i;
+    int j;
+  };
+  struct Y {
+    X x;
+    Y();
+  };
+
+  const Y y;
+  y.x.i++;    // well-formed: mutable member can be modified
+  y.x.j++;    // ill-formed: const-qualified member modified
+
+  Y* p = const_cast<Y*>(&y); // cast away const-ness of y
+  p->x.i = 99;               // well-formed: mutable member can be modified
+  p->x.j = 99;               // undefined: modifies a const member
+\end{lstlisting}」
+
+\paragraph{}
+通过volatile泛左值访问的语义由实现定义。如果尝试通过非volatile泛左值的使用来访问
+使用volatile限定类型定义的对象，则行为未定义。
+
+\paragraph{}
+「注：\tm{volatile}是对实现的提示，以避免因对象值通过实现不可检测方式的更改而对
+对象的进行过度优化。进一步，对某些实现，\tm{volatile}可能表明需要特殊硬件指令来
+访问对象。见\ref{intro.execution}关于详细语义。通常，C++中\tm{volatile}的语义与
+C中相同。」
+
 \sssect{简单类型说明符}{dcl.type.simple}
+\paragraph{}
+简单类型说明符为
+
+\synsym{simple-type-specifier}
+  \synprd{\nt{nested-name-specifier\tsub{opt} type-name}}
+  \synprd{\nt{nested-name-specifier} \tm{template} \nt{simple-template-id}}
+  \synprd{\nt{nested-name-specifier\tsub{opt} template-name}}
+  \synprd{\tm{char}}
+  \synprd{\tm{char16\_t}}
+  \synprd{\tm{char32\_t}}
+  \synprd{\tm{wchar\_t}}
+  \synprd{\tm{bool}}
+  \synprd{\tm{short}}
+  \synprd{\tm{int}}
+  \synprd{\tm{long}}
+  \synprd{\tm{signed}}
+  \synprd{\tm{unsigned}}
+  \synprd{\tm{float}}
+  \synprd{\tm{double}}
+  \synprd{\tm{void}}
+  \synprd{\tm{auto}}
+  \synprd{\nt{decltype-specifier}}
+\synsym{type-name}
+  \synprd{\nt{class-name}}
+  \synprd{\nt{enum-name}}
+  \synprd{\nt{typedef-name}}
+  \synprd{\nt{simple-template-id}}
+\synsym{decltype-specifier}
+  \synprd{\tm{decltype (} \nt{expression} \tm{)}}
+  \synprd[]{\tm{decltype ( auto )}}
+
+\paragraph{}
+\nt{simple-type-specifier} \tm{auto}是待推导类型（\ref{dcl.spec.auto}）的占位符。
+形如\tm{typename}\nt{\tsub{opt} nested-name-specifier\tsub{opt} template-name}的
+\nt{type-specifier}为待推导类类型（\ref{dcl.type.class.deduct}）占位符。
+\nt{template-name}应该命名一个非注入类名的类模板。另一个
+\nt{simple-type-specifier}指定一个之前声明的类型，从表达式确定的类型或基本类型
+（\ref{basic.fundamental}）之一。表\ref{tab:type.simple}总结了
+\nt{simple-type-specifier}的有效组合及其所指定的类型。
+
+\begin{table}[!h]
+  \centering
+  \caption{simple-type-specifier及其所指定类型}
+  \begin{tabular}{|ll|}
+    \hline
+    \tm{Specifier(s)}                   & \tm{Type}                           \\
+    \hline\hline
+    \nt{type-name}                      & 所命名的类型                        \\
+    \nt{simple-template-id}             & \ref{temp.names}中定义的类型        \\
+    \nt{template-name}                  & 待推导类型占位符                    \\
+    \tm{char}                           & ``char''                            \\
+    \tm{unsigned char}                  & ``unsigned char''                   \\
+    \tm{signed char}                    & ``signed char''                     \\
+    \tm{char16\_t}                      & ``char16\_t''                       \\
+    \tm{char32\_t}                      & ``char32\_t''                       \\
+    \tm{bool}                           & ``bool''                            \\
+    \tm{unsigned}                       & ``unsigned int''                    \\
+    \tm{unsigned int}                   & ``unsigned int''                    \\
+    \tm{signed}                         & ``int''                             \\
+    \tm{signed int}                     & ``int''                             \\
+    \tm{int}                            & ``int''                             \\
+    \tm{unsigned short int}             & ``unsigned short int''              \\
+    \tm{unsigned short}                 & ``unsigned short int''              \\
+    \tm{unsigned long int}              & ``unsigned long int''               \\
+    \tm{unsigned long}                  & ``unsigned long int''               \\
+    \tm{unsigned long long int}         & ``unsigned long long int''          \\
+    \tm{unsigned long long}             & ``unsigned long long int''          \\
+    \tm{signed long int}                & ``long int''                        \\
+    \tm{signed long}                    & ``long int''                        \\
+    \tm{signed long long int}           & ``long long int''                   \\
+    \tm{signed long long}               & ``long long int''                   \\
+    \tm{long long int}                  & ``long long int''                   \\
+    \tm{long long}                      & ``long long int''                   \\
+    \tm{long int}                       & ``long int''                        \\
+    \tm{long}                           & ``long int''                        \\
+    \tm{signed short int}               & ``short int''                       \\
+    \tm{signed short}                   & ``short int''                       \\
+    \tm{short int}                      & ``short int''                       \\
+    \tm{short}                          & ``short int''                       \\
+    \tm{wchar\_t}                       & ``wchar\_t''                        \\
+    \tm{float}                          & ``float''                           \\
+    \tm{double}                         & ``double''                          \\
+    \tm{long double}                    & ``long double''                     \\
+    \tm{void}                           & ``void''                            \\
+    \tm{auto}                           & ``待推导类型占位符''                \\
+    \tm{decltype(auto)}                 & ``待推导类型占位符''                \\
+    \tm{decltype(}\nt{expression}\tm{)} & ``如下定义的类型''                  \\
+    \hline
+  \end{tabular}
+  \label{tab:type.simple}
+\end{table}
+
+\paragraph{}
+当允许多个\nt{simple-type-specifier}时，它们可以与其他\nt{decl-specifier}以任何
+顺序自由混和。「注：\tm{char}类型对象表示为有符号还是无符号由实现定义。
+\tm{signed}说明符强制\tm{char}对象为有符号；其他情况下是冗余的。」
+
+\paragraph{}
+对表达式\tm{e}，由\tm{decltype(e)}所代表的对象由以下定义：
+\begin{enumerate}
+  \item{如果\tm{e}为命名结构绑定（\ref{dcl.struct.bind}）的无括号
+    \nt{id-expression}，则\tm{decltype(e)}是按结构绑定声明的规范中所给定的引用类
+    型；}
+  \item{否则，如果\tm{e}是无括号\nt{id-expression}或无括号类成员访问
+    （\ref{expr.ref}），则\tm{decltype(e)}为\tm{e}所命名实体的类型。如果不存在此
+    实体，或如果\tm{e}命名一组重载函数，则程序为病态；}
+  \item{否则，如果\tm{e}是失效值，则\tm{decltype(e)}为\tm{T\&\&}，其中\tm{T}是
+    \tm{e}的类型；}
+  \item{否则，如果\tm{e}是左值，则\tm{decltype(e)}为\tm{T\&}，其中\tm{T}是\tm{e}
+    的类型；}
+  \item{否则，\tm{decltype(e)}是\tm{e}的类型。}
+\end{enumerate}
+\tm{decltype}说明符的操作数为不求值操作数（第\ref{expr}章）。
+「例：
+\begin{lstlisting}
+const int&& foo() ;
+int i;
+struct A { double x; };
+const A* a = new A() ;
+decltype(foo() ) x1 = 17;   // type is const int&&
+decltype(i) x2;             // type is int
+decltype(a->x) x3;          // type is double
+decltype((a->x) ) x4 = x3;  // type is const double&
+\end{lstlisting}」「注：用于确定涉及\tm{decltype(auto)}的类型的规则在
+\ref{dcl.spec.auto}中指定。」
+
+\paragraph{}
+如果\nt{decltype-specifier}的操作数为纯右值，则不应用临时物化转换
+（\ref{conv.rval}），并且不为纯右值提供结果对象。纯右值的类型可能不完整。「注：
+其结果就是不为纯右值分配存储，且不销毁。因此在该上下文中不实例化类类型作为函数调
+用类型的结果。在这种上下文中，写该表达式的共同目的仅仅是引用其类型。从该意义上来
+说，\nt{decltype-specifier}类似于\nt{typedef-name}，因此需要完整类型的常规理由不
+再成立。特别是，不需要为临时对象分配内存或强制类型析构调用相关的语义约束。」
+「注：与之前的规则不同，这种情况下括号不具有特殊语义。」「例：
+\begin{lstlisting}
+  template<class T> struct A { ~A() = delete; };
+  template<class T> auto h()
+    -> A<T>;
+  template<class T> auto i(T)   // identity
+    -> T;
+  template<class T> auto f(T)   // #1
+    -> decltype(i(h<T>()));     // forces completion of A<T> and implicitly uses
+                                // A<T>::~A() for the temporary introduced by
+                                // the use of h().
+                                // (A temporary is not introduced as a result of
+                                // the use of i().)
+  template<class T> auto f(T)   // #2
+    -> void;
+  auto g() -> void {
+    f(42);                      // OK: calls #2. (#1 is not a viable candidate:
+                                // type deduction fails (17.8.2) because
+                                // A<int>::~A() is implicitly used in its
+                                // decltype-specifier)
+  }
+  template<class T> auto q(T)
+    -> decltype((h<T>()));      // does not force completion of A<T>; A<T>::~A()
+                                // is not implicitly used within the context of
+                                // this decltype-specifier
+  void r() {
+    q(42);                      // error: deduction against q succeeds, so
+                                // overload resolution selects the specialization
+                                // “q(T) -> decltype((h<T>())) [with T=int]”;
+                                // the return type is A<int>, so a temporary is
+                                // introduced and its destructor is used, so the
+                                // program is ill-formed
+  }
+\end{lstlisting}」
+
 \sssect{详细类型说明符}{dcl.type.elab}
+
+\synsym{elaborated-type-specifier}
+  \synprd{\nt{class-key attribute-specifier-seq\tsub{opt}
+    nested-name-specifier\tsub{opt} identity}}
+  \synprd{\nt{class-key simple-template-id}}
+  \synprd{\nt{class-key nested-name-specifier} \tm{template}\nt{\tsub{opt}
+    simple-template-id}}
+  \synprd[]{\tm{enum} \nt{nested-name-specifier\tsub{opt} identifier}}
+
+\paragraph{}
+除非后者是一个声明的唯一成分，否则\nt{attribute-specifier-seq}不应该出现在
+\nt{elaborated-type-specifier}中。如果\nt{elaborated-type-specifier}是声明的唯一
+成分，则除非该声明是一个显式特例化（\ref{temp.expl.spec}），显式实例化
+（\ref{temp.explicit}）或具有以下形式之一，该声明是病态的：                   \\
+\mbox{\qquad\nt{class-key attribute-specifier-seq\tsub{opt} identifier
+\tm{;}}}                                                                   \\
+\mbox{\qquad\tm{friend} \nt{class-key} \tm{::}\nt{\tsub{opt} identifier}
+  \tm{;}}                                                                    \\
+\mbox{\qquad\tm{friend} \nt{class-key} \tm{::}\nt{\tsub{opt} simple-template-id}
+  \tm{;}}                                                                    \\
+\mbox{\qquad\tm{friend} \nt{class-key nested-name-specifier identifier}
+  \tm{;}}                                                                     \\
+\mbox{\qquad\tm{friend} \nt{class-key nested-name-specifier}
+  \tm{template}\nt{\tsub{opt} simple-template-id} \tm{;}}                     \\
+在第一种情形中，如果存在，\nt{attribute-specifier-seq}应用于所声明的类；此后
+\nt{attribute-specifier-seq}中的属性被当作无论何时它所命名的类的属性。
+
+\paragraph{}
+\ref{basic.lookup.elab}描述了\nt{elaborated-type-specifier}中的\nt{identifier}名
+字查询如何进行。如果\nt{identifier}解析为\nt{class-name}或\nt{enum-name}，则
+\nt{elaborated-type-specifier}以与\nt{simple-type-specifier}引入其
+\nt{type-name}一样将其引入声明中。如果\nt{identifier}解析为\nt{typedef-name}或
+\nt{simple-template-id}解析为模板特例化别名，则\nt{elaborated-type-specifier}为
+病态。「注：这意味着在带有模板\nt{type-parameter} \tm{T}的类模板中，声明      \\
+\mbox{\qquad{\tm{friend class T;}}}                                           \\
+为病态。然而类似声明\tm{friend T;}（\ref{class.friends}）是允许的。」
+
+\paragraph{}
+存在于\nt{elaborated-type-specifier}中的\nt{class-key}或\tm{enum}关键字应该在类
+型（kind）上与\nt{elaborated-type-specifier}中的名字所指的声明一致。该规则也适用
+于声明\nt{class-name}或\tm{friend}类的\nt{elaborated-type-specifier}的形式，因其
+可被分解为类定义引用。因此，在任何\nt{elaborated-type-specifier}中，\tm{enum}关
+键字应该被用于引用枚举（\ref{dcl.enum}），\tm{union} \nt{class-key}应该用于引用
+联合（第\ref{class}章），且\tm{class}或\tm{struct} \nt{class-key}应该用于引用使
+用\tm{class}或\tm{struct} \nt{class-key}声明的类（第\ref{class}章）。「例：
+\begin{lstlisting}
+  enum class E { a, b };
+  enum E x = E::a;        // OK
+\end{lstlisting}」
 
 \sssect{auto说明符}{dcl.spec.auto}
 \paragraph{}
-\textit{类型说明符}\texttt{auto}和\texttt{decltype(auto)}用于指代一个占位类型，
-可以用初始化的推导来替换。
+\tm{auto}和\tm{decltype(auto)} \nt{type-specifier}用于指代占位类型，其后由初始化
+推导出来的类型所替换。\tm{auto} \nt{type-specifier}也用于引入具有
+\nt{trailing-return-type}的函数类型或用于简化泛型lambda
+（\ref{expr.prim.lambda.closure}）。\tm{auto} \nt{type-specifier}也用于引用结构
+化绑定声明（\ref{dcl.struct.bind}）。
 
-\paragraph{}<++>
+\paragraph{}
+在任何允许此合法声明子的环境中，占位类型可以同函数声明子出现在
+\nt{decl-specifier-seq}，\nt{type-specifier-seq}，\nt{conversion-function-id}或
+\nt{trailing-return-type}中。如果函数声明子包含一个\nt{trailing-return-type}
+（\ref{dcl.fct}），则该\nt{trailing-return-type}指明函数所声明的返回类型。否则，
+函数声明子应该声明一个函数。如果声明的函数返回类型包含一个占位类型，则函数的返回
+类型由函数体（\ref{stmt.if}）中未弃值\tm{return}语句（如果存在）推导而来。
+
+\paragraph{}
+如果\tm{auto} \nt{type-specifier}作为\nt{decl-specifier}之一出现在
+\nt{lambda-expression}的\nt{parameter-declaration}的
+\nt{decl-specifier-seq}中，则该lambda为\nt{泛型lambda}
+（\ref{expr.prim.lambda.closure}）。「例：
+\begin{lstlisting}
+  auto glambda = [] (int i, auto a) { return i; }; // OK: a generic lambda
+\end{lstlisting}」
+
+\paragraph{}
+使用\tm{auto}或\tm{decltype(auto)}声明的变量类型使用其初始化推导而来。在变量的初
+始化声明（\ref{dcl.init}）中允许该用法。\tm{auto}或\tm{decltype(auto)}应该作为
+\nt{decl-specifier-seq}中的\nt{decl-specifier}之一出现，且
+\nt{decl-specifier-seq}应该跟上一个或多个\nt{declarator}，每一个应该跟上非空初始
+化。在形如                                                                    \\
+\mbox{\qquad \tm{(} \nt{expression-list} \tm{)}}                              \\
+的初始化中，\nt{expression-list}应该是单个\nt{assignment-expression}。「例：
+\begin{lstlisting}
+  auto x = 5;                // OK: x has type int
+  const auto *v = &x, u = 6; // OK: v has type const int* , u has type const int
+  static auto y = 0.0;       // OK: y has type double
+  auto int r;                // error: auto is not a storage-class-specifier
+  auto f() -> int;           // OK: f returns int
+  auto g() { return 0. 0; }  // OK: g returns double
+  auto h();                  // OK: h ’s return type will be deduced when it is
+                             // defined
+\end{lstlisting}」
+
+\paragraph{}
+占位符类型也可以用于\nt{new-type-id}的\nt{type-specifier-seq}或
+\nt{new-expression}（\ref{expr.new}）的\nt{type-id}中，或在
+\nt{template-parameter}（\ref{temp.param}）中作为\nt{parameter-declaration}的
+\nt{decl-specifier-seq}的一个\nt{decl-specifier}。
+
+\paragraph{}
+在本节未显式允许的环境中使用\tm{auto}或\tm{decltype(auto)}的程序是病态的。
+
+\paragraph{}
+如果\nt{init-declarator-list}中包含多于一个\nt{init-declarator}，其均应形成变量
+声明。每个声明变量的类型由占位类型推导（\ref{dcl.type.auto.deduct}）确定，且如果
+在每个推导中替换占位类型的类型不同，则程序为病态。「例：
+\begin{lstlisting}
+  auto x = 5, *y = &x;      // OK: auto is int
+  auto a = 5, b = { 1, 2 }; // error: different types for auto
+\end{lstlisting}」
+
+\paragraph{}
+如果带有声明返回类型包含占位类型的函数具有多个非弃值\tm{return}语句，则返回类型
+由每一个这样的\tm{return}语句推导而来。如果每一个推导的类型不同，则程序为病态。
+
+\paragraph{}
+如果带有声明返回类型包含占位类型的函数不具有非弃值\tm{return}语句，则返回类型如
+同使用函数体结尾括号处的无操作数\tm{return}语句推导而来。「例：
+\begin{lstlisting}
+  auto f() { }        // OK, return type is void
+  auto* g() { }       // error, cannot deduce auto* from void()
+\end{lstlisting}」
+
+\paragraph{}
+如果需要带有未推导占位类型的实体的类型以确定一个表达式的类型，则程序为病态。但是
+，一旦在函数中遇到非弃值\tm{return}语句，从该语句推导出来的返回类型可以用于函数
+剩余部分，包括在其他返回语句中。「例：
+\begin{lstlisting}
+  auto n = n;             // error: n's type is unknown
+  auto f() ;
+  void g() { &f; }        // error, f's return type is unknown
+  auto sum(int i) {
+    if (i == 1)
+      return i;           // sum's return type is int
+    else
+      return sum(i-1)+i;  // OK, sum's return type has been deduced
+  }
+\end{lstlisting}」
+
+\paragraph{}
+即使函数体包含带有非类型依赖操作数的\tm{return}语句，声明类型中的带有占位符的函
+数返回类型推导在定义实例化时进行。「注：因此，任何函数模板特例化的使用将引起隐式
+实例化。任何因此实例化引起的错误不属于函数类型的直接上下文，且将导致病态程序
+（\ref{temp.deduced}）。」「例：
+\begin{lstlisting}
+  template <class T> auto f(T t) { return t; } // return type deduced at
+                                               // instantiation time
+  typedef decltype(f(1) ) fint_t; // instantiates f<int> to deduce return type
+  template<class T> auto f(T* t) { return *t; }
+  void g() { int (*p) (int*) = &f; }  // instantiates both f's to determine
+                                      // return types, chooses second
+\end{lstlisting}」
+
+\paragraph{}
+带有使用占位类型的返回类型的函数或函数模板的重声明或特例化应该也使用此占位符，而
+不是推导类型。「例：
+\begin{lstlisting}
+  auto f();               // return type is int
+  auto f() { return 42; } // OK
+  auto f();               // error, cannot be overloaded with auto f()
+  int f();                // error, auto and decltype(auto) don’t match
+  decltype(auto) f() ;
+
+  template <typename T> auto g(T t) { return t; } // #1
+  template auto g(int);   // OK, return type is int
+  template char g(char);  // error, no matching template
+  template<> auto g(double); // OK, forward declaration with unknown return type
+
+  template <class T> T g(T t) { return t; } // OK, now there is a matching
+                                            // template
+  template char g(char);  // OK, not functionally equivalent to #1
+  template auto g(float); // still matches #1
+
+  void h() { return g(42); } // error, ambiguous
+
+  template <typename T> struct A {
+    friend T frf(T);
+  };
+  auto frf(int i) { return i; } // not a friend of A<int>
+\end{lstlisting}」
+
+\paragraph{}
+使用占位类型作为返回类型的函数不应该是\tm{virtual}（\ref{class.virtual}）。
+
+\paragraph{}
+显式实例化声明（\ref{temp.explicit}）不会导致使用占位类型声明的实体的实例化，但
+也不会禁止用于确定其类型的实体实例化。「例：
+\begin{lstlisting}
+  template <typename T> auto f(T t) { return t; }
+  extern template auto f(int); // does not instantiate f<int>
+  int (*p) (int) = f; // instantiates f<int> to determine its return type, but
+                      // an explicit instantiation definition is still required
+                      // somewhere in the program
+\end{lstlisting}」
 
 \ssssect{占位类型推导}{dcl.type.auto.deduct}
 \paragraph{}
-\textit{占位类型推导}指包含占位类型被推导类型替换的过程。
+\textit{占位类型推导}指包含占位类型的类型使用推导类型替换的过程。
 
 \paragraph{}
-包括占位类型和对应初始化\texttt{e}的类型\texttt{T}，由以下确定：
+包括占位类型的类型\tm{T}和对应初始化\tm{e}，由以下确定：
+\begin{enumerate}
+  \item{对使用占位类型作为返回类型来声明的函数中出现的非弃值\tm{return}语句，
+    \tm{T}为声明的返回类型，\tm{e}为\tm{return}语句的操作数。如果\tm{return}语句
+    无操作数，则\tm{e}为\tm{void()}；}
+  \item{对使用含占位类型声明的变量，\tm{T}为变量声明的类型，\tm{e}为初始化。如果
+    初始化是直接列表初始化，则初始化应该是一个仅含有单个
+    \nt{assignment-expression}的\nt{braced-init-list}，\tm{e}是该
+    \nt{assignment-expression}；}
+  \item{对于使用含占位类型的类型声明的非类型模板参数，\tm{T}是非类型模板参数的声
+    明类型，\tm{e}是对应的模板参数。}
+\end{enumerate}
+在\tm{return}语句无操作数或操作数类型为\tm{void}的情况下，\tm{T}应该是
+\tm{decltype(auto)}或\nt{cv} \tm{auto}。
 
-\paragraph{}<++>
+\paragraph{}
+如果推导是为一个\tm{return}语句而\tm{e}是一个\nt{braced-init-list}
+（\ref{dcl.init.list}），则程序为病态。
 
-\sssect{推导类模板特例化类型}{dcl.type.class.deduct}
-\paragraph{}<++>
+\paragraph{}
+如果占位符是\tm{auto} \nt{type-specifier}，则替换\tm{T}的推导类型\tm{T'}使用模板
+参数推导的规则进行确定。通过使用假想的类型模板参数\tm{U}，或如果初始化为拷贝列表
+初始化，使用\tm{std::initializer\_list<U>}来替换\tm{auto}的出现，以从\tm{T}获取
+\tm{P}。使用来自函数调用（\ref{temp.deduct.call}）的模板参数推导的规则来为\tm{U}
+推导一个值，其中\tm{P}是函数模板参数类型且对应参数为\tm{e}。如果推导失败，则声明
+为病态。否则，\tm{T'}通过替换推导的\tm{U}为\tm{P}来获取。「例：
+\begin{lstlisting}
+  auto x1 = { 1, 2 };     // decltype(x1) is std::initializer_list<int>
+  auto x2 = { 1, 2. 0 };  // error: cannot deduce element type
+  auto x3{ 1, 2 };        // error: not a single element
+  auto x4 = { 3 };        // decltype(x4) is std::initializer_list<int>
+  auto x5{ 3 };           // decltype(x5) is int
+\end{lstlisting}」「例：
+\begin{lstlisting}
+  const auto &i = expr;
+\end{lstlisting}
+\tm{i}的类型为以下假想函数模板的调用\tm{f(expr)}中参数\tm{u}的推导类型：
+\begin{lstlisting}
+  template<class U> void f(const U& u);
+\end{lstlisting}」
+
+\paragraph{}
+如果占位符为\tm{decltype(auto)} \nt{type-specifier}，\tm{T}应该是占位符本身。
+\tm{T}的推导类型如\ref{dcl.type.simple}中所述进行确定，如同\tm{e}作为
+\tm{decltype}的操作数。「例：
+\begin{lstlisting}
+  int i;
+  int&& f();
+  auto x2a(i);                    // decltype(x2a) is int
+  decltype(auto) x2d(i);          // decltype(x2d) is int
+  auto x3a = i;                   // decltype(x3a) is int
+  decltype(auto) x3d = i;         // decltype(x3d) is int
+
+  auto            x4a = (i);      // decltype(x4a) is int
+  decltype(auto)  x4d = (i);      // decltype(x4d) is int&
+  auto            x5a = f();      // decltype(x5a) is int
+  decltype(auto)  x5d = f();      // decltype(x5d) is int&&
+  auto            x6a = { 1, 2 }; // decltype(x6a) is std::initializer_list<int>
+  decltype(auto)  x6d = { 1, 2 }; // error, { 1, 2 } is not an expression
+  auto           *x7a = &i;       // decltype(x7a) is int*
+  decltype(auto) *x7d = &i;       // error, declared type is not plain
+                                  // decltype(auto)
+\end{lstlisting}」
+
+\sssect{推导的类模板特例化类型}{dcl.type.class.deduct}
+\paragraph{}
+如果推导的类类型的占位符作为变量的初始化声明（\ref{dcl.init}）的
+\tm{decl-specifier-seq}中的\nt{decl-specifier}出现，则占位符由类模板推导
+（\ref{over.match.class.deduct}）的重载解析所选函数的返回类型所替换。如果
+\tm{decl-specifier-seq}后跟上一个包含多个\nt{declarator}的
+\nt{init-declarator-list}或\nt{member-declarator-list}，则替换占位符的类型在每一
+个推导中应该一致。
+
+\paragraph{}
+推导的类类型的占位符也可能用于\nt{new-type-id}的\nt{type-specifier-seq}或
+\nt{new-expression}（\ref{expr.new}）的\nt{type-id}中，或作为显式类型转换（函数
+式）（\ref{expr.type.conv}）中的\nt{simple-type-specifier}。一个推导类类型的占位
+符不应该出现在任何其他上下文中。
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  template<class T> struct container {
+    container(T t) {}
+    template<class Iter> container(Iter beg, Iter end);
+  };
+  template<class Iter>
+  container(Iter b, Iter e)->container<typename std::iterator_traits<Iter>::value_type>;
+  std::vector<double> v = { /* ... */ };
+
+  container c(7);                         // OK, deduces int for T
+  auto d = container(v.begin(), v.end()); // OK, deduces double for T
+  container e{5, 6};                      // error, int is not an iterator
+\end{lstlisting}」
 
 \sect{枚举声明}{dcl.enum}
-\paragraph{}<++>
+\paragraph{}
+枚举是带有命名常量的不同类型（\ref{basic.compound}）。其名字在其作用域中成为
+\nt{enum-name}。
+
+\synsym{enum-name}
+  \synprd{\nt{identifier}}
+\synsym{enum-specifier}
+  \synprd{\nt{enum-head} \tm{\{} \nt{enumerator-list\tsub{opt}} \tm{\}}}
+  \synprd{\nt{enum-head} \tm{\{} \nt{enumerator-list} \tm{, \}}}
+\synsym{enum-head}
+  \synprd{\nt{enum-key attribute-specifier-seq\tsub{opt}
+    enum-head-name\tsub{opt} enum-base\tsub{opt}}}
+\synsym{enum-head-name}
+  \synprd{\nt{nested-name-specifier\tsub{opt} identifier}}
+\synsym{opaque-enum-declaration}
+  \synprd{\nt{enum-key attribute-specifier-seq\tsub{opt}
+    nested-name-specifier\tsub{opt} identifier enum-base\tsub{opt}} \tm{;}}
+\synsym{enum-key}
+  \synprd{\tm{enum}}
+  \synprd{\tm{enum class}}
+  \synprd{\tm{enum struct}}
+\synsym{enum-base}
+  \synprd{\tm{:} \nt{type-specifier-seq}}
+\synsym{enumerator-list}
+  \synprd{\nt{enumerator-definition}}
+  \synprd{\nt{enumerator-list} \tm{,} \nt{enumerator-definition}}
+\synsym{enumerator-definition}
+  \synprd{\nt{enumerator}}
+  \synprd{\nt{enumerator} \tm{=} \nt{constant-expression}}
+\synsym{enumerator}
+  \synprd[]{\nt{identifier attribute-specifier-seq\tsub{opt}}}
+
+\nt{enum-head}和\nt{opaque-enum-declaration}中可选的\nt{attribute-specifier-seq}
+应用于枚举；此后无论何时命名，\nt{attribute-specifier-seq}中的属性都被当作是枚举
+的属性。\tm{:}跟在\nt{member-declaration}的\nt{decl-specifier-seq}中的
+``\tm{enum} \nt{nested-name-specifier\tsub{opt} identifier}''之后被当作
+\nt{enum-base}的一部分进行分析。「注：这解决了带有\nt{enum-base}的枚举声明和枚举
+类型的无名位域声明之间的歧义。「例：
+\begin{lstlisting}
+  struct S {
+    enum E : int {};
+    enum E : int {}; // error: redeclaration of enumeration
+  };
+\end{lstlisting}」」如果一个\nt{opaque-enum-declaration}包含一个
+\nt{nested-name-specifier}，则声明应该是一个显式特例化（\ref{temp.expl.spec}）。
+
+\paragraph{}
+所声明的带有仅为\tm{enum}的\nt{enum-key}的枚举类型是一个\nt{无作用域枚举}，且其
+\nt{enumerator}为\nt{无作用域枚举子}。\nt{enum-key} \tm{enum class}和
+\tm{enum struct}语义等价；使用其中之一声明的枚举类型为\nt{有作用域枚举}，且其
+\nt{enumerator}为\nt{有作用域枚举子}。有作用域枚举声明中可选的\nt{identifier}不
+应该省略。\nt{enum-base}的\nt{type-specifier-seq}应该命名整型；忽略任何cv限定。
+声明无作用域枚举的\nt{opaque-enum-declaration}不应该省略\nt{enum-base}。
+\nt{enumerator-list}中的标识符声明为常量，且可以用于任何要求常量的地方。带\tm{=}
+的\nt{enumerator-definition}给定关联\nt{enumerator}由\nt{constant-expression}所
+指定的值。如果第一个\nt{enumerator}无初始化，则对应常量值为零。无初始化的
+\nt{enumerator-definition}给定枚举子的值为前一个枚举子的值加一。「例：
+\begin{lstlisting}
+  enum { a, b, c=0 };
+  enum { d, e, f=e+2 };
+\end{lstlisting}
+定义\tm{a}，\tm{c}和\tm{d}为零，\tm{b}和\tm{e}为1，\tm{f}为3。」枚举子中可选的
+\nt{attribute-specifier-seq}应用于该枚举子。
+
+\paragraph{}
+一个\nt{opaque-enum-declaration}要么是当前作用域中枚举的重声明，要么是一个新枚举
+的声明。「注：由\nt{opaque-enum-declaration}声明的枚举具有固定的底层类型，且是一
+个完整类型。枚举子列表可由之后的带有\nt{enum-specifier}的重声明提供。」有作用域
+枚举不应该重声明为无作用域或为不同的底层类型。无作用域枚举不应该重声明为有作用域
+且每一个重声明应该包含指定与原有声明相同的底层声明的\nt{enum-base}。
+
+\paragraph{}
+如果\nt{enum-key}后跟\nt{nested-name-specifier}，则\nt{enum-specifier}应该指向一
+个之前\nt{nested-name-specifier}所引用的类或命名空间中直接声明的枚举（即，既不是
+派生也不是\nt{using-declaration}所引入），且\nt{enum-specifier}应该出现在包含之
+前声明的命名空间中。
+
+\paragraph{}
+每一个枚举定义与任何其他类型不同的类型。每一个枚举也具有\nt{底层类型}。底层类型
+可以使用\nt{enum-base}显式指定。对有作用域枚举类型，如果未显式指定，则底层类型为
+\tm{int}。对每一种情形，底层类型被称为\nt{固定}（\nt{fixed}）的。跟在
+\nt{enum-specifier}的包含括号后面，每一个枚举子具有其枚举的类型。如果底层类型为
+固定的，包含括号之前的每一个枚举子的类型为底层类型，且\nt{enumerator-definition}
+中的\nt{constant-expression}应该转换成底层类型的常表达式（\ref{expr.const}）。如
+果底层不是固定的，包含括号之前的枚举子类型由以下确定：
+\begin{enumerate}
+  \item{如果为某个枚举子指定了初始化，则\nt{constant-expression}应该是整型常表达
+    式（\ref{expr.const}）。如果表达式具有无作用域枚举类型，则枚举子具有枚举类型
+    的底层类型，否则具有与表达式相同的类型。}
+  \item{如果没有为第一个枚举子提供初始化，其类型为未指明的有符号整型。}
+  \item{否则枚举子的类型与之前的枚举子类型相同，除非增加的值不能由该类型表示，这
+    种情况下类型为足够包含增加值的未指明整型。如果不存在这种类型则程序为病态。}
+\end{enumerate}
+
+\paragraph{}
+如果底层类型为固定的枚举类型在其声明点（\ref{basic.scope.pdecl}）到紧接其
+\nt{enum-type}（如果有）之间为不完整类型，在这一点之后成为完整类型。底层类型不固
+定的枚举类型从其声明点到其\nt{enum-specifier}的紧接结尾的\tm{\}}之间为不完整类型
+，在这一点之后成为完整类型。
+
+\paragraph{}
+对于底层不固定的枚举类型，底层类型为可表示枚举定义的所有枚举子的值的整型。如果没
+有整型可以表示所有枚举子的值，则枚举为病态。除了底层类型不能大于\tm{int}（除了当
+存在枚举子的值不能存于\tm{int}或\tm{unsigned int}时）之外，使用哪个整型由实现定
+义。如果\nt{enumerator-list}为空，则底层类型与具有单个值为0的枚举子的枚举的底层
+类型相同。
+
+\paragraph{}
+对底层类型固定的枚举子，枚举的值为底层类型的值。否则，对一个枚举，其中$e_{min}$
+为最小枚举子，$e_{max}$为最大枚举子，枚举的值为范围$b_{min}$到$b_{max}$之间的值，
+定义如下：对二补码表示，设$K$为1，对一补码或符号量值表示，设$K$为0。$b_{max}$为
+大于或等于$\max(|e_{min} - K, |e_{max}|)$的最小整数并等于$2^M-1$，其中$M$为非负
+整数。如果$e_{min}$为非负则$b_{min}$为零，否则为$-(b_{max} + K)$。如果$b_{min}$
+为零，足够存储枚举类型所有值的最小位域的大小为$\max(M, 1)$，否则为$M + 1$。定义
+具有未由其任何枚举子定义的值的枚举是可能的。如果\nt{enumerator-list}为空，则枚举
+的值如同枚举具有单个值为0的枚举子。\footnote{该组值用于定义枚举类型的提升和转换
+语义。其不排除枚举类型表达式具有此范围之外的值。}
+
+\paragraph{}
+如果两个枚举类型的底层类型相同，则为\nt{布局兼容枚举}（\nt{layout-compatible}）。
+
+\paragraph{}
+枚举子或无作用域枚举类型对象的值通过整型提升（\ref{conv.prom}）转换成整型。
+「例：
+\begin{lstlisting}
+  enum color { red, yellow, green=20, blue };
+  color col = red;
+  color* cp = &col;
+  if (*cp == blue) // ...
+\end{lstlisting}
+\tm{color}为描述多种颜色的类型，并声明\tm{col}为该类型的对象和\tm{cp}为指向该类
+型对象的指针。\tm{color}类型对象的可能值为\tm{red}，\tm{yellow}，\tm{green}，
+\tm{blue}；这些值可以转换成整型值0，1，20和21。因枚举为不同类型，\tm{color}类型
+对象只能赋以\tm{color}类型的值。
+\begin{lstlisting}
+  color c = 1;    // error: type mismatch, no conversion from int to color
+  int i = yellow; // OK: yellow converted to integral value 1, integral promotion
+\end{lstlisting}
+注意隐式的\tm{enum}和\tm{int}转换不支持有作用域枚举：
+\begin{lstlisting}
+  enum class Col { red, yellow, green };
+  int x = Col::red;     // error: no Col to int conversion
+  Col y = Col::red;
+  if (y) { }            // error: no Col to bool conversion
+\end{lstlisting}」
+
+\paragraph{}
+每一个\nt{enum-name}和每一个无作用域枚举子在直接包含\nt{enum-specifier}的作用域
+中声明。每一个有作用域枚举子在枚举作用域中声明。这些名字遵循\ref{basic.scope}和
+\ref{basic.lookup}中关于为所有名字所定义的作用域规则。「例：
+\begin{lstlisting}
+  enum direction { left=’l’, right=’r’ };
+
+  void g() {
+    direction d;          // OK
+    d = left;             // OK
+    d = direction::right; // OK
+  }
+
+  enum class altitude { high=’h’, low=’l’ };
+
+  void h() {
+    altitude a;         // OK
+    a = high;           // error: high not in scope
+    a = altitude::low;  // OK
+  }
+\end{lstlisting}」类作用域中声明的枚举子可以使用类成员访问运算符（\tm{::}，
+\tm{.}（点）和\tm{->}（箭头））进行引用，见\ref{expr.ref}。「例：
+\begin{lstlisting}
+  struct X {
+    enum direction { left=’l’, right=’r’ };
+    int f(int i) { return i==left ? 0 : i==right ? 1 : 2; }
+  };
+
+  void g(X* p) {
+    direction d;        // error: direction not in scope
+    int i;
+    i = p->f(left);     // error: left not in scope
+    i = p->f(X::right); // OK
+    i = p->f(p->left);  // OK
+    // ...
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果\nt{enum-head}包含一个\nt{nested-name-specifier}，则\nt{enum-specifier}应该
+引用\nt{nested-name-specifier}所引用的类或命名空间或该命名空间（即，不仅仅是派生
+或\nt{using-declaration}所引用）的内联命名空间集（\ref{namespace.def}）中的一个
+元素中之前直接声明的枚举，且\nt{enum-specifier}应该出现在包含之前的声明的命名空
+间。在这种情况下，定义中\nt{enum-head}的\nt{nested-name-specifier}不应该以
+\nt{decltype-specifier}开头。
 
 \sect{命名空间}{basic.namespace}
+\paragraph{}
+命名空间是一个可选命名的声明区域。命名空间的名字可以用于访问该命名空间中声明的实
+体；即命名空间的成员。与其他声明区域不同的是，命名空间定义可以分割到一个或多个翻
+译单元的多个部分中。
+
+\paragraph{}
+翻译单元的最外层声明区域是一个命名空间；见\ref{basic.scope.namespace}。
 
 \ssect{命名空间定义}{namespace.def}
+
+\synsym{namespace-name}
+  \synprd{\nt{identifier}}
+  \synprd{\nt{namespace-alias}}
+\synsym{namespace-definition}
+  \synprd{\nt{named-namespace-definition}}
+  \synprd{\nt{unnamed-namespace-definition}}
+  \synprd{\nt{nested-namespace-definition}}
+\synsym{named-namespace-definition}
+  \synprd{\tm{inline}\nt{\tsub{opt}} \tm{namespace}
+    \nt{attribute-specifier-seq\tsub{opt} identifier} \tm{\{}
+    \nt{namespace-body} \tm{\}}}
+\synsym{unnamed-namespace-definition}
+  \synprd{\tm{inline}\nt{\tsub{opt}} \tm{namespace}
+    \nt{attribute-specifier-seq\tsub{opt}} \tm{\{} \nt{namespace-body} \tm{\}}}
+\synsym{nested-namespace-specifier}
+  \synprd{\tm{namespace} \nt{enclosing-namespace-specifier} \tm{::}
+    \nt{identifier} \tm{\{} \nt{namespace-body} \tm{\}}}
+\synsym{enclosing-namespace-specifier}
+  \synprd{\nt{identifier}}
+  \synprd{\nt{enclosing-namespace-specifier} \tm{::} \nt{identifier}}
+\synsym{namespace-body}
+  \synprd[]{\nt{declaration-seq\tsub{opt}}}
+
+\paragraph{}
+每个\nt{namespace-definition}应该出现在全局作用域或命名空间作用域中
+（\ref{basic.scope.namespace}）。
+
+\paragraph{}
+在\nt{named-namespace-definition}中，\nt{identifier}是命名空间的名字。在查询时
+（\ref{basic.lookup.unqual}），如果\nt{identifier}引用一个\nt{namespace-name}
+（但不是\nt{namespace-alias}），在\nt{named-namespace-definition}所出现在命名空
+间中引入，或在该命名空间的内联命名空间集的成员中引入，则该
+\nt{namespace-definition}\nt{扩展}之前声明的命名空间。否则，该\nt{identifier}作
+为\nt{namespace-name}引入到\nt{named-namespace-definition}所出现的声明区域中。
+
+\paragraph{}
+因为\nt{namespace-definition}在其\nt{namespace-body}中包含\nt{declaration}并且
+\nt{namespace-definition}本身是一个\nt{declaration}，因此
+\nt{namespace-declaration}可以嵌套。「例：
+\begin{lstlisting}
+  namespace Outer {
+    int i;
+    namespace Inner {
+      void f() { i++; }   // Outer::i
+      int i;
+      void g() { i++; }   // Inner::i
+    }
+  }
+\end{lstlisting}」
+
+\paragraph{}
+声明的\nt{包含命名空间}（\nt{enclosing namespace}）指声明词法上所出现在的那些命
+名空间，除了命名空间成员在其原命名空间外的重声明（即\ref{namespace.memdef}中所指
+的定义）。这样的重声明具有与原声明相同的包含命名空间。「例：
+\begin{lstlisting}
+  namespace Q {
+    namespace V {
+      void f(); // enclosing namespaces are the global namespace, Q, and Q::V
+      class C { void m(); };
+    }
+    void V::f() { // enclosing namespaces are the global namespace, Q, and Q::V
+      extern void h(); // ... so this declares Q::V::h
+    }
+    void V::C::m() { // enclosing namespaces are the global namespace, Q, and Q::V
+    }
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果可选的初始\tm{inline}关键字出现在一个特定命名空间的\nt{namespace-definition}
+中，该命名空间声明为\nt{内联命名空间}。\tm{inline}关键字可能用于
+\nt{namespace-definition}，仅当它之前用于初始为该命名空间声明\nt{namespace-name}
+的\nt{namespace-definition}才扩展命名空间。
+
+\paragraph{}
+\nt{named-namespace-definition}中可选的\nt{attribute-specifier-seq}应用于所定义
+或扩展的命名空间。
+
+\paragraph{}
+内联命名空间的成员在大部分情况下可以如同其是包含命名空间的成员使用。特别的，内联
+命名空间及其包含命名空间均被加到关联命名空间集中，当其中之一和命名内联命名空间的
+\nt{using-directive}（\ref{namespace.udir}）如无名命名空间
+（\ref{namespace.unnamed}）一样被隐式插入到包含命名空间是，这些关联命名空间用于
+参数依赖查询（\ref{basic.lookup.argdep}）。更进一步，内联命名空间的每个成员可以
+后续地部分特例化（\ref{temp.class.spec}），显式实例化（\ref{temp.explicit}）或显
+式特例化（\ref{temp.expl.spec}），如同其是包含命名空间的成员一样。最后，在包含命
+名空间中通过显式限定（\ref{namespace.qual}）查询一个名字将包括由
+\nt{using-directive}引入的内联命名空间中的成员，即使在包含命名空间中存在该名字的
+声明。
+
+\paragraph{}
+这些属性具有传递性：如果命名空间\tm{N}包含内联命名空间\tm{M}，而\tm{M}也包含内联
+命名空间\tm{O}，则\tm{O}的成员可当作\tm{M}或\tm{N}的成员使用。\tm{N}的\nt{内联命
+名空间集}是\tm{N}中所有内联命名空间的传递闭包。\tm{O}的\nt{包含命名空间集}指包含
+内联命名空间\tm{O}的最内层非内联命名空间，连同任何中间的内联命名空间一起组成的命
+名空间集合。
+
+\paragraph{}
+带有\nt{enclosing-namespace-specifier} \tm{E}，\nt{identifier} \tm{I}和
+\nt{namespace-body} \tm{B}的\nt{nested-namespace-definition}等价于            \\
+\mbox{\qquad \tm{namespace E \{ namespace I \{ B \} \}}}                      \\
+「例：
+\begin{lstlisting}
+  namespace A::B::C {
+    int i;
+  }
+\end{lstlisting}
+以上代码与
+\begin{lstlisting}
+  namespace A {
+    namespace B {
+      namespace C {
+        int i;
+      }
+    }
+  }
+\end{lstlisting}
+具有相同效果。」
+
 \sssect{无名命名空间}{namespace.unnamed}
+\paragraph{}
+\nt{unnamed-namespace-definition}行为如同其被                                 \\
+\mbox{\qquad\tm{inline}\nt{\tsub{opt}} \tm{namespace} \nt{unique} \tm{\{
+  /* empty body */ \}}}                                                       \\
+\mbox{\qquad\tm{using namespace} \nt{unique} \tm{;}}                          \\
+\mbox{\qquad\tm{using namespace} \nt{unique} \tm{\{} \nt{namespace-body}
+  \tm{\}}}                                                                    \\
+所替换一样，其中\tm{inline}当且仅当其出现在\nt{unnamed-namespace-definition}中且
+翻译单元中所有的\nt{unique}被相同的标识符替换，且该标识符在翻译与所有其他标识符
+不同时才出现。\nt{unnamed-namespace-definition}中的可选的
+\nt{attribute-specifier-seq}应用于\nt{unique}。「例：
+\begin{lstlisting}
+  namespace { int i; }  // unique::i
+  void f() { i++; }     // unique::i++
+
+  namespace A {
+    namespace {
+      int i;            // A::unique::i
+      int j;            // A::unique::j
+    }
+    void g() { i++; }   // A::unique::i++
+  }
+
+  using namespace A;
+  void h() {
+    i++;                // error: unique::i or A::unique::i
+    A::i++;             // A::unique:i
+    j++;                // A::unique:j
+  }
+\end{lstlisting}」
+
 \sssect{命名空间成员定义}{namespace.memdef}
+\paragraph{}
+命名空间\nt{N}中的声明（不包括嵌套作用域中的声明），其\nt{declarator-id}是一个
+\nt{unqualified-id}（\ref{dcl.meaning}），其\nt{class-head-name}
+（第\ref{class}章）或\nt{enum-head-name}（\ref{dcl.enum}）是一个\nt{identifier}，
+或其\nt{elaborated-type-specifier}具有形式为\nt{class-key
+attribute-specifier-seq\tsub{opt} identifier}（\ref{dcl.type.elab}），或是一个
+\nt{opaque-enum-declaration}，声明（或重声明）其\nt{unqualified-id}或
+\nt{identifier}为\tm{N}的成员。「注：模板的显式实例化（\ref{temp.explicit}）或显
+式特例化（\ref{temp.expl.spec}）不引入名字，因此在包含命名空间集的成员中可能使用
+\nt{unqualified-id}声明，如果主模板在内联命名空间中声明。」「例：
+\begin{lstlisting}
+  namespace X {
+    void f() { /* ... */ }  // OK: introduces X::f()
+
+    namespace M {
+      void g();             // OK: introduces X::M::g()
+    }
+    using M::g;
+    void g();               // error: conflicts with X::M::g()
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果待定义实体已在命名空间中声明且定义出现在包含声明命名空间的命名空间中声明点之
+后，则具名的命名空间成员也可以在该命名空间之外通过该定义名字的显式限定
+（\ref{namespace.qual}）进行定义。「例：
+\begin{lstlisting}
+  namespace Q {
+    namespace V {
+      void f();
+    }
+    void V::f() { /* ... */ } // OK
+    void V::g() { /* ... */ } // error: g() is not yet a member of V
+    namespace V {
+      void g();
+    }
+  }
+  namespace R {
+    void Q::V::g() { /* ... */ } // error: R doesn't enclose Q
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果一个非局部类中的\tm{friend}声明首先声明一个类，函数，类模板或函数模板
+\footnote{这意味着类或函数的名字是未限定的。}则该友元是最内层包含命名空间的一个
+成员。\tm{friend}声明本身并不使名字对未限定查询（\ref{basic.lookup.unqual}）或限
+定查询（\ref{basic.lookup.qual}）可见。「注：如果在命名空间作用域中提供了一个匹
+配的声明（无论在授予友元性的类定义之前还是之后），则在其命名空间中友元的名字将可
+见。」如果调用了友元函数或函数模板，其名字可能被考虑来自命名空间或关联于函数参数
+类型（\ref{basic.lookup.argdep}）的类中的函数的名字查询所找到。如果\tm{friend}声
+明中的名字既不限定也不是\tm{template-id}且声明是一个函数或
+\tm{elaborated-type-specifier}，则确定实体是否已声明的查询不应该考虑最内层命名空
+间之外的任何作用域。「注：\tm{friend}声明的另一种形式不能声明最内层包含命名空间
+的新成员，因此遵循常规查询规则。」「例：
+\begin{lstlisting}
+// Assume f and g have not yet been declared.
+void h(int);
+template <class T> void f2(T);
+namespace A {
+  class X {
+    friend void f(X);         // A::f(X) is a friend
+    class Y {
+      friend void g();        // A::g is a friend
+      friend void h(int);     // A::h is a friend
+                              // ::h not considered
+      friend void f2<>(int);  // ::f2<>(int) is a friend
+    };
+  };
+
+  // A::f, A::g and A::h are not visible here
+  X x;
+  void g() { f(x); }          // definition of A::g
+  void f(X) { /* ... */ }     // definition of A::f
+  void h(int) { /* ... */ }   // definition of A::h
+  // A::f, A::g and A::h are visible here and known to be friends
+
+  using A::x;
+  void h() {
+    A::f(x);
+    A::X::f(x);   // error: f is not a member of A::X
+    A::X::Y::g(); // error: g is not a member of A::X::Y
+  }
+}
+\end{lstlisting}」
 
 \ssect{命名空间别名}{namespace.alias}
+\paragraph{}
+\nt{namespace-alias-definition}根据以下语法为命名空间声明一个可选别名：
+
+\synsym{namespace-alias}
+  \synprd{\nt{identifier}}
+\synsym{namespace-alias-definition}
+  \synprd{\tm{namespace} \nt{identifier} \tm{=}
+    \nt{qualified-namespace-specifier} \tm{;}}
+\synsym{qualified-namespace-specifier}
+  \synprd[]{\nt{nested-name-specifier\tsub{opt} namespace-name}}
+
+\paragraph{}
+\nt{namespace-alias-definition}中的\nt{identifier}是
+\nt{qualified-namespace-specifier}所代表的命名空间的名字的别名，并成为
+\nt{namespace-alias}。「注：当在一个\nt{namespace-alias-definition}中查询
+\nt{namespace-name}的时候，只考虑命名空间名字，见\ref{basic.lookup.udir}。」
+
+\paragraph{}
+在一个声明区域中，\nt{namespace-alias-definition}可以用于重定义该声明区域中声明
+的\nt{namespace-alias}以引用其已经引用的命名空间。「例：以下声明形式正确：
+\begin{lstlisting}
+  namespace Company_with_very_long_name { /* ... */ }
+  namespace CWVLN = Company_with_very_long_name;
+  namespace CWVLN = Company_with_very_long_name; // OK: duplicate
+  namespace CWVLN = CWVLN;
+\end{lstlisting}」
+
 \ssect{using声明}{namespace.udecl}
+
+\synsym{using-declaration}
+  \synprd{\tm{using} \nt{using-declarator-list} \tm{;}}
+\synsym{using-declarator-list}
+  \synprd{\nt{using-declarator} \tm{...}\nt{\tsub{opt}}}
+\synsym{using-declarator}
+  \synprd[]{\tm{typename}\nt{\tsub{opt} nested-name-specifier unqualified-id}}
+
+\paragraph{}
+每一个\nt{using-declaration}\footnote{带有多于一个\nt{using-declarator}的
+\nt{using-declaration}等价于带有一个\nt{using-declarator}的
+\nt{using-declaration}的对应序列。}中的\nt{using-declarator}向
+\nt{using-declarator}所出现的声明区域引入一组声明。由该\nt{using-declarator}所引
+入的声明集合通过进行\nt{using-declarator}中名字的限定名称查询
+（\ref{basic.lookup.qual}，\ref{class.member.lookup}）来获得，不包括以下所述的被
+隐藏的函数。如果\nt{using-declarator}不命名构造函数，则\nt{unqualified-id}在
+\nt{using-declaration}所出现的声明区域中声明为由\nt{using-declarator}所引入的每
+一个声明的同义词。「注：只有指定的名字如此声明；在\nt{using-declaration}中指定一
+个枚举名不在\nt{using-declaration}的声明区域中声明其枚举子。」如果
+\nt{using-declarator}命名一个构造函数，其声明该类\nt{派生}来自提名基类由
+\nt{using-declarator}所引入的构造函数声明集合。
+
+\paragraph{}
+每一个\nt{using-declaration}是一个\nt{declaration}和\nt{member-declaration}，且
+因此可以用于类定义。「例：
+\begin{lstlisting}
+  struct B {
+    void f(char);
+    void g(char);
+    enum E { e };
+    union { int x; };
+  };
+  struct D : B {
+    using B::f;
+    void f(int) { f('c'); }   // calls B::f(char)
+    void g(int) { g('c'); }   // recursively calls D::g(int)
+  };
+\end{lstlisting}」
+
+\paragraph{}
+在用作\nt{member-declaration}的\nt{using-declaration}中，每个
+\nt{using-declarator}的\nt{nested-name-specifier}应该命名一个所定义类的基类。如
+果一个\nt{using-declarator}命名一个构造函数，则其\nt{nested-name-specifier}应该
+命名一个所定义类的直接基类。「例：
+\begin{lstlisting}
+  template <typename... bases>
+  struct X : bases... {
+    using bases::g...;
+  };
+
+  X<B, D> x;          // OK: B::g and D::g introduced
+\end{lstlisting}」「例：
+\begin{lstlisting}
+  class C {
+    int g();
+  };
+
+  class D2 : public B {
+    using B::f; // OK: B is a base of D2
+    using B::e; // OK: e is an enumerator of base B
+    using B::x; // OK: x is a union member of base B
+    using C::g; // error: C isn't a base of D2
+  };
+\end{lstlisting}」
+
+\paragraph{}
+「注：因析构函数没有名字，一个\nt{using-declaration}不能引用基类的析构函数。
+因转换函数的成员模板特例化不能通过名字查询找到，当一个\nt{using-declaration}指定
+一个转换函数（\ref{temp.mem}）时不考虑它们。」如果从基类带入到派生类中的构造函数
+或赋值运算符具有派生类的拷贝/移动构造函数或赋值运算符（\ref{class.copy}）签名，
+则\nt{using-declaration}本身不禁用派生类成员的隐式声明；基类成员被派生类隐式声明
+的拷贝/移动构造函数或赋值运算符所隐藏或重写。
+
+\paragraph{}
+\nt{using-declaration}不应该命名一个\nt{template-id}。「例：
+\begin{lstlisting}
+  struct A {
+    template <class T> void f(T);
+    template <class T> struct X { };
+  };
+  struct B : A {
+    using A::f<double>; // ill-formed
+    using A::X<int>;    // ill-formed
+  };
+\end{lstlisting}」
+
+\paragraph{}
+\nt{using-declaration}不应该命名一个命名空间。
+
+\paragraph{}
+\nt{using-declaration}不应该命名一个有作用域枚举子。
+
+\paragraph{}
+命名一个类成员的\nt{using-declaration}应该是一个\nt{member-declaration}。「例：
+\begin{lstlisting}
+  struct X {
+    int i;
+    static int s;
+  };
+
+  void f() {
+    using X::i; // error: X::i is a class member and this is not a member
+                // declaration.
+    using X::s; // error: X::s is a class member and this is not a member
+                // declaration.
+  }
+\end{lstlisting}」
+
+\paragraph{}
+由\nt{using-declaration}声明的成员可以通过显式限定进行引用，正如其他成员名一样
+（\ref{namespace.qual}）。「例：
+\begin{lstlisting}
+  void f();
+  namespace A {
+    void g();
+  }
+
+  namespace X {
+    using ::f;      // global f
+    using A::g;     // A's g
+  }
+
+  void h() {
+    X::f();         // calls ::f
+    X::g();         // calls A::g
+  }
+\end{lstlisting}」
+
+\paragraph{}
+\nt{using-declaration}是一个声明且在允许多声明的地方（仅在此）可以重复使用。
+「例：
+\begin{lstlisting}
+  namespace A {
+    int i;
+  }
+
+  namespace A1 {
+    using A::i, A::i;     // OK: double declaration
+  }
+
+  struct B {
+    int i;
+  }; 
+
+  struct X : B {
+    using B::i, B::i;     // error: double member declaration
+  };
+\end{lstlisting}」
+
+\paragraph{}
+「注：对一个\nt{using-declaration}，其\nt{nested-namespace-specifier}命名一个命
+名空间，在\nt{using-declaration}之后加入到命名空间中的成员不在引入的声明集合中，
+因此当使用名字时不考虑它们。因此，在\nt{using-declaration}之后加入的额外重载被忽
+略，但会考虑缺省函数参数（\ref{dcl.fct.default}），缺省模板参数
+（\ref{temp.param}）和模板特例化（\ref{temp.class.spec}，\ref{temp.expl.spec}）。
+」「例：
+\begin{lstlisting}
+  namespace A {
+    void f(int);
+  }
+
+  using A::f;         // f is a synonym for A::f; that is, for A::f(int).
+  namespace A {
+    void f(char);
+  }
+
+  void foo() {
+    f('a');           // calls f(int), even though f(char) exists.
+  }
+
+  void bar() {
+    using A::f;       // f is a synonym for A::f; that is, for A::f(int) and
+                      // A::f(char).
+    f('a');           // calls f(char)  
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：类模板的部分特例化通过查询主类模板找到，然后考虑该模板的所有部分特例化。如
+果一个\nt{using-declaration}命名一个类模板，在\nt{using-declaration}之后引入的部
+分特例化为有效可见的，因为主模板是可见的（\ref{temp.class.spec}）。」
+
+\paragraph{}
+因\nt{using-declaration}是一个声明，同一声明区域（\ref{basic.scope}）中同名的声
+明上的限制也适用于\nt{using-declaration}。「例：
+\begin{lstlisting}
+  namespace A {
+    int x;
+  }
+  namespace B {
+    int i;
+    struct g { };
+    struct x { };
+    void f(int);
+    void f(double);
+    void g(char);       // OK: hides struct g
+  }
+  void func() {
+    int i;
+    using B::i;         // error: i declared twice
+    void f(char);
+    using B::f;         // OK: each f is a function
+    f(3.5);             // calls B::f(double)
+    using B::g;
+    g('a');             // calls B::g(char)
+    struct g g1;        // g1 has class type B::g
+    using B::x;
+    using A::x;         // OK: hides struct B::x
+    x = 99;             // assigns to A::x
+    struct x x1;        // x1 has class type B::x
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果一个命名空间作用域或块作用域中的函数声明具有与\nt{using-declaration}所引入的
+函数相同的名字和相同的参数类型列表（\ref{dcl.fct}），且声明不声明相同的函数，则
+程序为病态。如果命名空间作用域中的函数模板声明具有与\nt{using-declaration}所引入
+的函数模板相同的名字，参数类型列表，返回类型和模板参数列表，则程序为病态。「注：
+两个\nt{using-declaration}可能引入具有相同名字，相同参数类型列表的函数。如果对于
+未限定函数名的调用，函数重载解析选择由\nt{using-declaration}所引入的函数，则函数
+调用为病态。「例：
+\begin{lstlisting}
+  namespace B {
+    void f(int);
+    void f(double);
+  }
+
+  namespace C {
+    void f(int);
+    void f(double);
+    void f(char);
+  }
+
+  void h() {
+    using B::f;     // B::f(int) and B::f(double)
+    using C::f;     // C::f(int), C::f(double), and C::f(char)
+    f('h');         // calls C::f(char)
+    f(1);           // error: ambiguous: B::f(int) or C::f(int)?
+    void f(int);    // error: f(int) conflicts with C::f(int) and B::f(int)
+  }
+\end{lstlisting}」」
+
+\paragraph{}
+当\nt{using-declarator}从基类将声明带入到派生类中时，派生类中的成员函数和成员函
+数模板重写和/或隐藏基类（而不是冲突）中相同名字，参数类型列表（\ref{dcl.fct}），
+cv限定和\nt{ref-qualifier}（如果存在）的成员函数和成员函数模板。这些隐藏或重写的
+声明从\nt{using-declarator}所引入的声明集合中排除。「例：
+\begin{lstlisting}
+  struct B {
+    virtual void f(int);
+    virtual void f(char);
+    void g(int);
+    void h(int);
+  };
+  struct D : B {
+    using B::f;
+    void f(int);      // OK: D::f(int) overrides B::f(int);
+    using B::g;
+    void g(char);     // OK
+    using B::h;
+    void h(int);      // OK: D::h(int) hides B::h(int)
+  };
+  void k(D* p) {
+    p->f(1);          // calls D::f(int)
+    p->f('a');        // calls B::f(char)
+    p->g(1);          // calls B::g(int)
+    p->g('a');        // calls D::g(char)
+  }
+  struct B1 {
+    B1(int);
+  };
+  struct B2 {
+    B2(int);
+  };
+  struct D1 : B1, B2 {
+    using B1::B1;
+    using B2::B2;
+  };
+  D1 d1(0);           // ill-formed: ambiguous
+  struct D2 : B1, B2 {
+    using B1::B1;
+    using B2::B2;
+    D2(int);          // OK: D2::D2(int) hides B1::B1(int) and B2::B2(int)
+  };
+  D2 d2(0);           // calls D2::D2(int)
+\end{lstlisting}」
+
+\paragraph{}
+为重载解析，由\nt{using-declaration}引入到派生类的函数被当作如同派生类的成员。特
+别是，隐式\tm{this}参数应该被当作如同是指向派生类而不是基类的指针。这对函数的类
+型没有影响，且在所有其他方面，函数仍是基类成员。同样，由\nt{using-declaration}所
+引入的构造函数在查询派生类构造函数（\ref{class.qual}）时或形成重载候选集
+（\ref{over.match.ctor}，\ref{over.match.copy}，\ref{over.match.list}）时被当作
+派生类构造函数。如果这样的构造函数被选作进行类类型对象的初始化，则所有除构造函数
+所在的基类以外的子对象被隐式初始化（\ref{class.inhctor.init}）。
+
+\paragraph{}
+在未命名构造函数的\nt{using-declarator}中，所有由声明引入集合的成员应该可访问。
+在命名构造函数的\nt{using-declarator}中，不进行访问检查。特别是，如果派生类使用
+一个\nt{using-declarator}来访问一个基类成员，则成员名应该可访问。如果名字是重载
+成员函数名，则所有命名的函数应该可访问。由\nt{using-declarator}所提到的基类成员
+应该在指定\nt{using-declarator}的类的至少一个直接基类的作用域中可见。
+
+\paragraph{}
+「注：因为一个\nt{using-declarator}指代一个基类成员（而不是基类子对象的成员子对
+象或成员函数），\nt{using-declarator}不能用于解析派生成员歧义性。「例：
+\begin{lstlisting}
+  struct A { int x(); };
+  struct B : A { };
+  struct C : A {
+    using A::x;
+    int x(int);
+  };
+
+  struct D : B, C {
+    using C::x;
+    int x(double);
+  };
+  int f(D* d) {
+    return d->x();  // error: overload resolution selects A::x, but A is an
+                    // ambiguous base class
+  }
+\end{lstlisting}」」
+
+\paragraph{}
+\nt{using-declaration}所创建的同义词具有\nt{member-declaration}的常规可访问性。
+命名构造函数的\nt{using-declarator}不创建同义词；当用于构造对应基类对象时，如果
+可访问，则这些额外的构造函数可访问，且\nt{using-declaration}的可访问性被忽略。
+「例：
+\begin{lstlisting}
+  class A {
+  private:
+    void f(char);
+  public:
+    void f(int);
+  protected:
+    void g();
+  };
+  class B : public A {
+    using A::f;           // error: A::f(char) is inaccessible
+  public:
+    using A::g;           // B::g is a public synonym for A::g
+  };
+\end{lstlisting}」
+
+\paragraph{}
+如果一个\nt{using-declarator}使用关键字\tm{typename}且指定一个依赖名
+（\ref{temp.dep}），则由\nt{using-declaration}所引入的名字被当作一个
+\nt{typedef-name}（\ref{dcl.typedef}）。
+
 \ssect{using指令}{namespace.udir}
 
-\sect{asm声明}{dcl.asam}
+\synsym{using-directive}
+  \synprd[]{\nt{attribute-specifier-seq\tsub{opt}} \tm{using namespace}
+    \nt{nested-name-specifier\tsub{opt} namespace-name} \tm{;}}
+
+\paragraph{}
+\nt{using-directive}不应该出现在类作用域中，但可以出现在命名空间作用域或块作用域
+中。「注：当在\nt{using-directive}中查询一个\nt{namespace-name}时，只考虑命名空
+间名，见\ref{basic.lookup.udir}。」可选的\nt{attribute-specifier-seq}应用于
+\nt{using-directive}。
+
+\paragraph{}
+一个\nt{using-directive}指定提名命名空间中的名字可用于\nt{using-directive}之后在
+\nt{using-directive}所在的作用域中。在未限定名查询（\ref{basic.lookup.unqual}）
+时，名字如同在同时包含\nt{using-directive}和提名的命名空间的最近包含命名空间中声
+明一样。「注：在此上下文中，``包含''指``直接或间接包含''。」
+
+\paragraph{}
+\nt{using-directive}不向其所出现的声明区域添加任何成员。「例：
+\begin{lstlisting}
+  namespace A {
+    int i;
+    namespace B {
+      namespace C {
+        int i;
+      }
+      using namespace A::B::C;
+      void f1() {
+        i = 5;                // OK, C::i visible in B and hides A::i
+      }
+    }
+    namespace D {
+      using namespace B;
+      using namespace C;
+      void f2() {
+        i = 5;                // ambiguous, B::C::i or A::i ?
+      }
+    }
+    void f3() {
+      i = 5;                  // uses A::i
+    }
+  }
+  void f4() {
+    i = 5;                    // ill-formed; neither i is visible
+  }
+\end{lstlisting}」
+
+\paragraph{}
+对于未限定查询（\ref{basic.lookup.unqual}），\nt{using-directive}是传递的：如果
+作用域包含提名第二个本身也包含\nt{using-directive}的命名空间的
+\nt{using-directive}，其效果如同第二个命名空间中的\nt{using-directive}也出现在第
+一个中一样。「注：对于限定查询，见\ref{namespace.qual}。」「例：
+\begin{lstlisting}
+  namespace M {
+    int i;
+  }
+  namespace N {
+    int i;
+    using namespace M;
+  }
+  void f() {
+  using namespace N;
+    i = 7;                    // error: both M::i and N::i are visible
+  }
+\end{lstlisting}
+另一个例子，
+\begin{lstlisting}
+  namespace A {
+    int i;
+  }
+  namespace B {
+    int i;
+    int j;
+    namespace C {
+      namespace D {
+        using namespace A;
+        int j ;
+        int k;
+        int a = i;            // B::i hides A::i
+      }
+      using namespace D;
+      int k = 89;             // no problem yet
+      int l = k;              // ambiguous: C::k or D::k
+      int m = i;              // B::i hides A::i
+      int n = j;              // D::j hides B::j
+    }
+  }
+\end{lstlisting}」
+
+\paragraph{}
+在命名空间的\nt{using-directive}给定后，如果命名空间被扩展，则扩展命名空间的额外
+成员以及扩展的\nt{namespace-definition}中由\nt{using-directive}所提名的命名空间
+的成员可以在扩展的\nt{namespace-definition}之后使用。
+
+\paragraph{}
+如果名字查询在两个不同命名空间中找到一个名字的声明，且声明没有声明相同实体，也不
+声明函数，则该名字的使用为病态。「注：特别是，变量，函数或枚举子的名字不隐藏不同
+命名空间中声明的类或枚举名字。比如，
+\begin{lstlisting}
+  namespace A {
+    class X { };
+    extern "C"   int g();
+    extern "C++" int h();
+  }
+  namespace B {
+    void X(int);
+    extern "C"   int g();
+    extern "C++" int h(int);
+  }
+  using namespace A;
+  using namespace B;
+
+  void f() {
+    X(1);                     // error: name X found in two namespaces
+    g();                      // OK: name g refers to the same entity
+    h();                      // OK: overload resolution selects A::h
+  }
+\end{lstlisting}」
+
+\paragraph{}
+在重载解析中，参数匹配是考虑来自传递搜索的所有函数。传递搜索所找到的声明集合无序
+。「注：特别是，所考虑的命名空间的顺序和\nt{using-directive}所隐含的命名空间之间
+的关系不会首选任何所搜索到的声明。」如果最佳匹配找到两个相同签名的函数则存在歧义
+，即使其中一个处于由另一个命名空间中的\nt{using-directive}可达的命名空间中。
+\footnote{在类层次中的名字查询中，某些歧义可能通过考虑一个成员是否在某些路径上隐
+藏另一个成员（\ref{class.member.lookup}）。在考虑跟随\nt{using-directive}所找到
+的名字集合时不存在这种歧义解析。}「例：
+\begin{lstlisting}
+  namespace D {
+    int d1;
+    void f(char);
+  }
+  using namespace D;
+  int d1;               // OK: no conflict with D::d1
+  namespace E {
+    int e;
+    void f(int);
+  }
+  namespace D {         // namespace extension
+    int d2;
+    using namespace E;
+    void f(int);
+  }
+  void f() {
+    d1++;               // error: ambiguous ::d1 or D::d1?
+    ::d1++;             // OK
+    D::d1++;            // OK
+    d2++;               // OK: D::d2
+    e++;                // OK: E::e
+    f(1);               // error: ambiguous: D::f(int) or E::f(int)?
+    f('a');             // OK: D::f(char)
+  }
+\end{lstlisting}」
+
+\sect{asm声明}{dcl.asm}
+\paragraph{}
+\tm{asm}声明形式为
+
+\synsym{asm-definition}
+  \synprd[]{\nt{attribute-specifier-seq\tsub{opt}} \tm{asm (}
+    \nt{string-literal} \tm{) ;}}
+
+\tm{asm}声明为条件支持；其语义由实现定义。\nt{asm-definition}中可选的
+\nt{attribute-specifier-seq}应用于\tm{asm}声明。「注：通常用于通过实现向汇编程序
+传递信息。」
 
 \sect{链接规范}{dcl.link}
+\paragraph{}
+所有函数类型，外部链接函数名和外部链接变量名具有\nt{语言链接}（\nt{language
+linkage}）。「注：某些关联于带有语言链接的实体的属性特定于每个实现，此处不叙述。
+比如，特定语言链接可能关联于一个表示外部链接的对象和函数名的特定形式，或关联于一
+个特定的调用惯例等。」所有函数类型，函数名和变量名的缺省语言链接是C++语言链接。
+不同语言链接的两个函数类型是不同类型，即使除此外二者是等价的。
+
+\paragraph{}
+C++和非C++代码段间的链接（\ref{basic.link}）可以通过\nt{linkage-specification}达
+到：
+
+\synsym{linkage-specification}
+  \synprd{\tm{extern} \nt{string-literal} \tm{\{} \nt{declaration-seq\tsub{opt}}
+    \tm{\}}}
+  \synprd[]{\tm{extern} \nt{string-literal declaration}}
+
+\nt{string-literal}表示所需的语言链接。本标准指明\nt{string-literal}
+\tm{\dq{}C\dq}和\tm{\dq{}C++\dq}的语义。使用除\tm{\dq{}C\dq}或\tm{\dq{}C++\dq}之
+外的\nt{string-literal}为条件支持，由实现定义语义。「注：因此，实现未知的
+\nt{string-literal}语言规范需要一个诊断。」「注：推荐使用从定义语言的标准中的
+\nt{string-literal}拼写。比如，根据年份，\tm{Ada}（而不是\tm{ADA}），
+\tm{Fortran}或\tm{FORTRAN}。」
+
+\paragraph{}
+每一个实现都应该为C语言所写函数提供链接\tm{\dq{}C\dq}，为C++函数提供链接
+\tm{\dq{}C++\dq}。「例：
+\begin{lstlisting}
+  complex sqrt(complex);    // C++ linkage by default
+  extern "C" {
+    double sqrt(double);    // C linkage
+  }
+\end{lstlisting}」
+
+\paragraph{}
+链接规范可以嵌套。当链接规范嵌套时，最内层规范确定语言链接。链接规范不构成作用域
+。\nt{linkage-specification}应只出现在命名空间作用域（\ref{basic.scope}）中。在
+\nt{linkage-specification}中，所指定语言链接应用于\nt{linkage-specification}内声
+明的所有函数声明子，外部链接函数名和外部链接变量。「例：
+\begin{lstlisting}
+  extern "C" // the name f1 and its function type have C language linkage;
+    void f1(void(*pf)(int)); // pf is a pointer to a C function
+
+  extern "C" typedef void FUNC();
+  FUNC f2;                  // the name f2 has C++ language linkage and the
+                            // function's type has C language linkage
+
+	extern "C" FUNC f3; // the name of function f3 and the function's type have
+                      // C language linkage
+
+  void (*pf2)(FUNC*); // the name of the variable pf2 has C++ linkage and the
+                      // type of pf2 is ``pointer to C++ function that takes one
+                      // parameter of type pointer to C function''
+
+  extern "C" {
+    static void f4(); // the name of the function f4 has internal linkage (not C
+                      // language linkage) and the function's type has C
+                      // language linkage.
+  }
+
+  extern "C" void f5() {
+    extern void f4(); // OK: Name linkage (internal) and function type linkage
+                      // (C language linkage) obtained from previous declaration
+  }
+
+  extern void f4();   // OK: Name linkage (internal) and function type linkage
+                      // (C language linkage) obtained from previous declaration
+
+  void f6() {
+    extern void f4(); // OK: Name linkage (internal) and function type linkage
+                      // (C language linkage) obtained from previous declaration
+  }
+\end{lstlisting}」一个C语言链接在确定类成员名和类成员函数类型名的语言链接时被忽
+略。「例：
+\begin{lstlisting}
+  extern "C" typedef void FUNC_c();
+  class C {
+    void mf1(FUNC_c*); // the name of the function mf1 and the member function’s
+                       // type have C++ language linkage; the parameter has type
+                       // ``pointer to C function''
+
+    FUNC_c mf2;        // the name of the function mf2 and the member function’s
+                       // type have C++ language linkage
+
+    static FUNC_c* q;  // the name of the data member q has C++ language linkage
+                       // and the data member’s type is ``pointer to C function''
+  };
+
+  extern "C" {
+    class X {
+      void mf();         // the name of the function mf and the member function’s
+                         // type have C++ language linkage
+      void mf2(void(*)()); // the name of the function mf2 has C++ language linkage;
+                           // the parameter has type ``pointer to C function''
+    };
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果两个声明声明相同名字和参数类型列表（\ref{dcl.fct}）的函数为同一命名空间的成
+员，或声明相同名字的对象为同一命名空间的成员，而声明两个名字为不同语言链接，则程
+序为病态；如果声明出现在不同翻译单元则无需诊断。除了C++链接的函数，无链接规范的
+函数声明不应该出现在该函数的首次链接规范之前。在见到显式链接规范之后，函数可以不
+使用链接规范进行声明；先前显式指定的链接不受这样的函数声明影响。
+
+\paragraph{}
+至多一个特定名字的函数可以有C语言链接。出现在不同命名空间作用域中的同名C语言链接
+函数的两个声明（忽略限定的命名空间名）引用同一函数。出现在不同命名空间作用域中的
+同名C语言链接变量的两个声明（忽略限定的命名空间名）引用同一变量。C语言链接实体不
+应该使用与全局作用域中的变量相同的名字来声明，除非两个声明代表同一实体；如果声明
+出现在不同翻译单元中则无需诊断。C语言链接变量不应该使用与C语言链接的函数相同的名
+字来声明（忽略限定对应名字的命名空间名字）；如果声明出现在不同翻译单元中则无需诊
+断。「注：对给定名字的C语言链接实体应该仅有一个定义出现在程序中
+（见\ref{basic.def.odr}）；这意味着此实体不能在多于一个命名空间作用域中定义。」
+「例：
+\begin{lstlisting}
+  int x;
+  namespace A {
+    extern "C" int f();
+    extern "C" int g() { return 1; }
+    extern "C" int h();
+    extern "C" int x();       // ill-formed: same name as global-space object x
+  }
+
+  namespace B {
+    extern "C" int f();       // A::f and B::f refer to the same function
+    extern "C" int g() { return 1; } // ill-formed, the function g with C
+                                     // language linkage has two definitions
+  }
+
+  int A::f() { return 98; }   // definition for the function f with C language
+                              // linkage
+
+  extern "C" int h() { return 97; } // definition for the function h with C
+                                    // language linkage
+                                    // A::h and ::h refer to the same function
+\end{lstlisting}」
+
+\paragraph{}
+为确定所声明名字的链接及其是否为定义，直接包含在\nt{linkage-specification}中的声
+明被当作如同包含\tm{extern}说明符（\ref{dcl.stc}）。这样的声明不应该指定存储类。
+「例：
+\begin{lstlisting}
+  extern "C" double f();
+  static double f();          // error
+  extern "C" int i;           // declaration
+  extern "C" {
+    int i;                    // definition
+  }
+  extern "C" static void g(); // error
+\end{lstlisting}」
+
+\paragraph{}
+「注：因语言链接是函数类型的一部分，当通过C函数指针进行取值时，结果左值所引用函
+数被当作一个C函数。」
+
+\paragraph{}
+从C++链接到其他语言中定义的对象和从C++中定义的对象链接到其他语言是实现定义且语言
+相关的。只有当两个语言实现的对象布局策略足够相似的情况下才能实现链接。
 
 \sect{属性}{dcl.attr}
+
 \ssect{属性语法和语义}{dcl.attr.grammar}
+\paragraph{}
+属性为多个源结构指定额外信息，比如类型，变量，名字，块或翻译单元。
+
+\synsym{attribute-specifier-seq}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} attribute-specifier}}
+\synsym{attribute-specifier}
+  \synprd{\tm{[ [} \nt{attribute-using-prefix\tsub{opt} attribute-list} \tm{] ]}}
+  \synprd{\nt{alignment-specifier}}
+\synsym{alignment-specifier}
+  \synprd{\tm{alignas (} \nt{type-id} \tm{...}\nt{\tsub{opt}} \tm{)}}
+  \synprd{\tm{alignas (} \nt{constant-expression} \tm{...}\nt{\tsub{opt}} \tm{)}}
+\synsym{attribute-using-prefix}
+  \synprd{\tm{using} \nt{attribute-namespace} \tm{:}}
+\synsym{attribute-list}
+  \synprd{\nt{attribute\tsub{opt}}}
+  \synprd{\nt{attribute-list} \tm{,} \nt{attribute\tsub{opt}}}
+  \synprd{\nt{attribute} \tm{...}}
+  \synprd{\nt{attribute-list} \tm{,} \nt{attribute} \tm{...}}
+\synsym{attribute}
+  \synprd{\nt{attribute-token attribute-argument-clause\tsub{opt}}}
+\synsym{attribute-token}
+  \synprd{\nt{identifier}}
+  \synprd{\nt{attribute-scoped-token}}
+\synsym{attribute-scoped-token}
+  \synprd{\nt{attribute-namespace} \tm{::} \nt{identifier}}
+\synsym{attribute-namespace}
+  \synprd{\nt{identifier}}
+\synsym{attribute-argument-clause}
+  \synprd{\tm{(} \nt{balanced-token-seq\tsub{opt}} \tm{)}}
+\synsym{balanced-token-seq}
+  \synprd{\nt{balanced-token}}
+  \synprd{\nt{balanced-token-seq balanced-token}}
+\synsym{balanced-token}
+  \synprd{\tm{(} \nt{balanced-token-seq\tsub{opt}} \tm{)}}
+  \synprd{\tm{[} \nt{balanced-token-seq\tsub{opt}} \tm{]}}
+  \synprd{\tm{\{} \nt{balanced-token-seq\tsub{opt}} \tm{\}}}
+  \synprd[]{除圆括号，方括号和花括号之外的任何\nt{token}}
+
+\paragraph{}
+如果一个\nt{attribute-specifier}包含一个\nt{attribute-using-prefix}，则跟在该
+\nt{attribute-using-prefix}之后的\nt{attribute-list}不应该包含一个
+\nt{attribute-scoped-token}，并且该\nt{attribute-list}中的每一个
+\nt{attribute-token}被当作如同其\nt{identifier}被加上前缀\tm{N::}，其中\tm{N}为
+\nt{attribute-using-prefix}中指定的\nt{attribute-namespace}。「注：该规则不对
+\nt{attribute-using-prefix}如何影响\nt{attribute-argument-clause}的标记加以约束。
+」「例：
+\begin{lstlisting}
+  [[using CC: opt(1) , debug]]        // same as [[CC::opt(1), CC::debug] ] 
+    void f() {}
+  [[using CC: opt(1)]] [[CC::debug]]  // same as [[CC::opt(1)]] [[CC::debug]] 
+    void g() {}
+  [[using CC: CC::opt(1)] // error: cannot combine using and scoped attribute token]
+    void h() {}
+\end{lstlisting}」
+
+\paragraph{}
+「注：对每个独立的属性，将指定\nt{balanced-token-seq}的形式。」
+
+\paragraph{}
+在\nt{attribute-list}中，只有当\nt{attribute}的规范允许时才可以使用省略号。跟上
+省略号的\nt{attribute}是一个包展开（\ref{temp.variadic}）。不包含\nt{attribute}
+的\nt{attribute-specifier}无效果。\nt{attribute-list}中\nt{attribute-token}出现
+的顺序不重要。如果满足\nt{identifier}（\ref{lex.name}）语法要求的关键字
+（\ref{lex.key}）或可选标记（\ref{lex.digraph}）包含于\nt{attribute-token}则其被
+当成是一个标识符。包含于\nt{attribute-token}中的任何标识符不进行名字查询
+（\ref{basic.lookup}）。\nt{attribute-token}确定对\nt{attribute-argument-clause}
+（如果有）的额外要求。
+
+\paragraph{}
+每一个\nt{attribute-specifier-seq}被说成是\nt{应用}（\nt{appertain}）于某些实体
+或语句，由其所出现的语法上下文所标识（第\ref{stmt.stmt}章，第\ref{dcl.dcl}章，第
+\ref{dcl.decl}章）。如果应用于某些实体或语句的\nt{attribute-specifier-seq}包含一
+个不允许应用于该实体或语句的\nt{attribute}或\nt{alignment-specifier}，则程序为病
+态。如果一个\nt{attribute-specifier-seq}应用于一个友元声明（\ref{class.friends}）
+则该声明应该是一个定义。不应该对显式实例化（\ref{temp.explicit}）应用
+\nt{attribute-specifier-seq}。
+
+\paragraph{}
+对本标准中未指定的\nt{attribute-token}（包括\nt{attribute-scoped-token}），其行
+为由实现定义。任何实现未识别的\nt{attribute-token}将被忽略。「注：每个实现应该为
+\nt{attribute-scoped-token}中的\nt{attribute-namespace}选择一个区分性的名字。」
+
+\paragraph{}
+两个连续左方括号标记只能出现在引入\nt{attribute-specifier}或
+\nt{attribute-argument-clause}的\nt{balanced-token-seq}中。「注：如果两个连续左
+方括号出现在不允许\nt{attribute-specifier}的地方，则即使括号匹配可选语法产生式，
+程序也是病态的。」「例：
+\begin{lstlisting}
+  int p[10];
+  void f() {
+    int x = 42, y[5];
+    int(p[[x] { return x; }()]);  // error: invalid attribute on a nested
+                                  // declarator-id and not a function-style
+                                  // cast of an element of p .
+    y[[] { return 2; }()] = 2;    // error even though attributes are not
+                                  // allowed in this context.
+    int i [[vendor::attr([[]])]]; // well-formed implementation-defined
+                                  // attribute.
+  }
+\end{lstlisting}」
+
 \ssect{对齐说明符}{dcl.align}
-\ssect{带有依赖}{dcl.attr.depend}
+\paragraph{}
+一个\nt{alignment-specifier}可能用于变量或类数据成员，但不应该用于位域，函数参数
+或一个\nt{exception-declaration}（\ref{except.handle}）。一个
+\nt{alignment-specifier}可能用于类声明或定义（分别在
+\nt{elaborated-type-specifier}（\ref{dcl.type.elab}）或\nt{class-head}
+（第\ref{class}章）中，以及枚举声明或定义（分别在\nt{opaque-enum-declaration}或
+\nt{enum-head}（\ref{dcl.enum}））中。带有省略号的\nt{alignment-specifier}是一个
+包展开（\ref{temp.variadic}）。
+
+\paragraph{}
+当\nt{alignment-specifier}形式为\tm{alignas( } \nt{constant-expression} \tm{)}：
+\begin{enumerate}
+  \item{\nt{constant-expression}应该是一个整型常表达式}
+  \item{如果常表达式未求值为对齐值（\ref{basic.align}，或求值为扩展对齐，而实现
+    在声明上下文中不支持该对齐，则程序为病态。}
+\end{enumerate}
+
+\paragraph{}
+形如\tm{alignas(} \nt{type-id} \tm{)}的\nt{alignment-specifier}具有与
+\tm{alignas(alignof(} \nt{type-id} \tm{))}相同的效果（\ref{expr.alignof}）。
+
+\paragraph{}
+实体的对齐要求为其\nt{alignment-specifier}所指定的最严格非零对齐（如果存在）；否
+则，\nt{alignment-specifier}无效果。
+
+\paragraph{}
+声明中的所有\nt{alignment-specifier}的组合效果不应该指定比假如省略所有
+\nt{alignment-specifier}所声明的实体所要求的对齐更小的对齐。「例：
+\begin{lstlisting}
+  struct alignas(8) S {};
+  struct alignas(1) U {
+    S s;
+  };  // error: U specifies an alignment that is less strict than if the
+      // alignas(1) were omitted.
+\end{lstlisting}」
+
+\paragraph{}
+如果实体的定义性声明具有一个\nt{alignment-specifier}，则该实体的非定义性声明应要
+么指定等价对齐，要么不指定\nt{alignment-specifier}。相反，如果实体的任何声明具有
+\nt{alignment-specifier}，则该实体的每一个定义性声明应该指定等价声明。如果实体的
+声明在不同翻译单元中具有不同的\nt{alignment-specifier}则无需诊断。「例：
+\begin{lstlisting}
+  // Translation unit #1:
+  struct S { int x; } s, *p = &s;
+
+  // Translation unit #2:
+  struct alignas(16) S;          // error: definition of S lacks alignment,
+                                 // no diagnostic required 
+  extern S* p;
+\end{lstlisting}」
+
+\paragraph{}
+「例：对齐要求\tm{A}，具有\tm{N}个类型\tm{T}的元素的对齐缓存可声明为：        \\
+\mbox{\qquad \tm{alignas(T) alignas(A) T buffer[N];}}                         \\
+指定\tm{alignas(T)}确保最终要求的对齐不会比\tm{alignof(T)}更弱，因此程序不是病态
+的。」
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  alignas(double) void f(); // error: alignment applied to function
+  alignas(double) unsigned char c[sizeof(double)]; // array of characters, suitably
+                                                   // aligned for a double
+  extern unsigned char c[sizeof(double)];          // no alignas necessary
+  alignas(float)
+    extern unsigned char c[sizeof(double)]; // error: different alignment in
+                                            // declaration
+\end{lstlisting}」
+
+\ssect{依赖（Carries dependency）}{dcl.attr.depend}
+\paragraph{}
+\nt{attribute-token} \tm{carries\_dependency}指定出入函数的依赖传递。其在每一个
+\nt{attribute-list}中至多只能出现一次，且不应该有\nt{attribute-argument-clause}。
+该属性可能用于函数或lambda中\nt{parameter-declaration}的\nt{declarator-id}，这种
+情况下属性指定参数初始化依赖（\ref{intro.multithread}）于该对象的每一个左值到右
+值转换（\ref{conv.lval}）。该属性也可以用于函数声明的\nt{declarator-id}，指定函
+数返回值（如果有）依赖于函数调用表达式的求值。
+
+\paragraph{}
+如果函数的任何声明指定了\nt{carries\_dependency}属性，则该函数的第一个声明应该为
+其\nt{declarator-id}指定\tm{carries\_dependency}属性。更进一步，如果任何函数声明
+为某个参数指定\nt{carries\_dependency}属性，则函数的第一个声明应该为该参数指定
+\nt{carries\_dependency}属性。如果在一个翻译单元中的第一次声明中使用
+\nt{carries\_dependency}属性声明函数或其中的一个参数，而在另一个翻译单元中同样的
+函数或参数未使用\nt{carries\_dependency}属性声明，则程序为病态，无需诊断。
+
+\paragraph{}
+「注：\nt{carries\_dependency}属性不改变程序的语义，但可能产生更有效的代码。」
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  /∗ Translation unit A. ∗/
+
+  struct foo { int* a; int* b; };
+  std::atomic<struct foo *> foo_head[10];
+  int foo_array[10][10];
+
+  [[carries_dependency]] struct foo* f(int i) {
+    return foo_head[i].load(memory_order_consume);
+  }
+
+  int g(int* x, int* y [[carries_dependency]]) {
+    return kill_dependency(foo_array[*x][*y]);
+  }
+
+  /∗ Translation unit B. ∗/
+
+  [[carries_dependency]] struct foo* f(int i);
+  int g(int* x, int* y [[carries_dependency]]);
+
+  int c = 3;
+
+  void h(int i) {
+    struct foo* p;
+    p = f(i);
+    do_something_with(g(&c, p->a));
+    do_something_with(g(p->a, &c));
+  }
+\end{lstlisting}
+函数\tm{f}的\nt{carries\_dependency}属性意味着返回值依赖于\tm{f}的输出，因此实现
+不需要对\tm{f}的返回顺序进行约束。\tm{f}的实现及其调用者可能选择保留依赖而不是生
+成硬件内存序指令（也即围栏指令）。函数\tm{g}的第二参数具有
+\nt{carries\_dependency}属性，但其第一参数没有。因此函数\tm{h}对\tm{g}的第一次调
+用依赖\tm{g}的输入，但第二次调用没有。实现可能需要在第二次\tm{g}的调用前插入围栏
+指令。」
+
 \ssect{不推荐}{dcl.attr.deprecated}
-\ssect{贯穿}{dcl.attr.fallthrough}
+\nt{attribute-token} \tm{deprecated}可以用于标记仍允许使用的名字或实体，但因某些
+原因不推荐使用。「注：特别是，\tm{deprecated}适用于被认为过时或不安全的名字和实
+体。」在每个\nt{attribute-list}中至多出现一次。可以存在
+\nt{attribute-argument-clause}，如果存在，则应该形如：                        \\
+\mbox{\qquad \tm{(} \nt{string-literal} \nt{)}}                               \\
+「注：\nt{attribute-argument-clause}中的\nt{string-literal}可用于解释不推荐的原
+因和/或推荐可替代实体。」
+
+\paragraph{}
+该属性可用于类，\nt{typedef-name}，变量，非静态数据成员，函数，命名空间，枚举，
+枚举子或模板特例化的不推荐使用。
+
+\paragraph{}
+未使用\tm{deprecated}属性声明的名字或实体可以之后使用该属性重声明，反之亦然。
+「注：因此，最初未使用属性声明的实体可以在后续重声明中标记为不推荐。然后，在实体
+被标记为不推荐后，后续的重声明不会取消该属性。」使用该属性的不同形式的重声明（使
+用或不使用\nt{attribute-argument-clause}或使用不同的
+\nt{attribute-argument-clause}）是允许的。 
+
+\paragraph{}
+「注：在一个声明指定了该属性之后，实现可能在程序引用名字或实体而不是声明它时使用
+\tm{deprecated}属性来产生诊断信息。诊断消息可能包括应用于名字或实体的任何
+\tm{deprecated}属性的\nt{attribute-argument-clause}中所提供的文本。」
+
+\ssect{过渡}{dcl.attr.fallthrough}
+\paragraph{}
+\nt{attribute-token} \tm{fallthrough}可应用于空语句（\ref{stmt.expr}）；这样的语
+句为过渡语句。\nt{attribute-token} \tm{fallthrough}在每一个\nt{attribute-list}中
+至多只能出现一次且不应该存在\nt{attribute-argument-clause}。过渡语句只能出现在包
+含的\tm{switch}语句中（\ref{stmt.switch}）。过渡语句之后执行的下一条语句应该是加
+标号的语句，该标号为同一\tm{switch}语句的case或default标号。如果不存在这样的语句
+则程序为病态。
+
+\paragraph{}
+「注：过渡语句的使用意在禁止实现对某执行路径上从另一个case或default标号到达某一
+case或default标号会发出的警告消息。在过渡语句不能动态可达时实现应该发出警告。」
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+void f(int n) {
+  void g(), h(), i();
+  switch (n) {
+  case 1:
+  case 2:
+    g();
+    [[fallthrough]];
+  case 3:             // warning on fallthrough discouraged
+    h();
+  case 4:             // implementation may warn on fallthrough
+    i();
+    [[fallthrough]];  // ill-formed
+  }
+}
+\end{lstlisting}」
+
 \ssect{可能未使用}{dcl.attr.unused}
-\ssect{不丢弃}{dcl.attr.nodiscard}
+\paragraph{}
+\nt{attribute-token} \tm{maybe\_unused}表明名字或实体可能有意未使用。在每一个
+\nt{attribute-list}中应该至多出现一次，且不应该存在
+\nt{attribute-argument-clause}。
+
+\paragraph{}
+该属性可能应用于类，\nt{typedef-name}，变量，非静态数据成员，函数，枚举或枚举子
+的声明。
+
+\paragraph{}
+「注：对标记为\tm{maybe\_unused}的未使用实体，或尽管存在该属性此实体仍被使用，实
+现不应该发出警告。」
+
+\paragraph{}
+未使用\tm{maybe\_unused}属性声明的名字或实体，可以在之后使用该属性进行重声明，反
+之亦然。在首次标记该属性的声明之后该实体被当作标记为未使用。
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  [[maybe_unused]] void f([[maybe_unused]] bool thing1,
+                          [[maybe_unused]] bool thing2) {
+    [[maybe_unused]] bool b = thing1 && thing2;
+    assert(b);
+  }
+\end{lstlisting}
+无论是否定义了\tm{NDEBUG}，实现都不应该警告\tm{b}未使用。」
+
+\ssect{不弃值}{dcl.attr.nodiscard}
+\paragraph{}
+\nt{attribute-token} \tm{nodiscard}可以用于函数声明中的\nt{declarator-id}或类或
+枚举的声明。在每个\nt{attribute-list}中至多出现一次且不应该存在
+\nt{attribute-argument-clause}。
+
+\paragraph{}
+「注：不弃值函数调用是调用之前声明为\tm{nodiscard}或返回类型是一个标为
+\tm{nodiscard}可能cv限定的类或枚举类型的函数的表达式。作为潜在求值的弃值表达式
+（第\ref{expr}章）的不弃值调用的出现是不推荐的，除非显式转换为\tm{void}。这种情
+况下实现不应该发出警告。这通常是因为丢弃不弃值调用的返回值具有预料之外的结果。」
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  struct [[nodiscard]] error_info { /* ... */ };
+  error_info enable_missile_safety_mode();
+  void launch_missiles();
+  void test_missiles() {
+    enable_missile_safety_mode(); // warning encouraged
+    launch_missiles();
+  }
+  error_info &foo();
+  void f() { foo(); }  // warning not encouraged: not a nodiscard call, because
+                       // neither the (reference) return type nor the function
+                       // is declared nodiscard
+\end{lstlisting}」
+
 \ssect{不返回}{dcl.attr.noreturn}
+\paragraph{}
+\nt{attribute-token} \tm{noreturn}指明函数不返回。在每个\nt{attribute-list}中至
+多只能出现一次，且不应该存在\nt{attribute-argument-clause}。该属性可能应用于函数
+声明的\nt{declarator-id}。如果函数的任何声明指明了\tm{noreturn}属性，则函数的首
+次声明应该指定\tm{noreturn}属性。如果函数在一个翻译单元中使用\tm{noreturn}属性声
+明且该函数在另一翻译中声明为无\tm{noreturn}属性，则程序为病态，无需诊断。
+
+\paragraph{}
+如果之前使用\tm{noreturn}属性进行声明的函数\tm{f}且最终该函数返回了，调用该函数
+的行为未定义。「注：函数可能通过抛出异常而终止。」「注：如果标记为
+\tm{[[noreturn]}的函数可能返回，则实现应该发出警告。」
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  [[ noreturn ]] void f() {
+    throw "error"; // OK
+  }
+  [[ noreturn ]] void q(int i) { // behavior is undefined if called with an
+                                 // argument <= 0 
+    if (i > 0)
+      throw "positive";
+  }
+\end{lstlisting}」

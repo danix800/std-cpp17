@@ -102,7 +102,7 @@
   \synprd{\nt{defining-type-specifier-seq abstract-declarator\tsub{opt}}}
 \synsym{abstract-declarator}
   \synprd{\nt{ptr-abstract-declarator}}
-  \synprd{\nt{noptr-abstract-declarator\tsub{opt} parameters-and-qualifiers
+  \synprd{\nt{noptr-abstract-declarator\tsub{opt} parameters-and-qualifier
     trailing-return-type}}
   \synprd{\nt{abstract-pack-declarator}}
 \synsym{ptr-abstract-declarator}
@@ -453,7 +453,7 @@ cv-qualifier-seq}指针''。可选的\nt{attribute-specifier-seq}
 
 \paragraph{}
 成员指针不应该指向一个类的静态成员（\ref{class.static}），引用类型成员，或
-``\nt{cv} \tm{void}''。 
+``\nt{cv} \tm{void}''。
 
 「注：见\ref{expr.unary}和\ref{expr.mptr.oper}。类型``成员指针''不同于类型
 ``指针''，即，成员指针只能使用成员指针声明子语法来声明，而不是指针声明子语法。
@@ -533,7 +533,7 @@ C++中也不存在``成员引用''类型。」
 「注：除了为类而声明（\ref{over.sub}），下标运算符\tm{[]}解释为\tm{E1[E2]}与
 \tm{*((E1)+(E2))}等价（\ref{expr.sub}）。由于应用于\tm{+}的转换规则，如果\tm{E1}
 是数组而\tm{E2}是整数，则\tm{E1[E2]}引用\tm{E1}的第\tm{E2}个元素。因此，尽管其非
-对称形式，下标是可交换操作。」 
+对称形式，下标是可交换操作。」
 
 \paragraph{}
 「注：多维数组遵循一致的规则。如果\tm{E}是一个\nt{n}维数组，阶为
@@ -816,8 +816,8 @@ cv限定）类类型。
     void f(int = 1, int); // error: does not use default from surrounding scope
   }
   void m() {
-    void f(int, int);     // has no defaults
-    f(4);                 // error: wrong number of arguments
+    void f(int, int);     // has no default
+    f(4);                 // error: wrong number of argument
     void f(int, int = 5); // OK
     f(4);                 // OK, calls f(4, 5);
     void f(int, int = 5); // error: cannot redefine, even to same value
@@ -892,7 +892,7 @@ cv限定）类类型。
 和类成员。「例：
 \begin{lstlisting}
   int a;
-  int f(int a, int b = a);        // error: parameter a used as default argument 
+  int f(int a, int b = a);        // error: parameter a used as default argument
   typedef int I;
   int g(float I, int b = I(2));    // error: parameter I found
   int h(int a, int b = sizeof(a)); // OK, unevaluated operand
@@ -905,7 +905,7 @@ cv限定）类类型。
   class X {
     int a;
     int mem1(int i = a); // error: non-static member a used as default argument
-    int mem2(int i = b); // OK; use X::b 
+    int mem2(int i = b); // OK; use X::b
     static int b;
   };
 \end{lstlisting}
@@ -1034,23 +1034,1118 @@ cv限定）类类型。
 式当作是\tm{constexpr}。
 
 \paragraph{}
-<++>
+如果一个显式缺省函数使用不生成与隐式声明（\ref{except.spec}）相同异常规范的
+\nt{noexcept-specifier}来声明，则
+\begin{enumerate}
+  \item{如果该函数在首次声明时为显式缺省，则定义为删除；}
+  \item{否则程序为病态。}
+\end{enumerate}
 
 \paragraph{}
-<++>
+「例：
+\begin{lstlisting}
+  struct S {
+    constexpr S() = default;    // ill-formed: implicit S() is not constexpr
+    S(int a = 0) = default;     // ill-formed: default argument
+    void operator=(const S&) = default; // ill-formed: non-matching return type
+    ~S() noexcept(false) = default;     // deleted: exception specification doe
+                                        // not match
+  private:
+    int i;
+    S(S&);                      // OK: private copy constructor
+  };
+  S::S(S&) = default;           // OK: defines copy constructor
+\end{lstlisting}」
 
 \paragraph{}
-<++>
+显式缺省函数和隐式声明函数统称为\nt{缺省}函数，实现应为其提供隐式定义
+（\ref{class.ctor}，\ref{class.dtor}，\ref{class.copy}），可能意味着将其定义为删
+除的函数。函数为\nt{用户提供}，如果其在首次声明时为用户声明，未显式声明为缺省或
+删除。用户提供的显式缺省函数（如在首次声明后显式定义为缺省）在其显式缺省处被定
+义；如果这样的函数隐式定义为删除，则程序为病态。「注：在首次声明后，声明函数为缺
+省的可以在实现稳定二进制接口的同时为不断演化的代码库提供有效执行和准确定义。」
 
 \paragraph{}
-测试
+「例：
+\begin{lstlisting}
+  struct trivial {
+    trivial() = default;
+    trivial(const trivial&) = default;
+    trivial(trivial&&) = default;
+    trivial& operator=(const trivial&) = default;
+    trivial& operator=(trivial&&) = default;
+    ~trivial() = default;
+  };
+
+  struct nontrivial1 {
+    nontrivial1();
+  };
+  nontrivial1::nontrivial1() = default; // not first declaration
+\end{lstlisting}」
 
 \ssect{删除定义}{dcl.fct.def.delete}
+\paragraph{}
+形如                                                                          \\
+\mbox{\qquad\nt{attribute-specifier-seq\tsub{opt} decl-specifier-seq\tsub{opt}
+  declarator virt-specifier-seq\tsub{opt}} \tm{= delete ;}}                   \\
+的函数定义被称为\nt{删除的定义}。删除定义的函数应该也称为\nt{删除函数}。
+
+\paragraph{}
+除声明之外，隐式或显式引用删除函数的程序为病态。「注：包括隐式或显式调用函数，形
+成指向函数的指针或成员指针。即使是不潜在求值的表达式中的引用也成立。如果函数被重
+载，仅当重载解析选中该函数才算作被引用。虚函数隐式odr使用
+（\ref{basic.def.odr}）本身不构成引用。」
+
+\paragraph{}
+「例：可以使用以下进行强制非缺省初始化和非整型初始化
+\begin{lstlisting}
+  struct onlydouble {
+    onlydouble() = delete;              // OK, but redundant
+    onlydouble(std::intmax_t) = delete;
+    onlydouble(double);
+  };
+\end{lstlisting}」
+「例：通过为类的用户定义\tm{operator new}使用删除定义可以防止某些
+\nt{new-expressions}中该类的使用。
+\begin{lstlisting}
+  struct sometype {
+    void* operator new(std::size_t) = delete;
+    void* operator new[](std::size_t) = delete;
+  };
+  sometype* p = new sometype;    // error, deleted class operator new
+  sometype* p = new sometype[3]; // error, deleted class operator new[]
+\end{lstlisting}」
+「例：通过对拷贝构造函数和拷贝赋值运算符使用删除定义并为移动构造函数和移动赋值运
+算符提供缺省定义可以使类不可拷贝，即仅移动。
+\begin{lstlisting}
+  struct moveonly {
+    moveonly() = default;
+    moveonly(const moveonly&) = delete;
+    moveonly(moveonly&&) = default;
+    moveonly& operator=(const moveonly&) = delete;
+    moveonly& operator=(moveonly&&) = default;
+    ~moveonly() = default;
+  };
+  moveonly* p;
+  moveonly q(*p);  // error, deleted copy constructor
+\end{lstlisting}」
+
+\paragraph{}
+删除函数隐式的为内联函数（\ref{dcl.inline}）。「注：单一定义原则
+（\ref{basic.def.odr}）适用删除函数。」函数的删除定义应该是函数的首次声明，或者
+对于显式特例化函数模板，该特例化的首次声明。隐式声明的分配和释放函数
+（\ref{basic.stc.dynamic}）不应定义为删除的。「例：
+\begin{lstlisting}
+  struct sometype {
+    sometype();
+  };
+  sometype::sometype() = delete; // ill-formed; not first declaration
+\end{lstlisting}」
 
 \sect{结构化绑定声明}{dcl.struct.bind}
+\paragraph{}
+结构化绑定声明将\nt{identifier-list}的\nt{标识符} \tm{v\tsub{0}，v\tsub{1}，
+\ldots}作为名字（\ref{basic.scope.declarative}）引入，称为\nt{结构化绑定}。设
+\nt{cv}表示\nt{decl-specifier-seq}中的\nt{cv-qualifier}。首先引入具有唯一名字
+\tm{e}的变量。如果\nt{initializer}中的\nt{assignment-expression}具有数组类型
+\tm{A}，且不存在\nt{ref-qualifier}，则\tm{e}具有类型\nt{cv} \tm{A}，且每一个元素
+按\nt{initializer}的形式所指定的\nt{assignment-expression}中对应元素进行拷贝初始
+化或者直接初始化。否则，\tm{e}如同以下方式定义                                \\
+\mbox{\qquad\nt{attribute-specifier-seq\tsub{opt} decl-specifier-seq
+ref-qualifier\tsub{opt}} \tm{e} \nt{initializer} \tm{;}}                   \\
+其中声明不会按函数声明来解释，且声明中除\nt{declarator-id}以外的的部分取自对应的
+结构化绑定声明。\nt{id-expression} \tm{e}的类型称为\tm{E}。「注：\tm{E}不会是引
+用类型（第\ref{expr}章）。」
+
+\paragraph{}
+如果\tm{E}是元素类型为\tm{T}的数组类型，\nt{identifier-list}中元素的数目应等于
+\tm{E}的元素数目。每一个\tm{v\tsub{i}}是一个引用数组第\nt{i}个元素的左值的名字，
+其类型为\tm{T}；引用类型为\tm{T}。「注：\tm{T}的顶层cv限定符为\nt{cv}。」「例：
+\begin{lstlisting}
+  auto f() -> int(&)[2];
+  auto [ x, y ] = f();     // x and y refer to elements in a copy of the array
+                           // return value
+  auto & [ xr, yr ] = f(); // xr and yr refer to elements in the array referred
+                           // to by f's return value
+\end{lstlisting}」
+
+\paragraph{}
+否则，如果\nt{qualified-id} \tm{std::tuple\_size<E>}指代一个完整类型，则表达式
+\tm{std::tuple\_size<E>::value}应该是一个良构的整型常量表达式，且
+\nt{identifier-list}中元素数目应该等于该表达式的值。在\tm{E}的作用域通过成员访问
+查询（\ref{basic.lookup.classref}）查找\nt{unqualified-id} \tm{get}，如果找到至
+少一个声明，则初始化为\tm{e.get<i>()}。否则初始化为\tm{get<i>(e)}，其中\tm{get}
+在关联命名空间（\ref{basic.lookup.argdep}）中查询。无论哪种情形，\tm{get<i>}解释
+为\nt{template-id}。「注：不进行常规未限定查询（\ref{basic.lookup.unqual}）。」
+不论哪种情形，如果实体\tm{e}的类型是左值引用，则\tm{e}是一个左值，否则为亡值。给
+定由\tm{std::tuple\_element<i, E>::type}指定的类型\tm{T}\nt{\tsub{i}}，每一个
+\tm{v}\nt{\tsub{i}}是一个类型为``\tm{T}\nt{\tsub{i}}的引用''的变量，由
+\nt{initializer}初始化，其中如果\nt{initializer}是一个左值的话则引用是一个左值引
+用，否则为右值引用；所引用的类型为\tm{T}\nt{\tsub{i}}。
+
+\paragraph{}
+否则，所有\tm{E}的非静态数据成员应该是\tm{E}或\tm{E}的同一无歧义公有其类的公有
+直接成员，\tm{E}不应该具有匿名联合成员，且\nt{identifier-list}中成员数目应该等于
+\tm{E}的非静态数据成员数目。称\tm{E}的非静态数据成员为\tm{m\tsub{0}，m\tsub{1}，
+m\tsub{2}，...}（按声明顺序），每一个\tm{v}\nt{\tsub{i}}是引用\tm{e}的成员\tm{m}
+\nt{\tsub{i}}的左值的名字，其类型为\nt{cv} \tm{T}\nt{\tsub{i}}，其中
+\tm{T}\nt{\tsub{i}}为该成员的声明类型；所引用类型为\nt{cv} \tm{T}\nt{\tsub{i}}。
+如果该成员为位域则该左值为位域。「例：
+\begin{lstlisting}
+  struct S { int x1 : 2; volatile double y1; };
+  S f();
+  const auto [ x, y ] = f();
+\end{lstlisting}
+\nt{id-expression} \tm{x}的类型为``\tm{const int}''，\nt{id-expression} \tm{y}的
+类型为``\tm{const volatile double}''。」
 
 \sect{初始化}{dcl.init}
+\paragraph{}
+声明子可以为所声明的标识符指定初值。标识符指定被初始化的变量。本节剩余部分所述的
+初始化过程对其他语法上下文所指定的初始化也适用，比如函数参数的初始化
+（\ref{expr.call}）或返回值的初始化（\ref{stmt.return}）。                    \\
+\synsym{initializer}
+  \synprd{\nt{brace-or-equal-initializer}}
+  \synprd{\tm{(} \nt{expression-list} \tm{)}}
+\synsym{brace-or-equal-initializer}
+  \synprd{\tm{=} \nt{initializer-clause}}
+  \synprd{\nt{brace-init-list}}
+\synsym{initializer-clause}
+  \synprd{\nt{assignment-expression}}
+  \synprd{\nt{braced-init-list}}
+\synsym{initializer-list}
+  \synprd{\nt{initializer-clause} \tm{...}\nt{\tsub{opt}}}
+  \synprd{\nt{initializer-list} \tm{,} \nt{initializer-clause}
+    \tm{...}\nt{\tsub{opt}}}
+\synsym{braced-init-list}
+  \synprd{\tm{\{} \nt{initializer-list} \tm{,}\nt{\tsub{opt}} \tm{\}}}
+  \synprd{\tm{\{} \tm{\}}}
+\synsym{expr-or-braced-init-list}
+  \synprd{\nt{expression}}
+  \synprd[]{\nt{braced-init-list}}
+
+\paragraph{}
+除使用\tm{constexpr}说明符进行声明的对象（见\ref{dcl.constexpr}）外，变量定义中
+的\nt{initializer}可以包括含有字面值，已声明变量和函数的任意表达式，无论变量存储
+期是什么。「例：
+\begin{lstlisting}
+  int f(int);
+  int a = 2;
+  int b = f(a);
+  int c(b);
+\end{lstlisting}」
+
+\paragraph{}
+「注：缺省参数的要求更严格；见（\ref{dcl.fct.default}）。」
+
+\paragraph{}
+「注：静态存储期变量初始化顺序在（\ref{basic.start}）和（\ref{stmt.dcl}）中描
+述。」
+
+\paragraph{}
+具有\nt{initializer}的外部链接或内部链接的块作用域变量声明为病态。
+
+\paragraph{}
+\nt{零初始化}一个对象或引用指：
+\begin{enumerate}
+  \item{如果\tm{T}为标量类型（\ref{basic.types}），则对象初始化为通过将整型字面
+    值\tm{0}（零）转换成类型\tm{T}获得的值；\footnote{如\ref{conv.ptr}所述，转换
+    整型字面值\tm{0}到指针类型将产生空指针值。}}
+  \item{如果\tm{T}是一个（可能cv限定的）非联合类类型，则每一个非静态数据成员，每
+    一个非平凡基类子对象，以及如果对象不是一个基类子对象，每一个虚基类子对象都被
+    零初始化，填充也被初始化为零位；}
+  \item{如果\tm{T}是一个（可能cv限定的）联合类型，对象的首个非静态命名数据成员被
+    零初始化，填充也被初始化为零位；}
+  \item{如果\tm{T}是数组类型，每一个元素被零初始化；}
+  \item{如果\tm{T}是引用类型，不进行初始化。}
+\end{enumerate}
+
+\paragraph{}
+\nt{缺省初始化}一个类型为\tm{T}的对象指：
+\begin{enumerate}
+  \item{如果\tm{T}是一个（可能cv限定的）类类型（第\ref{class}章），则考虑构造函
+    数。列出可用的构造函数（\ref{over.match.ctor}），通过重载解析
+    （\ref{over.match}）为\nt{initializer} \tm{()}选择最佳的构造函数。然后使用空
+    参数列表来调用该构造函数以初始化对象。}
+  \item{如果\tm{T}是数组类型，每一个元素进行缺省初始化。}
+  \item{否则不进行初始化。}
+\end{enumerate}
+
+类类型\tm{T}是\nt{const-default-constructible}，如果\tm{T}的缺省初始化会调用一个
+用户提供（不是从基类继承）的\tm{T}的构造函数，或者如果
+\begin{enumerate}
+  \setcounter{enumi}{3}
+  \item{\tm{T}的每一个直接非可变非静态数据成员\tm{M}有一个缺省成员初始化，或者如
+    果\tm{M}具有类类型\tm{X}（或其数组），则\tm{X}为常-缺省-可构造，}
+  \item{如果\tm{T}是具有至少一个非静态数据成员的联合，则有且仅有一个可变成员具有
+    缺省成员初始化，}
+  \item{如果\tm{T}不是一个联合，对每一个具有至少一个非静态数据成员（如果有）的匿
+    名联合成员，有且仅有一个非静态数据成员具有缺省成员初始化，且}
+  \item{\tm{T}的每一个潜在构造基类是常-缺省-可构造。}
+\end{enumerate}
+如果程序调用常限定类型\tm{T}的对象的缺省初始化，则\tm{T}应该是一个常缺省可构造类
+类型或其数组。
+
+\paragraph{}
+类型\tm{T}的对象的值初始化指：
+\begin{enumerate}
+  \item{如果\tm{T}是一个无缺省构造函数或由用户提供或删除的缺省构造函数的（可能
+    cv限定的）类类型（第\ref{class}章），则对象是缺省初始化；}
+  \item{如果\tm{T}是一个非用户提供或删除的缺省构造函数的（可能cv限定的）类类型，
+    则对象零初始化且对缺省初始化进行语义约束检查，且如果\tm{T}具有非平凡缺省构造
+    函数，则对象缺省初始化；}
+  \item{如果\tm{T}是数组类型，则每一个元素进行值初始化；}
+  \item{否则，对象进行零初始化。}
+\end{enumerate}
+
+\paragraph{}
+调用具有引用类型实体的缺省或值初始化的程序是病态的。
+
+\paragraph{}
+「注：在程序开始时，任何其他初始化开始前，每一个静态存储期对象进行零初始化。在某
+些情况下会进行进一步初始化。」
+
+\paragraph{}
+初始化是括号空集的对象，即\tm{()}，应该进行值初始化。
+「注：因\tm{()}在语法上不允许作为\nt{initializer}，                           \\
+\mbox{\qquad\tm{X a();}}                                                      \\
+不是类\tm{X}的对象声明，而是无参数，返回\tm{X}的函数声明。在某些其他初始化上下文
+中形式\tm{()}是允许的（\ref{expr.new}，\ref{expr.type.conv}，
+\ref{class.base.init}）。」
+
+\paragraph{}
+如果没有为对象指定初始化，则对象进行缺省初始化。当自动或动态存储期对象取得存储时
+对象具有\nt{不确定值}，且如果没有为对象进行初始化，则对象保持其不确定值直到该值
+被替换（\ref{expr.ass}）。「注：静态或线程存储期对象进行零初始化，见
+\ref{basic.start.static}。」如果求值产生不确定值，则除以下情形以外的行为未定义：
+\begin{enumerate}
+  \item{如果通过以下求值以生无符号窄字符类型（\ref{basic.fundamental}）或
+    \tm{std::byte}类型（21.2.1）的不确定值：
+    \begin{enumerate}
+      \item{条件表达式的第二或第三操作数（\ref{expr.cond}），}
+      \item{逗号表达式的右操作数（\ref{expr.comma}），}
+      \item{强制转换或转换（\ref{conv.integral}，\ref{expr.type.conv}，
+        \ref{expr.static.cast}，\ref{expr.cast}）到无符号窄字符类型或
+        \tm{std::byte}（21.2.1）类型的操作数，或}
+      \item{弃值表达式（第\ref{expr}章），}
+    \end{enumerate}
+    则操作的结果为不确定值。
+  }
+  \item{如果通过对第一个操作数为无符号窄字符类型或\tm{std::byte}类型的左值的简单
+    赋值运算符（\ref{expr.ass}）的右操作数进行求值产生窄字符类型或\tm{std::byte}
+    类型的不确定值，则左操作数所引用的对象替换为不确定值。}
+  \item{如果在初始化无符号窄字符类型对象时通过求值初始化表达式产生无符号窄字符类
+    型的不确定值，则该对象被初始化为不确定值。}
+  \item{如果在初始化\tm{std::byte}类型对象时通过求值初始化表达式产生无符号窄字符
+    类型的不确定值，则该对象被初始化为不确定值。}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  int f(bool b) {
+    unsigned char c;
+    unsigned char d = c;  // OK, d has an indeterminate value
+    int e = d;            // undefined behavior
+    return b ? d : 0;     // undefined behavior if b is true
+  }
+\end{lstlisting}」
+
+\paragraph{}
+静态成员的初始化处于成员类作用域中。「例：
+\begin{lstlisting}
+  int a;
+
+  struct X {
+    static int a;
+    static int b;
+  };
+
+  int X::a = 1;
+  int X::b = a;       // X::b = X::a
+\end{lstlisting}」
+
+\paragraph{}
+如果初始化实体不是类类型，则括号初始化中的\nt{expression-list}应该是单个表达式。
+
+\paragraph{}
+出现在\nt{brace-or-equal-initializer}或\nt{condition}（\ref{stmt.select}）的
+\tm{=}形式中，以及参数传递，函数返回，抛异常（\ref{except.throw}），处理异常
+（\ref{except.handle}）和聚合成员初始化（\ref{dcl.init.aggr}）中的初始化，被称为
+\nt{拷贝初始化}。「注：拷贝初始化可能调用一个移动操作（\ref{class.copy}）。」
+
+\paragraph{}
+出现在形式                                                                    \\
+\mbox{\qquad\tm{T x(a);}} \\
+\mbox{\qquad\tm{T x{a};}} \\
+中，以及\tm{new}表达式（\ref{expr.new}），\tm{static\_cast}表达式
+（\ref{expr.static.cast}），函数式类型转换（\ref{expr.type.conv}），
+\nt{mem-initializer}（\ref{class.base.init}）和\nt{condition}的
+\nt{braced-init-list}形式中的初始化，称为\nt{直接初始化}。
+
+\paragraph{}
+初始化的语义如下。\nt{目标类型}为初始化的引用或对象的类型，\nt{源类型}为初始化表
+达式的类型。如果初始化不是单个（可能加括号）表达式，则源类型未定义。
+\begin{enumerate}
+  \item{如果初始化是一个（无括号）\nt{braced-init-list}或
+    \tm{=} \nt{braced-init-list}，则对象或引用进行列表初始化
+    （\ref{dcl.init.list}）。}
+  \item{如果目标类型是引用类型，见\ref{dcl.init.ref}。}
+  \item{如果目标类型是字符、\tm{char16\_t}、\tm{char32\_t}或\tm{wchar\_t}数组，
+    则初始化为字符串字面值，见\ref{dcl.init.string}。}
+  \item{如果初始化为\tm{()}，则对象进行值初始化。}
+  \item{否则，如果目标类型为数组，则程序为病态。}
+  \item{如果目标类型为一个（可能cv限定的）类类型：
+    \begin{enumerate}
+      \item{如果初始化表达式是一个纯右值且源类型的cv未限定版本与目标类型的类为同
+        一个类，则初始化表达式用于初始化目标类型。「例：\tm{T x = T(T(T()))；}
+        调用\tm{T}的缺省构造函数以初始化\tm{x}。」}
+      \item{否则，如果初始化为直接初始化，或者如果是一个拷贝构造函数，其源类型的
+        cv未限定版本与目标类型的类或其派生类为同一个类，同拷贝构造函数。列举出可
+        用构造函数（\ref{over.match.ctor}），并通过重载解析（\ref{over.match}）
+        选择最佳匹配。使用初始化表达式或\nt{expression-list}作为参数来调用所选构
+        造函数以初始化对象。如果没有可用构造函数，或重载解析有歧义，则初始化为病
+        态。}
+      \item{否则（即拷贝初始化的剩余情形），按\ref{over.match.copy}所述，列举出
+        可将源类型转换成目标类型或其派生类的用户定义转换序列，并通过重载解析
+        （\ref{over.match}）选择最匹配的一个。如果不能进行转换或有歧义，则初始化
+        为病态。所选函数以初始化表达式作为参数来调用；如果函数是构造函数，则调用
+        是一个目标类型的cv未限定版本纯右值，其结果对象由构造函数进行初始化。根据
+        以上规则，调用用于直接初始化拷贝初始化的目标对象。}
+    \end{enumerate}}
+  \item{否则，如果源类型为（可能cv限定的）类类型，则考虑转换函数。列举可用转换函
+    数（\ref{over.match.conv}）并按重载解析（\ref{over.match}）选择最佳匹配。调
+    用所选的用户定义转换以转换初始化表达式为待初始化对象。如果不能进行转换或有歧
+    义，则初始化为病态。}}
+  \item{否则，待初始化对象的初值为（可能被转换过的）初始化表达式的值。如果可能则
+    使用标准转换（第\ref{conv}章）将初始化表达式转换为目标类型的cv未限定版本；不
+    考虑用户定义转换。如果不能进行转换，则初始化为病态。如果使用其不能表示的值来
+    初始化位域，则位域的结果值由实现定义。「注：类型``\nt{cv1} \tm{T}''的表达式
+    可以初始化``\nt{cv2} \tm{T}''类型的对象，不依赖于cv限定符\nt{cv1}和
+    \nt{cv2}。
+\begin{lstlisting}
+  int a;
+  const int b = a;
+  int c = b;
+\end{lstlisting}」}
+\end{enumerate}
+
+\paragraph{}
+后跟省略号的\nt{initializer-clause}是一个包展开（\ref{temp.variadic}）。
+
+\paragraph{}
+如果初始化是一个带括号\nt{expression-list}，则表达式按函数调用所指定的顺序进行求
+值（\ref{expr.call}）。
+
+\paragraph{}
+初始化完成的对象视为构造完成，即使没有调用对象类的构造函数来初始化。「注：这样的
+对象可能进行了值初始化或由聚合初始化（\ref{dcl.init.aggr}）或继承构造函数
+（\ref{class.inhctor.init}）来初始化。」
+
+\paragraph{}
+指定了变量初始化的声明，无论是显式初始化或缺省初始化，称为该变量的\nt{初始化声
+明}。「注：这大部分情况下是一个变量的定义声明（\ref{basic.def}），但非内联静态数
+据成员的初始化声明在类定义中可能是一个声明，而不是命名空间中的定义。」
+
 \ssect{聚合}{dcl.init.aggr}
+\paragraph{}
+\nt{聚合}是符合
+\begin{enumerate}
+  \item{无用户提供显式或派生构造函数（\ref{class.ctor}），}
+  \item{无私有或保护非静态数据成员（第\ref{class.access}章），}
+  \item{无虚函数（\ref{class.virtual}），且}
+  \item{无虚、私有或保护基类（\ref{class.mi}）。}
+\end{enumerate}
+的数组或类（第\ref{class}章）。「注：聚合初始化不允许访问保护或私有基类成员或构
+造函数。」
+
+\paragraph{}
+聚合的\nt{元素}为：
+\begin{enumerate}
+  \item{如果是数组，数组元素按升序下标顺序，或}
+  \item{如果是类，按声明顺序的直接基类，跟上非匿名联合成员的直接非静态数据
+    成员（\ref{class.mem}），按声明顺序。}
+\end{enumerate}
+
+\paragraph{}
+在按\ref{dcl.init.list}所述使用初始化列表初始化聚合时，按顺序使用初始化列表元素
+作为聚合元素的初始化。每一个元素从对应的\nt{initializer-clause}进行拷贝初始化。
+如果\nt{initializer-clause}是一个表达式且需要一个窄转换（\ref{dcl.init.list}）来
+转换表达式，则程序为病态。「注：如果\nt{initializer-clause}本身是一个初始化列表，
+则元素进行列表初始化，如果元素是一个聚合，则按本节规则进行递归应用。」「例：
+\begin{lstlisting}
+  struct A {
+    int x;
+    struct B {
+      int i;
+      int j;
+    } b;
+  } a = { 1, { 2, 3} };
+\end{lstlisting}
+\tm{a.x}初始化\tm{1}，\tm{a.b.i}初始化为\tm{2}，\tm{a.b.j}初始化为\tm{3}。
+\begin{lstlisting}
+  struct base1 { int b1, b2 = 42; };
+  struct base2 {
+    base2() {
+      b3 = 42;
+    };
+    int b3;
+  };
+  struct derived : base1, base2 {
+    int d;
+  };
+
+  derived d1{{1, 2}, {}, 4};
+  derived d2{{}, {}, 4};
+\end{lstlisting}
+\tm{d1.b1}初始化为\tm{1}，\tm{d1.b2}初始化为\tm{2}，\tm{d1.b3}初始化为\tm{42}，
+\tm{d1.d}初始化为\tm{4}，\tm{d2.b1}初始化为\tm{0}，\tm{d2.b2}初始化为\tm{42}，
+\tm{d2.b3}初始化为\tm{42}，\tm{d1.d}初始化为\tm{4}。」
+
+\paragraph{}
+类的聚合也可以使用未包含在花括号中的单个表达式来初始化，见\ref{dcl.init}所述。
+
+\paragraph{}
+使用括号包含的具有\tm{n}个\nt{initializer-clause}的初始化列表来初始化的未知边界
+数组，定义为具有\tm{n}个元素（\ref{dcl.array}）。「例：
+\begin{lstlisting}
+  int x[ = { 1, 3, 5 };
+\end{lstlisting}
+声明并初始化\tm{x}为具有三个元素的一维数组，因为未指定大小，而具有三个初始化。」
+空初始化列表\tm{\{\}}不应该用作未知边界数组的\nt{initializer-clause}\footnote{语
+法提供了空\nt{initializer-list}，但是C++没有零长数组。}。「注：缺省成员初始化不
+会决定未知边界成员数组的边界。因为如果存在合适的
+\nt{mem-initializer}（\ref{class.base.init}）的话则缺省成员初始化会被忽略，不考
+虑使用缺省
+成员初始化来初始化未知边界数组。「例：
+\begin{lstlisting}
+  struct S {
+    int y[] = { 0 };  // error: non-static data member of incomplete type
+  };
+\end{lstlisting}」」
+
+\paragraph{}
+「注：静态数据成员和无名位域不作为聚合的元素。「例：
+\begin{lstlisting}
+  struct A {
+    int i;
+    static int s;
+    int j;
+    int :17;
+    int k;
+  } a = { 1, 2, 3 };
+\end{lstlisting}
+此外第二个初始化\tm{2}初始化\tm{a.j}，而不是静态数据成员\tm{A::s}，第三个初始化
+\tm{3}初始化\tm{a.k}而不是其之前的无名位域。」」
+
+\paragraph{}
+如果\nt{initializer-clause}中元素数目多于待初始化元素个数，则
+\nt{initializer-clause}为病态。「例：
+\begin{lstlisting}
+  char cv[4] = { 'a', 's', 'd', 'f', 0 }; // error
+\end{lstlisting}
+是病态的。」
+
+\paragraph{}
+如果\nt{initializer-clause}中元素个数少于非联合聚合的元素个数，则每一个未显式初
+始化的元素按如下进行初始化：
+\begin{enumerate}
+  \item{如果元素具有缺省成员初始化（\ref{class.mem}），则元素使用该初始化。}
+  \item{否则，如果元素不是引用，则元素使用空初始化列表进行拷贝初始化
+    （\ref{dcl.init.list}）。}
+  \item{否则，程序为病态的。}
+\end{enumerate}
+如果聚合是联合，初始化列表为空，则
+\begin{enumerate}
+  \setcounter{enumi}{3}
+  \item{如果任何可变成员具有缺省成员初始化，则该成员使用其缺省成员初始化进行初始
+    化。}
+  \item{否则，联合的第一个成员（如果有）使用空初始化列表进行拷贝初始化。}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  struct S { int a; const char* b; int c; int d = b[a]; };
+  S ss = { 1, "asdf" };
+\end{lstlisting}
+使用\tm{1}来初始化\tm{ss.a}，使用\tm{"asdf"}来初始化\tm{ss.b}。\tm{ss.c}使用形如
+\tm{int\{\}}的表达式（即\tm{0}）来初始化，\tm{ss.d}使用\tm{ss.b[ss.a]}的值
+（即\tm{'s'}）来初始化，
+\begin{lstlisting}
+  struct X { int i, j, k = 42; };
+  X a[] = { 1, 2, 3, 4, 5, 6 };
+  X b[2] = { { 1, 2, 3 }, { 4, 5, 6 } };
+\end{lstlisting}
+\tm{a}和\tm{b}具有相同值。」
+
+\paragraph{}
+如果引用成员使用其缺省成员初始化来初始化，则其潜在求值子表达式是一个使用此缺省成
+员初始化的聚合初始化，则程序为病态。「例：
+\begin{lstlisting}
+  struct A;
+  extern A a;
+  struct A {
+    const A& a1 { A{a, a} };  // OK
+    const A& a2 { A{} };      // error
+  };
+  A a{a,a};                   // OK
+\end{lstlisting}」
+
+\paragraph{}
+如果聚合类\tm{C}包含一个无元素的子聚合元素\tm{e}，则类型\tm{C}的对象
+\nt{initializer-list}中不应该忽略\tm{e}的\nt{initializer-clause}，除非\tm{e}之后
+的\tm{C}的所有元素的\nt{initializer-clause}也被忽略。「例：
+\begin{lstlisting}
+  struct S { } s;
+  struct A {
+    S s1;
+    int i1;
+    S s2;
+    int i2;
+    S s3;
+    int i3;
+  } a = {
+    { },          // Required initialization
+    0,
+    s,            // Required initialization
+    0
+  };              // Initialization not required for A::s3 because A::i3 is also
+                  // not initialized
+\end{lstlisting}
+
+\paragraph{}
+当初始化一个多维数组时，\nt{initializer-clause}初始化数组变化最快的最后（最右）
+一个索引对应的元素（\ref{dcl.array}）。「例：
+\begin{lstlisting}
+  int x[2][2] = { 3, 1, 4, 2 };
+\end{lstlisting}
+初始化\tm{x[0][0]}为\tm{3}，\tm{x[0][1]}为\tm{1}，\tm{x[1][0]}为\tm{4}，
+\tm{x[0][1]}为\tm{2}。而
+\begin{lstlisting}
+  float y[4][3] = {
+    { 1 }, { 2 }, { 3 }, { 4 }
+  };
+\end{lstlisting}
+初始化\tm{y}的第一列（作为二维数组）而其余元素为零。」
+
+\paragraph{}
+\nt{initializer-list}中的括号可按如下省略。如果\nt{initializer-list}以左括号开始
+则\nt{initializer-clause}中后续的逗号分隔列表初始化子聚合的元素；
+\nt{initializer-clause}比元素多的话是错误的。然后如果子聚合的
+\nt{initializer-list}不以左括号开头，则只从列表中取足够的\nt{initializer-clause}
+来初始化子聚合元素；任何剩余\nt{initializer-clause}用于初始化聚合的下一个元素。
+「例：
+\begin{lstlisting}
+  float y[4][3] = {
+    { 1, 3, 5 },
+    { 2, 4, 6 },
+    { 3, 5, 7 },
+  };
+\end{lstlisting}
+是一个完全括号初始化：\tm{1}，\tm{3}，\tm{5}初始化数组第一行\tm{y[0]}，即
+\tm{y[0][0]}，\tm{y[0][1]}和\tm{y[0][2]}。同样，接下来的两行初始化\tm{y[1]}和
+\tm{y[2]}。初始化过早结束，因此\tm{y[3]}的元素按形如\tm{float()}的表达式进行显式
+初始化，即使用\tm{0.0}进行初始化。在下面的例子中，\nt{initializer-list}中的括号
+被省略了；但\nt{initializer-list}与以上例子中的完全括号\nt{initializer-list}具有
+相同效果：
+\begin{lstlisting}
+  float y[4][3] = {
+    1, 3, 5, 2, 4, 6, 3, 5, 7
+  };
+\end{lstlisting}
+\tm{y}的初始化从左括号开始，但是\tm{y[0]}不是，因此使用列表中的三个元素。同样，
+\tm{y[1]}和\tm{y[2]}分别取接下来的三个元素。」
+
+\paragraph{}
+在使用\nt{assignment-expression}初始化元素时，考虑所有隐式类型转换
+（第\ref{conv}章）。如果\nt{assignment-expression}可以初始化元素则元素被初始化。
+否则，如果元素本身是一个子聚合，则假定省略括号且考虑\nt{assignment-expression}来
+初始化子聚合的第一个元素。「注：如上所述，省略括号不能用于无元素的子聚合；对整个
+子对象需要一个\nt{initializer-clause}。」「例：
+\begin{lstlisting}
+  struct A {
+    int i;
+    operator int();
+  };
+  struct B {
+    A a1, a2;
+    int z;
+  };
+  A a;
+  B b = { 4, a, a };
+\end{lstlisting}
+\tm{b.a1.i}的\nt{initializer-clause}外括号被省略。\tm{b.a1.i}使用\tm{4}初始化，
+\tm{b.a2}使用\tm{a}来初始化，\tm{b.z}使用\tm{a.operator int()}返回值来初始化。」
+
+\paragraph{}
+「注：聚合数组或聚合类可能包括含用户提供构造函数（\ref{class.ctor}）的类类型元
+素。这些聚合对象的初始化由\ref{class.expl.init}指定。」
+
+\paragraph{}
+「注：静态存储期聚合的初始化是静态还是动态由\ref{basic.start.static}，
+\ref{basic.start.dynamic}和\ref{stmt.dcl}指定。」
+
+\paragraph{}
+当联合使用括号包含的初始化来初始化时，括号只能为联合的非静态数据成员包含一个
+\nt{initializer-clause}。「例：
+\begin{lstlisting}
+  union u { int a; const char* b; };
+  u a = { 1 };
+  u b = a;
+  u c = 1;              // error
+  u d = { 0, "asdf" };  // error
+  u e = { "asdf" };     // error
+\end{lstlisting}」
+
+\paragraph{}
+「注：如上所述，如果联合是另一个聚合的成员，则联合成员的\nt{initializer-clause}
+外的花括号可以省略。」
+
 \ssect{字符数组}{dcl.init.string}
+\paragraph{}
+窄字符类型（\ref{basic.fundamental}）类型，\tm{char16\_t}数组，\tm{char32\_t}数
+组或\tm{wchar\_t}数组可以对应的使用窄字符串字面值，\tm{char16\_t}字符串字面值，
+\tm{char32\_t}字符串字面值或宽字符串字面值来初始化，或者包括在括号中的合适类型的
+字符串字面值（\ref{lex.string}）。字符串字面值的连续字符用来初始化数组元素。
+「例：
+\begin{lstlisting}
+  char msg[] = "Syntax error on line %s\n";
+\end{lstlisting}
+表示字符数组成员使用\nt{string-literal}来初始化。注意\tm{'\bs{}n'}是单个字符，且
+结尾扩展\tm{'\bs{}0'}，\tm{sizeof(msg)}为\tm{25}。」
+
+\paragraph{}
+不应该有比数组元素更多的初始化。「例：
+\begin{lstlisting}
+  char cv[4] = "asdf";  // error
+\end{lstlisting}
+为病态，因为没有空间来存储隐含的结尾\tm{'\bs{}0'}。」
+
+\paragraph{}
+如果初始化比数组元素少，未显式初始化的元素应该使用零初始化（\ref{dcl.init}）。
+
 \ssect{引用}{dcl.init.ref}
+\paragraph{}
+声明类型为``类型\tm{T}的引用''的变量应该进行初始化。「例：
+\begin{lstlisting}
+  int g(int) noexcept;
+  void f() {
+    int i;
+    int& r = i;             // r refers to i
+    r = 1;                  // the value of i becomes 1
+    int* p = &r;            // p points to i
+    int& rr = r;            // rr refers to what r refers to, that is, to i
+    int (&rg)(int) = g;     // rg refers to the function g
+    rg(i);                  // calls function g
+    int a[3];
+    int (&ra)[3] = a;       // ra refers to the array a
+    ra[1] = i;              // modifies a[1]
+  }
+\end{lstlisting}」
+
+\paragraph{}
+引用在初始化后不能改为引用另一个对象。「注：对引用赋值即对引用所引对象的赋值
+\ref{expr.ass}。」参数传递（\ref{expr.call}）和函数值返回（\ref{stmt.return}）为
+初始化。
+
+\paragraph{}
+在参数声明（\ref{dcl.fct}），函数返回类型声明，类成员在类定义中声明
+（\ref{class.mem}）以及显式使用\tm{extern}说明符时可以省略初始化。「例：
+\begin{lstlisting}
+  int& r1;            // error: initializer missing
+  extern int& r2;     // OK
+\end{lstlisting}」
+
+\paragraph{}
+给定类型``\nt{cv1} \tm{T1}''和``\nt{cv2} \tm{T2}''，``\nt{cv1} \tm{T1}''与
+``\nt{cv2} \tm{T2}''是\nt{引用相关}的，如果\tm{T1}与\tm{T2}是相同类型，或者
+\tm{T1}是\tm{T2}的基类。``\nt{cv1} \tm{T1}''与``\nt{cv2} \tm{T2}''是
+\nt{引用兼容}的，如果
+\begin{enumerate}
+  \item{\tm{T1}与\tm{T2}引用相关，或者}
+  \item{\tm{T2}是``\tm{noexcept}函数''，\tm{T1}是``函数''，函数类型在其他方面
+    相同，}
+\end{enumerate}
+且\nt{cv1}与\nt{cv2}是相同的cv限定，或比\nt{cv2}更强的cv限定。在任何两个类型的
+引用相关或引用兼容关系用于建立引用绑定的有效性时，且\tm{T1}是\tm{T2}的基类的情况
+下，在需要这样的绑定的程序中，如果\tm{T1}不可访问（第\ref{class.access}章）或是
+\tm{T2}的歧义基类（\ref{class.member.lookup}），则程序为病态。
+
+\paragraph{}
+类型``\nt{cv1} \tm{T1}''的引用由类型``\nt{cv2} \tm{T2}''类型表达式按如下进行初始
+化：
+\begin{enumerate}
+  \item{如果引用是左值引用而初始化表达式
+    \begin{enumerate}
+      \item{是一个左值（但不是位域），且``\nt{cv1} \tm{T1}''与
+        ``\nt{cv2} \tm{T2}''引用兼容，或}
+      \item{具有类类型（即\tm{T2}是类类型），其中\tm{T1}不与\tm{T2}引用相关，且
+        可以转换成类型``\nt{cv3} \tm{T3}''的左值，其中``\nt{cv1} \tm{T1}''与
+        ``\nt{cv3} \tm{T3}''引用兼容\footnote{这需要一个返回引用类型的转换函数
+        （\ref{class.conv.fct}）。}（该转换通过列举可用转换函数
+        （\ref{over.match.ref}）并通过重载解析（\ref{over.match}）来选择最佳匹
+         配。）}
+    \end{enumerate}
+    那么该引用在第一种情况下绑定到初始化表达式左值，在第二种情况下绑定到转换的结
+    果左值（或者在任一种情况下，绑定到对象的基类子对象）。「注：不需要常规左值到
+    右值转换（\ref{conv.lval}），数组到指针转换（\ref{conv.array}），函数到指针
+    转换（\ref{conv.func}），因此在直接绑定到左值时被抑制。」「例：
+\begin{lstlisting}
+  double d = 2.0;
+  double& rd = d;           // rd refers to d
+  const double& rcd = d;    // rcd refers to d
+
+  struct A { };
+  struct B : A { operator int&(); } b;
+  A& ra = b;                // ra refers to A subobject in b
+  const A& rca = b;         // rca refers to A subobject in b
+  int& ir = B();            // ir refers to the result of B::operator int&
+\end{lstlisting}」}
+  \item{否则，引用应该是到非volatile常类型的左值（即\nt{cv1}应该是\tm{const}，或
+    者引用应该是一个右值引用。「例：
+\begin{lstlisting}
+  double& rd2 = 2.0;        // error: not an lvalue and reference not const
+  int i = 2;
+  double& rd3 = i;          // error: type mismatch and reference not const
+\end{lstlisting}」
+    \begin{enumerate}
+      \item{如果初始化表达式
+        \begin{enumerate}
+          \item{是右值（但不是位域）或函数左值且``\nt{cv1} \tm{T1}''与
+            ``\nt{cv2} \tm{T2}''引用兼容，或}
+          \item{具有类类型（即\tm{T2}为类类型），其中\tm{T1}与\tm{T2}不是引用相
+            关，且可以转换成``\nt{cv3} \tm{T3}''类型的右值或函数左值，其中
+            ``\nt{cv1} \tm{T1}''与``\nt{cv3} \tm{T3}''引用兼容（见
+            \ref{over.match.ref}），}
+        \end{enumerate}
+        那么第一种情况下初始化表达式的值和第二种情况下转换的结果被称作转换初始
+        化。如果转换初始化是纯右值，其类型\tm{T4}调整为类型``\nt{cv1} \tm{T4}''
+        （\ref{conv.qual}）且应用临时物化转换（\ref{conv.rval}）。在任一种情况
+        下，引用绑定到产生的广义左值（或绑定到合适的基类子对象）。「例：
+\begin{lstlisting}
+  struct A { };
+  struct B : A { } b;
+  extern B f();
+  const A& rca2 = f();    // bound to the A subobject of the B rvalue;
+  A&& rra = f();          // same as above
+  struct X {
+    operator B();
+    operator int&();
+  } x;
+  const A& r = x;         // bound to the A subobject of the result of the
+                          // conversion
+  int i2 = 42;
+  int&& rri = static_cast<int&&>(i2); // bound directly to i2
+  B&& rrb = x;            // bound directly to the result of operator B
+\end{lstlisting}」}
+      \item{否则：
+        \begin{enumerate}
+          \item{如果\tm{T1}或\tm{T2}是类类型，且\tm{T1}不与\tm{T2}引用相关，则通
+            过用户定义转换（\ref{dcl.init}，\ref{over.match.copy}，
+            \ref{over.match.conv}）使用``\nt{cv1} \tm{T1}''类型对象的拷贝初始化
+            规则，考虑用户定义转换；如果对应非引用拷贝初始化是病态的则程序是病态
+            的。按非引用拷贝初始化所述，转换函数的调用结果用于直接初始化引用。对
+            该直接初始化，不考虑用户定义转换。}
+          \item{否则，初始化表达式隐式转换为类型``\nt{cv1} \tm{T1}''的纯右值。应
+            用临时物化转换，并将结果绑定到引用。}
+        \end{enumerate}
+        如果\tm{T1}与\tm{T2}引用相关：
+        \begin{enumerate}
+          \setcounter{enumiii}{2}
+          \item{\nt{cv1}应该与\nt{cv2}具有相同cv限定或比\nt{cv2}具有更强的
+            cv限定；且}
+          \item{如果引用是一个右值引用，则初始化表达式不应该是左值。}
+        \end{enumerate}
+        「例：
+\begin{lstlisting}
+  struct Banana { };
+  struct Enigma { operator const Banana(); };
+  struct Alaska { operator Banana&(); };
+  void enigmatic() {
+    typedef const Banana ConstBanana;
+    Banana &&banana1 = ConstBanana();     // ill-formed
+    Banana &&banana2 = Enigma();          // ill-formed
+    Banana &&banana2 = Alaska();          // ill-formed
+  }
+
+  const double& rcd2 = 2; // rcd2 refers to temporary with value 2.0
+  double&& rrd = 2;       // rrd refers to temporary with value 2.0
+  const volatile int cvi = 1;
+  const int& r2 = cvi;    // error: cv-qualifier dropped
+  struct A { operator volatile int&(); } a;
+  const int& r3 = a;      // error: cv-qualifier dropped
+                          // from result of conversion function
+
+  double d2 = 1.0;
+  double&& rrd2 = d2;     // error: initializer is lvalue of related type
+  struct X { operator int&(); };
+  int&& rri2 = X();       // error: result of conversion function is lvalue of
+                          // related type
+  int i3 = 2;
+  double&& rrd3 = i3;     // rrd3 refers to temporary with value 2.0
+\end{lstlisting}」
+      }
+    }
+  \end{enumerate}
+\end{enumerate}
+在除最后一种情况（即隐式转换初始化表达式为引用的底层类型）外的所有情况中，引用称
+为\nt{直接绑定}到初始化表达式。
+
+\paragraph{}
+「注：\ref{class.temporary}描述了绑定到引用的临时对象生命期。」
+
 \ssect{列表初始化}{dcl.init.list}
+\paragraph{}
+\nt{列表初始化}指使用\nt{braced-init-list}进行对象或引用的初始化。这样的初始化称
+为\nt{初始化列表}，且列表的逗号分隔\nt{initializer-clause}称为初始化列表的\nt{元
+素}。初始化列表可以为空。初始化列表可以出现在直接初始化或拷贝初始化上下文中；直
+接初始化上下文中的列表初始化称为\nt{直接列表初始化}，拷贝初始化上下文中的初始化
+列表称为\nt{拷贝列表初始化}。「注：列表初始化化可以
+\begin{enumerate}
+  \item{用作变量定义的初始化（\ref{dcl.init}）}
+  \item{用作\nt{new-expression}（\ref{expr.new}）的初始化}
+  \item{用于返回语句中（\ref{stmt.return}）}
+  \item{用作\nt{for-range-initializer}（\ref{stmt.iter}）}
+  \item{用作函数参数（\ref{expr.call}）}
+  \item{作为下标（\ref{expr.sub}）}
+  \item{用作构造函数调用的参数（\ref{dcl.init}，\ref{expr.type.conv}）}
+  \item{用作非静态数据成员的初始化（\ref{class.mem}）}
+  \item{用于\nt{men-initializer}（\ref{class.base.init}）}
+  \item{用于赋值右端（\ref{expr.ass}）}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  int a = {1};
+  std::complex<double> z{1, 2};
+  new std::vector<std::string>{"once","upon","a","time"}; // 4 string elements
+  f( {"Nicholas", "Annemarie"} );   // pass list of two elements
+  return { "Norah" };                 // return list of one element
+  int* e {};                          // initialization to zero / null pointer
+  x = double{1};                      // explicitly construct a double
+  std::map<std::string,int> anim = { {"bear",4}, {"cassowary",2}, {"tiger",7} };
+\end{lstlisting}」」
+
+\paragraph{}
+对某些类型\tm{E}，如果构造函数的第一个参数类型为\tm{std::initializer\_list<E>}或
+者是可能cv限定的\tm{std::initializer\_list<E>}的引用，且要么无其他参数，要么其他
+参数都具有缺省参数（\ref{dcl.fct.default}），则称其为\nt{initializer-list}
+构造函数。「注：在列表初始化（\ref{over.match.list}）中首选初始化列表构造函数而
+不是其他构造函数。作为参数传递初始化列表到类\tm{C}的构造函数模板
+\tm{template<class T> C(T)}不创建初始化列表构造函数，因为初始化列表构造函数使得
+对应参数成为非推导上下文（\ref{temp.deduct.call}）。」模板
+\tm{std::initializer\_list}不会预定义；如果在使用\tm{std::initializer\_list}前未
+包含头\tm{<initializer\_list>}--即使是对未命名类型（\ref{dcl.spec.auto}）的隐式
+使用前--则程序是病态的。
+
+\paragraph{}
+类型\tm{T}对象或引用的列表初始化定义如下：
+\begin{enumerate}
+  \item{如果\tm{T}是聚合类且初始化列表具有类型为\nt{cv} \tm{T}的单个元素，其中
+    \tm{U}为\tm{T}或派生自\tm{T}的类，则对象由该元素初始化（对拷贝列表初始化，通
+    过拷贝初始化，对直接列表初始化，通过直接初始化）。}
+  \item{否则，如果\tm{T}为字符数组且初始化列表具有合适类型字符串字面值
+    （\ref{dcl.init.string}）的单个元素，则初始化按该节所述进行。}
+  \item{否则，如果\tm{T}为聚合，则进行聚合初始化（\ref{dcl.init.aggr}）。
+\begin{lstlisting}
+  double ad[] = { 1, 2.0 };   // OK
+  int ai[] = { 1, 2.0 };      // error: narrowing
+
+  struct S2 {
+    int m1;
+    double m2, m3;
+  };
+  S2 s21 = { 1, 2, 3.0 };     // OK
+  S2 s22 { 1.0, 2, 3 };       // error: narrowing
+  S2 s23 { };                 // OK: default to 0,0,0
+\end{lstlisting}」}
+  \item{否则，如果初始化列表无元素且\tm{T}是带有缺省构造函数的类类型，则对象进行
+    值初始化。}
+  \item{否则，如果\tm{T}是\tm{std::initializer\_list<E>}的特例化，则对象按以下所
+    述构造。}
+  \item{否则，如果\tm{T}是类类型，则考虑构造函数。列举可用构造函数并通过重载解析
+    （\ref{over.match}，\ref{over.match.list}）选择最佳匹配。如果需要窄转换（见
+    下文）来转换任何参数，则程序为病态。「例：
+\begin{lstlisting}
+  struct S {
+    S(std::initializer_list<double>);    // #1
+    S(std::initializer_list<int>);       // #2
+    S();                                  // #3
+    // ...
+  };
+  S s1 = { 1.0, 2.0, 3.0 };               // invoke #1
+  S s1 = { 1, 2, 3 };                     // invoke #2
+  S s3 = { };                             // invoke #3
+\end{lstlisting}」「例：
+\begin{lstlisting}
+  struct Map {
+    Map(std::initializer_list<std::pair<std::string,int>>);
+  };
+  Map ship = {{"Sophie",14}, {"Surprise", 28}};
+\end{lstlisting}」「例：
+\begin{lstlisting}
+  struct S {
+    // no initializer-list constructors
+    S(int, double, double);               // #1
+    S();                                  // #2
+  };
+  S s1 = { 1, 2, 3.0 };                   // OK: invoke #1
+  S s2 = { 1.0, 2, 3 };                   // error: narrowing
+  S s3 { };                               // OK: invoke #2
+\end{lstlisting}」}
+  \item{否则，如果\tm{T}是具有固定底层类型（\ref{dcl.enum}）的枚举，
+    \nt{initializer-list}具有单个元素，且初始化为直接列表初
+    始化，则对象使用值\tm{T(v)}进行初始化（\ref{expr.type.conv}）；如果需要窄转
+    换来转换\tm{v}到底层类型\tm{T}，则程序为病态。「例：
+\begin{lstlisting}
+  enum byte : unsigned char { };
+  byte b { 42 };                          // OK
+  byte c = { 42 };                        // error
+  byte d = byte{ 42 };                    // OK; same value as b
+  byte e { -1 };                          // error
+
+  struct A { byte b; };
+  A a1 = { { 42 } };                      // error
+  A a2 = { byte{ 42 } };                  // OK
+
+  void f(byte);
+  f({ 42 });                              // error
+
+  enum class Handle : uint32_t { Invalid = 0 };
+  Handle h { 42 };                        // OK
+\end{lstlisting}」}
+  \item{否则，如果初始化列表具有类型\tm{T}的单个元素，且要么\tm{T}不是引用类型，
+    要么其引用类型与\tm{E}引用相关，则对象或引用使用该元素进行初始化（如果是拷贝
+    列表初始化则通过拷贝初始化，如果是直接列表初始化则通过直接初始化）；如果需要
+    窄转换（见下文）来转换元素到\tm{T}，则程序为病态。「例：
+\begin{lstlisting}
+  int x1 {2};                             // OK
+  int x2 {2.0};                           // error: narrowing
+\end{lstlisting}」}
+  \item{否则，如果\tm{T}为引用类型，则生成\tm{T}所引用类型的纯右值。该纯右值通过
+    拷贝列表初始化或直接列表初始化来初始化其结果对象，取决于引用初始化的类型。然
+    后使用纯右值来初始化引用。「注：通常如果引用类型是一个非const类型的左值引用
+    则绑定会失败且程序为病态。」「例：
+\begin{lstlisting}
+  struct S {
+    S(std::initializer_list<double>);     // #1
+    S(const std::string&);                // #2
+    // ...
+  };
+  const S& r1 = { 1, 2, 3.0 };            // OK: invoke #1
+  const S& r2 { "Spinach" };              // OK: invoke #2
+  S& r3 = { 1, 2, 3 };                    // error: initializer is not an lvalue
+  const int& i1 = { 1 };                  // OK
+  const int& i2 = { 1.1 };                // error: narrowing
+  cosnt int (&iar)[2] = { 1, 2 };         // OK: iar is bound to temporary array
+\end{lstlisting}」}
+  \item{否则，如果初始化列表无元素，则对象进行值初始化。「例：
+\begin{lstlisting}
+  int** pp {};                            // initialized to null pointer
+\end{lstlisting}」}
+  \item{否则程序为病态。「例：
+\begin{lstlisting}
+  struct A { int i; int j; };
+  A a1 { 1, 2 };                          // aggregate initialization
+  A a2 { 1.2 };                           // error: narrowing
+  struct B {
+    B(std::initializer_list<int>);
+  };
+  B b1 { 1, 2 };                          // creates initializer_list<int> and
+                                          // calls constructor
+  B b2 { 1, 2.0 };                        // error: narrowing
+  struct C {
+    C(int i, double j);
+  };
+  C c1 = { 1, 2.2 };                      // calls constructor with arguments
+                                          // (1, 2.2)
+  C c2 = { 1.1, 2 };                      // error: narrowing
+
+  int j { 1 };                            // initialize to 1
+  int k { };                              // initialize to 0
+\end{lstlisting}」}
+\end{enumerate}
+
+\paragraph{}
+\nt{braced-init-list}的\nt{initializer-list}中，\nt{initializer-clause}，包括来
+自包展开（\ref{temp.variadic}）的结果，按其出现顺序进行求值。即逗号分隔的
+\nt{initializer-list}中，关联于给定的\nt{initializer-clause}的每一个值计算和副作
+用前序于关联跟在其后的任何\nt{initializer-clause}的每一个值计算和副作用。「注：
+该求值顺序无论初始化语义为何均成立；比如，当\nt{initializer-list}的元素当作构造
+函数调用参数时，即使通常对调用参数无序列点约束，该规则也是适用的。」
+
+\paragraph{}
+类型\tm{std::initializer\_list<E>}的对象从初始化列表进行构造，如同实现生成并物化
+（\ref{conv.rval}）一个``\nt{N}个\tm{const E}的数组''类型的纯右值，其中\nt{N}为
+初始化列表元素个数。该数组的每一个元素使用初始化列表的对应元素进行拷贝初始化，且
+\tm{std::initializer\_list<E>}对象构造成引用该数组。「注：选择用于拷贝的构造函数
+或转换函数在初始化列表上下文中应该可访问。」如果需要窄转换来初始化任何元素，则程
+序为病态。「例：
+\begin{lstlisting}
+  struct X {
+    X(std::initializer_list<double> v);
+  };
+  X x{ 1,2,3 };
+\end{lstlisting}
+初始化实现将粗略等价于以下：
+\begin{lstlisting}
+  const double __a[3] = {double{1}, double{2}, double{3}};
+  X x(std::initializer_list<double>(__a, __a+3));
+\end{lstlisting}
+假定实现可以使用一对指针来构造一个\tm{initializer\_list}对象。」
+
+\paragraph{}
+数组具有与任何其他临时对象（）一样的生命期，除了与绑定引用到临时对象一样，使用数
+组来初始化\tm{initializer\_list}对象将扩展数组的生命期。「例：
+\begin{lstlisting}
+  typedef std::complex<double> complx;
+  std::vector<complx> v1 = { 1, 2, 3 };
+
+  void f() {
+    std::vector<complx> v2{ 1, 2, 3 };
+    std::initializer_list<int> i3 = { 1, 2, 3 };
+  }
+
+  struct A {
+    std::initializer_list<int> i4;
+    A() : i4{ 1, 2, 3 } {}      // ill-formed, would create a dangling reference
+  };
+\end{lstlisting}
+对\tm{v1}和\tm{v2}，\tm{initializer\_list}对象是函数调用的参数，因此为
+\tm{\{ 1, 2, 3 \}}所创建数组具有全表达式生命期。对\tm{i3}，
+\tm{initializer\_list}对象是一个变量，因此数组将为变量生命期保留。对\tm{i4}，
+\tm{initializer\_list}对象在构造函数的\nt{ctor-initializer}中初始化，如同通过绑
+定临时数组到引用成员，因此程序是病态的（\ref{class.base.init}）。」「注：如果可
+以使用相同初始化来显式分配数组，实现可以自由选择在只读内存分配数组。」
+
+\paragraph{}
+\nt{窄转换}是一个隐式转换
+\begin{enumerate}
+  \item{从符点类型到整型 ，或}
+  \item{从\tm{long double}到\tm{double}或\tm{float}，或从\tm{double}到
+    \tm{float}，除非源是常表达式且转换后的实际值在可表示值范围内（即使不能确切表
+    示），或}
+  \item{从整型或无作用域枚举类型到符点类型，除非源是常表达式且转换后实际值可存于
+    目标类型，并且在转换回原类型后产生原值，或}
+  \item{从整型或无作用域枚举类型到整型，但不能表示原类型的所有值，除非源类型为常
+    表达式，其值在整型提升后可存于目标类型。}
+\end{enumerate}
+「注：如上所示，这样的转换在列表初始化的顶层是不允许的。」「例：
+\begin{lstlisting}
+  int x = 999;              // x is not a constant expression
+  const int y = 999;
+  const int z = 99;
+  char c1 = x;              // OK, though it might narrow
+                            // (in this case, it does narrow)
+  char c2{x};               // error: might narrow
+  char c3{y};               // error: narrows (assuming char is 8 bits)
+  char c4{z};               // OK: no narrowing needed
+  unsigned char uc1 = {5};  // OK: no narrowing needed
+  unsigned char uc2 = {-1}; // error: narrows
+  unsigned int ui1 = {-1};  // error: narrows
+  signed int si1 =
+    { (unsigned int) -1 };  // error: narrows
+  int ii = {2.0};           // error: narrows
+  float f1 { x };           // error: might narrow
+  float f2 { 7 };           // OK: 7 can be exactly represented as a float
+  int f(int) ;
+  int a[] =
+    { 2, f(2) , f(2.0) };   // OK: the double -to- int conversion is not at the
+                            // top level
+\end{lstlisting}」

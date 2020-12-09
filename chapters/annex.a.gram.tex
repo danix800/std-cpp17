@@ -1,0 +1,48 @@
+%% annex.a gram
+
+\chptr{（信息）语法汇总}{gram}
+\paragraph{}
+此C++语法汇总的目的是为了帮助理解。不是该语言的准确陈述。特别是，此处所述语法接
+受合法C++结构的超集。必须使用去歧义规则（\ref{stmt.ambig}，\ref{dcl.spec}，
+\ref{class.member.lookup}）来区分表达式和声明。更进一步，必须使用访问控制，歧义
+解析和类型规则以剔除语法上有效但无意义的结构。
+
+\sect{关键字}{gram.key}
+\paragraph{}
+新的上下文相关关键字由\tm{typedef}（\ref{dcl.typedef}）、\tm{namespace}
+（\ref{namespace.def}），类（第\ref{class}章），枚举（\ref{dcl.enum}）和
+\tm{template}（第\ref{temp}章）声明引入程序。
+
+\synsym{typedef-name}
+  \synprd{\nt{identifier}}
+\synsym{namespace-name}
+  \synprd{\nt{identifier}}
+  \synprd{\nt{namespace-alias}}
+\synsym{namespace-alias}
+  \synprd{\nt{identifier}}
+\synsym{class-name}
+  \synprd{\nt{identifier}}
+  \synprd{\nt{simple-template-id}}
+\synsym{enum-name}
+  \synprd{\nt{identifier}}
+\synsym{template-name}
+  \synprd[]{\nt{identifier}}
+
+注意命名一个类的\nt{typedef-name}也是一个\nt{class-name}（\ref{class.name}）。
+
+\sect{词法惯例}{gram.lex}
+\paragraph{}
+<++>
+
+\sect{基本概念}{gram.basic}
+\sect{表达式}{gram.expr}
+\sect{语句}{gram.stmt}
+\sect{声明}{gram.dcl}
+\sect{声明子}{gram.decl}
+\sect{类}{gram.class}
+\sect{派生类}{gram.derived}
+\sect{特殊成员函数}{gram.special}
+\sect{重载}{gram.over}
+\sect{模板}{gram.temp}
+\sect{异常处理}{gram.except}
+\sect{预处理指令}{gram.cpp}

@@ -2651,7 +2651,7 @@ delete[]}。「注：实现应该为全局分配函数提供缺省定义（\ref{
     （\ref{conv.ptr}），函数指针转换（\ref{conv.fctptr}）以及限定转换
     （\ref{conv.qual}）将其转换成合成指针类型（第\ref{expr}章）。结果具有该合成
     指针类型。}
-  \item{第二和第三操作数中的一个或二者均具有成员指针类型；使用指针到成员转换 
+  \item{第二和第三操作数中的一个或二者均具有成员指针类型；使用指针到成员转换
     （\ref{conv.mem}）和限定转换（\ref{conv.qual}）将其转换成合成指针类型（第
     \ref{expr}章）。结果具有该合成指针类型。}
   \item{第二和第三操作数二者均具有\tm{std::nullptr\_t}类型或其中之一具有该类型，
@@ -2946,7 +2946,7 @@ expression}）：
 \begin{lstlisting}
   bool f() {
     char array[1 + int(1 + 0.2 - 0.1 - 0.1)]; // Must be evaluated during translation
-    int size = 1 + int(1 + 0.2 - 0.1 - 0.1);  // May be evaluated at runtime 
+    int size = 1 + int(1 + 0.2 - 0.1 - 0.1);  // May be evaluated at runtime
     return sizeof(array) == size;
   }
 \end{lstlisting}

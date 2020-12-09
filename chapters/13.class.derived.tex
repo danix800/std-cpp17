@@ -1,11 +1,675 @@
 %% 13. class.derived
 
 \chptr{派生类}{class.derived}
+\paragraph{}
+基类列表可以使用以下写法在类定义中指定：
+
+\synsym{base-clause}
+  \synprd{\tm{:} \nt{base-specifier-list}}
+\synsym{base-specifier-list}
+  \synprd{\nt{base-specifier} \tm{...}\nt{\tsub{opt}}}
+  \synprd{\nt{base-specifier-list} \tm{,} \nt{base-specifier}
+    \tm{...}\nt{\tsub{opt}}}
+\synsym{base-specifier}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt}} \nt{class-or-decltype}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt}} \tm{virtual}
+    \nt{access-specifier\tsub{opt} class-or-decltype}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt}} \nt{access-specifier}
+    \tm{virtual}\nt{\tsub{opt} class-or-decltype}}
+\synsym{class-or-decltype}
+  \synprd{\nt{nested-class-specifier\tsub{opt} class-name}}
+  \synprd{\nt{nested-class-specifier} \tm{template} \nt{simple-template-id}}
+  \synprd{\nt{decltype-specifier}}
+\synsym{access-specifier}
+  \synprd{\tm{private}}
+  \synprd{\tm{protected}}
+  \synprd[]{\tm{public}}
+
+可选的\nt{attribute-specifier-seq}应用于\nt{base-specifier}。
+
+\paragraph{}
+\nt{class-or-decltype}应该标记非不完整定义（第\ref{class}章）的类类型。
+\nt{base-specifier}的\nt{class-or-decltype}所标记的类称为所定义类的\nt{直接基类}
+（\nt{direct base class}）。直接基类名的查询忽略非类型名
+（\ref{basic.scope.hiding}）。如果查询到的名字不是\nt{class-name}则程序为病态。
+类\tm{B}是类\tm{D}的基类，如果它是\tm{D}的直接基类，或者是\tm{D}的基类的基类。如
+果一个类是另一个类的基类但是不是直接基类则它是另一个类的\nt{非直接}基类。一个类
+被说成是（直接或间接）派生自其基类。「注：见第\ref{class.access}章关于
+\nt{access-specifier}的语义。」除非在派生类中重声明，基类成员也被当成是派生类的
+成员。除构造函数以外的基类成员被说成是由派生类\nt{继承}。如\ref{namespace.udecl}
+所述，基类构造函数也可以继承。继承成员可以像派生类其他成员一样的方式在表达式中引
+用，除非其名字被隐藏或有歧义（\ref{class.member.lookup}）。「注：作用域解析运算
+符\tm{::}（\ref{expr.prim}）可用于显式地直接或间接引用基类成员。这允许访问在派生
+类中重声明的名字。派生类本身可当成是基类访问控制主体；见
+\ref{class.access.base}。指向派生类的指针可以隐式转换成可访问的无歧义基类
+（\ref{conv.ptr}）。派生类类型的左值可以绑定到可访问的无歧义基类引用
+（\ref{dcl.init.ref}）。」
+
+\paragraph{}
+\nt{base-specifier-list}包含于派生类类型对象中的\nt{基类子对象}的类型。「例：
+\begin{lstlisting}
+  struct Base {
+    int a, b, c;
+  };
+
+  struct Derived : Base {
+    int b;
+  };
+
+  struct Derived2 : Derived {
+    int c;
+  };
+\end{lstlisting}
+此处类\tm{Derived2}的对象将有类\tm{Derived}的子对象，而类\tm{Derived}的对象将有
+类\tm{Base}的子对象。」
+
+\paragraph{}
+跟在省略号之后的\nt{base-specifier}是一个包展开（\ref{temp.variadic}）。
+
+\paragraph{}
+在最终派生类（\ref{intro.object}）中基类子对象的分配顺序未指定。「注：派生类及其
+基类子对象可以使用有向无环图（DAG）来表示，其中箭头指``直接派生于''。箭头在内存
+中无需物理表示。子对象的DAG通常称为``子对象格（subobject lattice）''。
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=0.16\textwidth]{figure/figdag.pdf}
+  \caption{有向无环图}
+  \label{fig:dag}
+\end{figure}」
+
+\paragraph{}
+「注：表示基类的对象可以在构造函数中指定；见\ref{class.base.init}。」
+
+\paragraph{}
+「注：基类子对象可能具有与同类型的最终派生类对象不同的布局（\ref{basic.stc}）。
+基类子对象可能具有与同类型最终派生类对象不同的多态行为（\ref{class.cdtor}）。基
+类子对象可能具有零大小（\ref{class}）；但具有相同类类型且属于相同最终派生类对象
+的两个子对象不同分配在同一地址（\ref{expr.eq}）。」
 
 \sect{多基类}{class.mi}
+\paragraph{}
+类可以派生自任意多个基类。「注：多于一个直接基类通常称作多重继承。」「例：
+\begin{lstlisting}
+  class A { /* ... */ };
+  class B { /* ... */ };
+  class C { /* ... */ };
+  class D : public A, public B, public C { /* ... */ };
+\end{lstlisting}」
+
+\paragraph{}
+「注：除构造函数初始化（\ref{class.base.init}）、清除（\ref{class.dtor}）和存储
+布局（\ref{class.mem}，\ref{class.access.spec}）的语义所指定之外，派生的顺序是不
+重要的。」
+
+\paragraph{}
+一个类不能多次被指定为直接基类。「注：类可以多次作为非直接基类，也可以即作直接基
+类和非直接基类。这样的类所做的事情有限。直接基类的非静态数据成员和成员函数不能在
+派生类的作用域中引用。然后，静态成员，枚举和类型可以无歧义地引用。」「例：
+\begin{lstlisting}
+  class X { /* ... */ };
+  class Y : public X, public X { /* ... */ };           // ill-formed
+  class L { public: int next; /* ... */ };
+  class A : public L { /* ... */ };
+  class B : public L { /* ... */ };
+  class C : public A, public B { void f(); /* ... */ }; // well-formed
+  class D : public A, public L { void f(); /* ... */ }; // well-formed
+\end{lstlisting}」
+
+\paragraph{}
+不含关键字\tm{virtual}的基类说明符指定一个\nt{非虚基类}。包含关键字\tm{virtual}
+的基类说明符指定\nt{虚基类}。对最终派生类的类格中非虚基类的每一次出现，最终派生
+类对象（\ref{intro.object}）中应该包含该类型的一个不同基类子对象。对每一个指定为
+虚基类的不同基类，最终派生对象应该包含该类型的独立基类子对象。
+
+\paragraph{}
+「注：对一个类类型\tm{C}的对象，\tm{C}的类格中（非虚）基类\tm{L}的每一次不同出现
+与类型\tm{C}中的不同\tm{L}子对象一一对应。给定如上定义的类\tm{C}，类\tm{C}的对象
+应具有如图\ref{fig:nonvirt}所示的\tm{L}的两个子对象。在这样的格中，可以使用显式的
+限定来指定所用对象。\tm{C::f}的函数体可以引用每一个\tm{L}子对象成员\tm{next}：
+\begin{lstlisting}
+  void C::f() { A::next = B::next; }      // well-formed
+\end{lstlisting}
+如果没有限定符\tm{A::}或\tm{B::}，则由于歧义（\ref{class.member.lookup}）以上
+\tm{C::f}的定义将是病态的。」
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=0.22\textwidth]{figure/fignonvirt.pdf}
+  \caption{非虚基类}
+  \label{fig:nonvirt}
+\end{figure}
+
+\paragraph{}
+「注：相反，考虑虚基类的情形：
+\begin{lstlisting}
+  class V { /* ... */ };
+  class A : virtual public V { /* ... */ };
+  class B : virtual public V { /* ... */ };
+  class C : public A, public B { /* ... */ };
+\end{lstlisting}
+对类类型\tm{C}的对象\tm{c}，类型\tm{V}的单个子对象由\tm{c}的每一个类型\tm{V}的虚
+基类子对象共享。给定如上定义的类\tm{C}，类\tm{C}的对象具有一个类\tm{V}的子对象，
+如图\ref{fig:virt}所示。」
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=0.22\textwidth]{figure/figvirt.pdf}
+  \caption{虚基类}
+  \label{fig:virt}
+\end{figure}
+
+\paragraph{}
+「注：一个类可以同时有给定类型的虚基类和非虚基类。
+\begin{lstlisting}
+  class B { /* ... */ };
+  class X : virtual public B { /* ... */ };
+  class Y : virtual public B { /* ... */ };
+  class Z : public B { /* ... */ };
+  class AA : public X, public Y, public Z { /* ... */ };
+\end{lstlisting}
+对类\tm{AA}的对象，\tm{AA}的类格中所有\tm{virtual}的基类\tm{B}的出现对应类型
+\tm{AA}的对象中单个\tm{B}子对象，且\tm{AA}的类格中每一个（非虚）基类\tm{B}的其
+他出现与类型\tm{AA}对象中不同的\tm{B}子对象一一对应。给定以上定义的类\tm{AA}，类
+\tm{AA}具有两个类\tm{B}的子对象：\tm{Z}的\tm{B}以及与\tm{X}和\tm{Y}共享的虚
+\tm{B}，如图\ref{fig:virtnonvirt}所示。」
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=0.34\textwidth]{figure/figvirtnonvirt.pdf}
+  \caption{虚基类和非虚基类}
+  \label{fig:virtnonvirt}
+\end{figure}
 
 \sect{成员名查询}{class.member.lookup}
+\paragraph{}
+成员名查询确定名字（\nt{id-expression}）在类作用域（\ref{basic.scope.class}）中
+的涵义。名字查询可能产生\nt{歧义}，此时程序是病态的。对于\nt{id-expression}，名
+字查询从\tm{this}的类作用域开始；对于\nt{qualified-id}，名字查询从
+\nt{nested-name-specifier}的作用域开始。名字查询在访问控制之前
+（\ref{basic.lookup}，第\ref{class.access}章）。
+
+\paragraph{}
+以下步骤定义类作用域\tm{C}中成员名\tm{f}的名字查询结果。
+
+\paragraph{}
+\tm{f}在\tm{C}中的\nt{查询集}，\nt{S(f, C)}，由两个子集组成：\nt{声明集}，名字为
+\tm{f}的成员集；以及\nt{子对象集}，这些成员（可能包括\nt{using-declaration}）的
+声明所在的子对象集。在声明集中，\nt{using-declaration}由未被派生类
+（\ref{namespace.udecl}）成员所隐藏或重写的成员所指定的集合所代替，而类型声明
+（包括注入类名）由其所指代的类型所代替。\nt{S(f, C)}按如下计算：
+
+\paragraph{}
+如果\tm{C}包含名字\tm{f}的声明，则声明集包含声明于\tm{C}中的每一个\tm{f}的声明，
+这些声明满足查询所在的语言结构的要求。「注：比如，在
+\nt{elaborated-type-specifier}（\ref{basic.lookup.elab}）或\nt{base-specifier}
+（第\ref{class.derived}章）中查询一个名字会忽略所有非类型声明，而在
+\nt{nested-name-specifier}中查询一个名字会忽略函数，变量以及枚举声明。另一个例子
+是，在\nt{using-declaration}（\ref{namespace.udecl}）中查询一个名字会包含类或枚
+举的声明，这些声明通常被同一作用域中该名字的另一声明所隐藏。」如果所产生的声明集
+合为空，则子对象集包含\tm{C}本身，且计算完成。
+
+\paragraph{}
+否则（即\tm{C}不包含\tm{f}的声明，或所产生声明集为空），则\nt{S(f, C)}初始为空。
+如果\tm{C}具有基类，在每一个直接基类子对象\nt{B\tsub{i}}中为\tm{f}计算查询集，并
+合并每一个查询集\nt{S(f, B\tsub{i})}为\nt{S(f, C)}。
+
+\paragraph{}
+以下步骤定义合并查询集\nt{S(f, B\tsub{i})}形成中间\nt{S(f, C)}的结果：
+\begin{enumerate}
+  \item{如果\nt{S(f, B\tsub{i})}的每一个子对象成员是至少一个\nt{S(f, C)}的子对象
+    成员的基类子对象，则\nt{S(f, C)}不变，计算完成。相反，如果
+    \nt{S(f, C)}的每一个子对象成员是至少一个\nt{S(f, B\tsub{i})}的子对象成员的基
+    类子对象，或如果\nt{S(f, C)}为空，则新的\nt{S(f, C)}是\nt{S(f, B\tsub{i})}的
+    拷贝。}
+  \item{否则，如果\nt{S(f, B\tsub{i})}和\nt{S(f, C)}的声明集不同，则合并有歧义：
+    新的\nt{S(f, C)}是一个由无效声明集和子对象集的并组成的查询集。在后续合并中，
+    无效声明集被当作是彼此不同的。}
+  \item{否则，新的\nt{S(f, C)}由声明的共享集和子对象集的并组成。}
+\end{enumerate}
+
+\paragraph{}
+\tm{C}中\tm{f}的名字查询结果为\nt{S(f, C)}的声明集。如果这是一个无效集合，则程序
+为病态。「例：
+\begin{lstlisting}
+  struct A { int x; };              // S(x,A) = { { A::x }, { A } }
+  struct B { float x; };            // S(x,B) = { { B::x }, { B } }
+  struct C: public A, public B { }; // S(x,C) = { invalid, { A in C, B in C } }
+  struct D: public virtual C { };   // S(x,D) = S(x,C)
+  struct E: public virtual C { char x; }; // S(x,E) = { { E::x }, { E } }
+  struct F: public D, public E { };       // S(x,F) = S(x,E)
+  int main() {
+    F f;
+    f.x = 0;                        // OK, lookup finds E::x
+  }
+\end{lstlisting}
+\nt{S(x, F)}无歧义，因为\tm{D}的\tm{A}和\tm{B}基类子对象也是\tm{E}的基类子对象，
+因此\nt{S(x, D)}在第一个合并步骤中被丢弃。」
+
+\paragraph{}
+如果无歧义地找到一个重载函数的名字，则重载解析（\ref{over.match}）也发生在访问控
+制之前。歧义性也可以通过使用其类名来限定一个名字来解决。「例：
+\begin{lstlisting}
+  struct A {
+    int f();
+  };
+  struct B {
+    int f();
+  };
+  struct C : A, B {
+    int f() { return A::f() + B::f(); }
+  };
+\end{lstlisting}」
+
+\paragraph{}
+「注：在基类\tm{T}中定义的静态成员，嵌套类型或枚举子可以无歧义地找到，即使对象具
+有超过一个类型\tm{T}的基类子对象。两个基类子对象共享其公共虚基类的非静态成员子对
+象。」「例：
+\begin{lstlisting}
+  struct V {
+    int v;
+  };
+  struct A {
+    int a;
+    static int s;
+    enum { e };
+  };
+  struct B : A, virtual V { };
+  struct C : A, virtual V { };
+  struct D : B, C { };
+
+  void f(D* pd) {
+    pd->v++;        // OK: only one v (virtual)
+    pd->s++;        // OK: only one s (static)
+    int i = pd->e;  // OK: only one e (enumerator)
+    pd->a++;        // error, ambiguous: two a's in D
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：在使用虚基类时，被隐藏的声明可以经子对象格的某条不经过隐藏声明的路径到达。
+这是无歧义的。等价的非虚基类的使用是有歧义的；此时没有单个名字实例隐藏所有其他名
+字实例。」「例：
+\begin{lstlisting}
+  struct V { int f(); int x; };
+  struct W { int g(); int y; };
+  struct B : virtual V, W {
+    int f(); int x;
+    int g(); int y;
+  };
+  struct C: virtual V, W { };
+
+  struct D : B, C { void glorp(); };
+\end{lstlisting}
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=0.3\textwidth]{figure/figname.pdf}
+  \caption{名字查询}
+  \label{fig:name}
+\end{figure}
+声明于\tm{V}中的名字和左侧的\tm{W}的实例被\tm{B}的这些实例所隐藏，但是右侧的实例
+名字完全没有被隐藏。
+\begin{lstlisting}
+  void D::glorp() {
+    x++;            // OK: B::x hides V::x
+    f();            // OK: B::f() hides V::f()
+    y++;            // error: B::y and C's W::y
+    g();            // error: B::g() and C's W::g()
+  }
+\end{lstlisting}」
+
+\paragraph{}
+从指针或指代派生类对象的表达式显式或隐式地转换到其基类的指针或引用应该无歧义地引
+用表示基类的唯一对象。「例：
+\begin{lstlisting}
+  struct V { };
+  struct A { };
+  struct B : A, virtual V { };
+  struct C : A, virtual V { };
+  struct D : B, C { };
+
+  void g() {
+    D d;
+    B* pb = &d;
+    A* pa = &d;       // error: ambiguous: C's A or B's A?
+    V* pv = &d;       // OK: only one V subobject
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：即使名字查询的结果无歧义，在多个子对象的查询到的名字可能仍有歧义
+（\ref{conv.mem}，\ref{expr.ref}，\ref{class.access.base}）。」「例：
+\begin{lstlisting}
+  struct B1 {
+    void f();
+    static void f(int);
+    int i;
+  };
+  struct B2 {
+    void f(double);
+  };
+  struct I1: B1 { };
+  struct I2: B1 { };
+
+  struct D: I1, I2, B2 {
+    using B1::f;
+    using B2::f;
+    void g() {
+      f();                      // Ambiguous conversion of this
+      f(0);                     // Unambiguous (static)
+      f(0.0);                   // Unambiguous (only one B2)
+      int B1::* mpB1 = &D::i;   // Unambiguous
+      int D::* mpD = &D::i;     // Ambiguous conversion
+    }
+  };
+\end{lstlisting}」
 
 \sect{虚函数}{class.virtual}
+\paragraph{}
+「注：虚函数支持动态绑定和面向对象编程。」声明或继承虚函数的类称为\nt{多态类}。
+
+\paragraph{}
+如果虚成员函数\tm{vf}声明于基类\tm{Base}中，并且在类\tm{Derived}中无论是直接地还
+是间接地继承自\tm{Base}， 声明（或不存在）与\tm{Base::vf}具有相同的名字、参数列
+表（\ref{dcl.fct}）、cv限定和引用限定符的成员函数\tm{vf}，则\tm{Derived::vf}也是
+虚函数（无论是否如此声明），且\nt{重写}\footnote{与虚函数有同名但不同参数列表
+（第\ref{over}章）的函数不一定是虚函数且不重写其他函数。在重写函数的声明中使用
+\tm{virtual}说明符是合法但冗余的（具有空语义）。在确定重写的过程中不考虑访问控制
+（第\ref{class.access}章）。}\tm{Base::vf}。为方便我们称任何虚函数重写其自身。类
+对象\tm{S}的虚成员函数\tm{C::vf}为\nt{最终重写}，除非\tm{S}为其基类子对象（如果
+有）的最终派生类（\ref{intro.object}）声明或继承重写\tm{vf}的另一个成员函数。在
+派生类中，如果基类子对象的虚成员函数具有超过一个最终重写，则程序为病态。「例：
+\begin{lstlisting}
+  struct A {
+    virtual void f();
+  };
+  struct B : virtual A {
+    virtual void f();
+  };
+  struct C : B, virtual A {
+    using A::f;
+  };
+
+  void foo() {
+    C c;
+    c.f();                    // calls B::f, the final overrider
+    c.C::f();                 // calls A::f because of the using-declaration
+  }
+\end{lstlisting}」
+
+「例：
+\begin{lstlisting}
+  struct A { virtual void f(); };
+  struct B : A { };
+  struct C : A { void f(); };
+  struct D : B, C { };        // OK: A::f and C::f are the final overrides
+                              // for the B and C subobjects, respectively
+\end{lstlisting}」
+
+\paragraph{}
+「注：虚成员函数不一定要可见才能重写，比如，
+\begin{lstlisting}
+  struct B {
+    virtual void f();
+  };
+  struct D : B {
+    void f(int);
+  };
+  struct D2 : D {
+    void f();
+  };
+\end{lstlisting}
+类\tm{D}中函数\tm{f(int)}隐藏了其基类\tm{B}中的虚成员函数；\tm{D::f(int)}不是虚
+函数。然而声明于\tm{D2}中的\tm{f()}与\tm{B::f()}具有相同的名字和相同的参数列表，
+因此是一个重写函数\tm{B::f(})的虚函数，即使\tm{B::f()}在类\tm{D2}不可见。」
+
+\paragraph{}
+如果某个类\tm{B}中的虚函数\tm{f}使用\nt{virt-specifier} \tm{final}标记，且在派生
+自\tm{B}的类\tm{D}中函数\tm{D::f}重写了\tm{B::f}，则程序为病态。「例：
+\begin{lstlisting}
+  struct B {
+    virtual void f() const final;
+  };
+  struct D : B {
+    void f() const;   // error: D::f attempts to override final B::f
+  };
+\end{lstlisting}」
+
+\paragraph{}
+如果虚函数使用\nt{virt-specifier} \tm{override}标记但没有重写基类的成员函数，则
+程序为病态。「例：
+\begin{lstlisting}
+  struct B {
+    virtual void f(int);
+  };
+  struct D : B {
+    virtual void f(long) override;    // error: wrong signature overriding B::f
+    virtual void f(int) override;     // OK
+  };
+\end{lstlisting}」
+
+\paragraph{}
+即使析构函数没有继承，派生类中的析构函数重写声明为虚函数的基类析构函数；见
+\ref{class.dtor}和\ref{class.free}。
+
+\paragraph{}
+重写函数的返回类型应该要么与被重写函数的返回类型等价，要么与函数的类\nt{协变}
+（\nt{covariant}）。如果函数\tm{D::f}重写函数\tm{B::f}，函数的返回类型如果满足以
+下准则是协变的：
+\begin{enumerate}
+  \item{都是指向类的指针，都是类的左值引用，或都是类的右值引用\footnote{不允许类
+    的多层指针或类的多层指针的引用。}}
+  \item{\tm{B::f}的返回类型中的类与\tm{D::f}的返回类型中的类是相同的，或者是
+    \tm{D::f}返回类型中的类的无歧义可访问直接或间接基类}
+  \item{都是具有相同cv限定的指针或引用且\tm{D::f}的返回类型中的类类型与\tm{B::f}
+    的返回类型中的类类型具有相同的cv限定或更少的cv限定。}
+\end{enumerate}
+
+\paragraph{}
+如果\tm{D::f}的协变返回类型中的类类型与\tm{B::f}的不同，则\tm{D::f}中返回类型中
+的类类型在\tm{D::f}的声明点应该是完整的，否则应该是类类型\tm{D}。当重写函数作为
+被重写函数的最终重写进行调用时，其结果被转换成（静态选择）被重写函数的返回类型
+（\ref{expr.call}）。「例：
+\begin{lstlisting}
+  class B { };
+  class D : private B { friend class Derived; };
+  struct Base {
+    virtual void vf1();
+    virtual void vf2();
+    virtual void vf3();
+    virtual B* vf4();
+    virtual B* vf5();
+    void f();
+  };
+
+  struct No_good : public Base {
+    D* vf4();         // error: B (base class of D) inaccessible
+  };
+
+  class A;
+  struct Derived : public Base {
+    void vf1();       // virtual and overrides Base::vf1()
+    void vf2(int);    // not virtual, hides Base::vf2()
+    char vf3();       // error: invalid difference in return type only
+    D*   vf4();       // OK: returns pointer to derived class
+    A*   vf5();       // error: returns pointer to incomplete class
+    void f();
+  };
+
+  void g() {
+    Derived d;
+    Base* bp = &d;    // standard conversion:
+                      // Derived* to Base*
+    bp->vf1();        // calls Derived::vf1()
+    bp->vf2();        // calls Base::vf2()
+    bp->f();          // calls Base::f() (not virtual)
+    B* P = bp->vf4(); // calls Derived::vf4() and does not
+                      // convert the result to B*
+    dp->vf2();        // ill-formed: argument mismatch
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：虚函数调用的解释取决于所调用对象的类型（动态类型），而非虚成员函数的调用只
+取决于指代对象的指针或引用的类型（静态类型）（\ref{expr.call}）。」
+
+\paragraph{}
+「注：\tm{virtual}说明符意味着成员关系，因此虚函数不能是非成员
+（\ref{dcl.fct.spec}）函数。虚函数也不能是静态成员，因此虚函数调用依赖于特定对象
+以确定调用哪一个函数。一个类中声明的虚函数可以在另一个类中声明为友元。」
+
+\paragraph{}
+声明于类中的虚函数应该在该类中定义，或在该类中声明为纯虚函数
+（\ref{class.abstract}），或二者皆可；无需诊断（\ref{basic.def.odr}）。
+
+\paragraph{}
+「例：以下是一些多基类虚函数的使用：
+\begin{lstlisting}
+  struct A {
+    virtual void f();
+  };
+
+  struct B1 : A {           // note non-virtual derivation
+    void f();
+  };
+
+  struct B2 : A {
+    void f();
+  };
+
+  struct D : B1, B2 {       // D has two separate A subobjects
+  };
+
+  void foo() {
+    D d;
+    // A* ap = &d;          // would be ill-formed: ambiguous
+    B1* b1p = &d;
+    A* ap = b1p;
+    D* dp = &d;
+    ap->f();                // calls D::B1::f
+    dp->f();                // ill-formed: ambiguous
+  }
+\end{lstlisting}
+在以上的类\tm{D}中类\tm{A}出现了两次，因此虚成员函数\tm{A::f}出现两次。
+\tm{B1::A::f}的最终重写为\tm{B1::f}，\tm{B2::A::f}的最终重写为\tm{B2::f}。」
+
+\paragraph{}
+「例：以下例子显示一个没有唯一最终重写的函数：
+\begin{lstlisting}
+  struct A {
+    virtual void f();
+  };
+
+  struct VB1 : virtual A {    // note virtual derivation
+    void f();
+  };
+
+  struct VB2 : virtual A {
+    void f();
+  };
+
+  struct Error : VB1, VB2 {   // ill-formed
+  };
+
+  struct Okay : VB1, VB2 {
+    void f();
+  };
+\end{lstlisting}
+\tm{VB1::f}和\tm{VB2::f}都重写了\tm{A::f}，但类\tm{Error}中没有二者的重写。因此
+该例子是病态的。但类\tm{Okay}是合法的，因为\tm{Okay::f}是最终重写。」
+
+\paragraph{}
+「例：以下例子使用上面的合法的类。
+\begin{lstlisting}
+  struct VB1a : virtual A { };    // does not declare f
+  struct Da : VB1a, VB2 { };
+
+  void foe() {
+    VB1a* vb1ap = new Da;
+    vb1ap->f();                   // calls VB2::f
+  }
+\end{lstlisting}」
+
+\paragraph{}
+使用作用域运算符（\ref{expr.prim}）进行显式限定可以抑制虚调用机制。「例：
+\begin{lstlisting}
+  class B { public: virtual void f(); };
+  class D : public B { public: void f(); };
+
+  void D::f() { /* ... */ B::f(); }
+\end{lstlisting}
+这里\tm{D::f}中的函数调用就是调用\tm{B::f}而不是\tm{D::f}。」
+
+\paragraph{}
+删除定义的函数（\ref{dcl.fct.def}）不应该重写没有删除定义的函数。同样，没有删除
+定义的函数不应该重写删除定义的函数。
 
 \sect{抽象类}{class.abstract}
+\paragraph{}
+「注：抽象类机制支持诸如\tm{shape}这样的一般概念的记法，这样只有更具体的变体，比
+如\tm{circle}或\tm{square}，才能实际被使用。一个抽象类也可以用于定义接口，其派生
+类提供一系列的实现。」
+
+\paragraph{}
+\nt{抽象类}指仅作为其他类的基类的类；不能创建抽象类的对象，除非作为其派生类的子
+对象。一个类是抽象的，如果其有至少一个\nt{纯虚函数}。「注：这样的函数可继承：见
+以下。」一个虚函数在类定义中函数声明时使用\nt{pure-specifier}
+（\ref{class.mem}）来指定为\nt{纯虚函数}。一个纯虚函数只在使用或如同使用
+（\ref{class.dtor}）\nt{qualified-id}语法（\ref{expr.prim}）调用时才需要有定义。
+「例：
+\begin{lstlisting}
+  class point { /* ... */ };
+  class shape {                     // abstract class
+    point center;
+  public:
+    point where() { return center; }
+    void move(point p) { center = p; draw(); }
+    virtual void rotate(int) = 0;   // pure virtual
+    virtual void draw() = 0;        // pure virtual
+  };
+\end{lstlisting}」「注：函数声明不能同时有\nt{pure-specifier}和定义。」「例：
+\begin{lstlisting}
+  struct C {
+    virtual void f() = 0 { };       // ill-formed
+  };
+\end{lstlisting}」
+
+\paragraph{}
+一个抽象类不能用途参数类型，函数返回类型或显式转换类型。可以声明抽象类的指针和引
+用。「例：
+\begin{lstlisting}
+  shape x;            // error: object of abstract class
+  shape* p;           // OK
+  shape f();          // error
+  void g(shape);      // error
+  shape& h(shape&);   // OK
+\end{lstlisting}」
+
+\paragraph{}
+如果包含或继承至少一个纯虚函数，其最终重写是纯虚函数，则类是抽象类。「例：
+\begin{lstlisting}
+  class ab_circle : public shape {
+    int radius;
+  public:
+    void rotate(int) { }
+    // ab_circle::draw() is a pure virtual
+  };
+\end{lstlisting}
+因\tm{shape::draw()}是纯虚函数，\tm{ab\_circle::draw()}缺省即为纯虚函数。另一个
+声明
+\begin{lstlisting}
+  class circle : public shape {
+    int radius;
+  public:
+    void rotate(int) { }
+    void draw();      // a definition is required somewhere
+  };
+\end{lstlisting}
+将使\tm{circle}成为非抽象类，且必须为\tm{circle::draw()}提供定义。」
+
+\paragraph{}
+「注：抽象类可以派生自非抽象类，纯虚函数可以重写不是纯虚函数的虚函数。」
+
+\paragraph{}
+成员函数可以从抽象类的构造函数（或析构函数）中调用；直接或间接对该构造函数（或析
+构函数）所创建（销毁）的对象进行纯虚函数的虚调用（\ref{class.virtual}）的效果未
+定义。

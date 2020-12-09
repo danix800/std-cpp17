@@ -1842,7 +1842,7 @@ namespace A {
 
   struct B {
     int i;
-  }; 
+  };
 
   struct X : B {
     using B::i, B::i;     // error: double member declaration
@@ -1873,7 +1873,7 @@ namespace A {
   void bar() {
     using A::f;       // f is a synonym for A::f; that is, for A::f(int) and
                       // A::f(char).
-    f('a');           // calls f(char)  
+    f('a');           // calls f(char)
   }
 \end{lstlisting}」
 
@@ -2427,9 +2427,9 @@ C++和非C++代码段间的链接（\ref{basic.link}）可以通过\nt{linkage-s
 \nt{attribute-using-prefix}如何影响\nt{attribute-argument-clause}的标记加以约束。
 」「例：
 \begin{lstlisting}
-  [[using CC: opt(1) , debug]]        // same as [[CC::opt(1), CC::debug] ] 
+  [[using CC: opt(1) , debug]]        // same as [[CC::opt(1), CC::debug] ]
     void f() {}
-  [[using CC: opt(1)]] [[CC::debug]]  // same as [[CC::opt(1)]] [[CC::debug]] 
+  [[using CC: opt(1)]] [[CC::debug]]  // same as [[CC::opt(1)]] [[CC::debug]]
     void g() {}
   [[using CC: CC::opt(1)] // error: cannot combine using and scoped attribute token]
     void h() {}
@@ -2529,7 +2529,7 @@ C++和非C++代码段间的链接（\ref{basic.link}）可以通过\nt{linkage-s
 
   // Translation unit #2:
   struct alignas(16) S;          // error: definition of S lacks alignment,
-                                 // no diagnostic required 
+                                 // no diagnostic required
   extern S* p;
 \end{lstlisting}」
 
@@ -2627,7 +2627,7 @@ C++和非C++代码段间的链接（\ref{basic.link}）可以通过\nt{linkage-s
 「注：因此，最初未使用属性声明的实体可以在后续重声明中标记为不推荐。然后，在实体
 被标记为不推荐后，后续的重声明不会取消该属性。」使用该属性的不同形式的重声明（使
 用或不使用\nt{attribute-argument-clause}或使用不同的
-\nt{attribute-argument-clause}）是允许的。 
+\nt{attribute-argument-clause}）是允许的。
 
 \paragraph{}
 「注：在一个声明指定了该属性之后，实现可能在程序引用名字或实体而不是声明它时使用
@@ -2743,7 +2743,7 @@ void f(int n) {
     throw "error"; // OK
   }
   [[ noreturn ]] void q(int i) { // behavior is undefined if called with an
-                                 // argument <= 0 
+                                 // argument <= 0
     if (i > 0)
       throw "positive";
   }

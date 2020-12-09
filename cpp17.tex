@@ -16,20 +16,28 @@
 % \usepackage{enumitem}
 \setlist[enumerate,1]{label={(\arabic{paragraph}.\arabic*) \quad --}}
 \setlist[enumerate,2]{label={(\arabic{paragraph}.\arabic{enumi}.\arabic*) \quad
-  \ \ \quad --}}
+\quad \quad \ --}}
+\setlist[enumerate,3]{label={
+(\arabic{paragraph}.\arabic{enumi}.\arabic{enumii}.\arabic*) \quad \quad \quad
+\quad \quad \ --}}
 
 % footnote counter is interrupted by chapter (start over from 1 in new chapters)
 % remove this feature, so the counter increases throughout the whole document.
 \usepackage{chngcntr}
 \counterwithout{footnote}{chapter}
 \counterwithout{table}{chapter}
+\counterwithout{figure}{chapter}
 
 % space btw footnotes
 % \setlength{\footnotesep}{0.5cm}
 
 % \lstset{basicstyle=\fontsize{11}{13}\selectfont\ttfamily}
 % \lstset{frame=none}
-\lstset{showstringspaces=false,language=C}
+\lstset{showstringspaces=false,
+        language=C,
+        columns=fixed,
+        basicstyle=\linespread{1.0}\ttfamily\small,
+        basewidth=0.5em}
 
 \renewcommand{\theparagraph}{\arabic{paragraph}}
 \renewcommand{\thefigure}{\arabic{figure}}
@@ -89,28 +97,40 @@
 \mainmatter
 \hypersetup{pageanchor=true}
 
-\include{chapters/foreword}
-\include{chapters/1.scope}
-\include{chapters/2.refs}
-\include{chapters/3.defs}
-\include{chapters/4.intro}
-\include{chapters/5.lex}
+%chapters
+
+%\include{chapters/foreword}
+%\include{chapters/1.scope}
+%\include{chapters/2.refs}
+%\include{chapters/3.defs}
+%\include{chapters/4.intro}
+%\include{chapters/5.lex}
 \include{chapters/6.basic}
-\include{chapters/7.conv}
-\include{chapters/8.expr}
-\include{chapters/9.stmt}
-\include{chapters/10.dcl.dcl}
-\include{chapters/11.dcl.decl}
-\include{chapters/12.class}
-\include{chapters/13.class.derived}
+%\include{chapters/7.conv}
+%\include{chapters/8.expr}
+%\include{chapters/9.stmt}
+%\include{chapters/10.dcl.dcl}
+%\include{chapters/11.dcl.decl}
+%\include{chapters/12.class}
+%\include{chapters/13.class.derived}
 \include{chapters/14.class.access}
-\include{chapters/15.special}
-\include{chapters/16.over}
-\include{chapters/17.temp}
-\include{chapters/18.except}
-\include{chapters/19.cpp}
-\include{chapters/20.library}
-\include{chapters/21.language.support}
-\include{chapters/22.diagnostics}
+%\include{chapters/15.special}
+%\include{chapters/16.over}
+%\include{chapters/17.temp}
+%\include{chapters/18.except}
+%\include{chapters/19.cpp}
+%\include{chapters/20.library}
+%\include{chapters/21.language.support}
+%\include{chapters/22.diagnostics}
+
+% annexes
+\setcounter{chapter}{0} % start from 0
+\renewcommand{\thechapter}{\Alph{chapter}}
+\renewcommand{\chaptername}{附录 \thechapter}
+
+%\include{chapters/annex.a.gram}
+%\include{chapters/annex.b.implimits}
+%\include{chapters/annex.c.diff}
+%\include{chapters/annex.d.depr}
 
 \end{document}

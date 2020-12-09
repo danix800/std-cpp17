@@ -1,23 +1,1093 @@
 %% 12. class
 
 \chptr{类}{class}
+\paragraph{}
+类是一种类型。其名字成为其作用域中的\nt{class-name}（\ref{class.name}）。
+
+\synsym{class-name}
+  \synprd{\nt{identifier}}
+  \synprd[]{\nt{simple-template-id}}
+
+\nt{class-specifier}和\nt{elaborated-type-specifier}（\ref{dcl.type.elab}）用于
+构成\nt{class-name}。类的对象由一系列（可能为空的）成员和基类对象组成。
+
+\synsym{class-specifier}
+  \synprd{\nt{class-head} \tm{\{} \nt{member-specification\tsub{opt}} \tm{\}}}
+\synsym{class-head}
+  \synprd{\nt{class-key attribute-specifier-seq\tsub{opt} class-head-name
+    class-virt-specifier\tsub{opt} base-clause\tsub{opt}}}
+  \synprd{\nt{class-key attribute-specifier-seq\tsub{opt}
+    base-clause\tsub{opt}}}
+\synsym{class-head-name}
+  \synprd{\nt{nested-name-specifier\tsub{opt} class-name}}
+\synsym{class-virt-specifier}
+  \synprd{\tm{final}}
+\synsym{class-key}
+  \synprd{\tm{class}}
+  \synprd{\tm{struct}}
+  \synprd[]{\tm{union}}
+
+\nt{class-head}省略了\nt{class-head-name}的\nt{class-specifier}定义无名类。
+「注：因此无名类不能是\tm{final}。」
+
+\paragraph{}
+在见到\nt{class-name}后立即向其声明作用域内插入一个\nt{class-name}。也会向类本身
+的作用域中插入该\nt{class-name}；称为\nt{注入类名}（\nt{injected-class-name}）。
+为了访问检查，注入类名被当作是公有成员名。\nt{class-specifier}通常称为类定义。类
+在其\nt{class-specifier}的结尾括号之后完成定义，即使成员函数一般还未定义。可选的
+\nt{attribute-specifier-seq}适用于类；因此使用类时\nt{attribute-specifier-seq}中
+的属性当成是类的属性。
+
+\paragraph{}
+如果类使用\nt{class-virt-specifier} \tm{final}标记，且其出现在\nt{base-clause}的
+\nt{class-or-decltype}中，则程序为病态。当\nt{class-key}后跟上
+\nt{class-head-name}，\nt{标识符} \tm{final}以及冒号或左括号，\tm{final}解释为
+\nt{class-virt-specifier}。「例：
+\begin{lstlisting}
+  struct A;
+  struct A final {};          // OK: definition of struct A,
+                              // not value-initialization of variable final
+
+  struct X {
+    struct C { constexpr operator int() { return 5; } };
+    struct B final : C{};     // OK: definition of nested class B,
+                              // not declaration of a bit-field member final
+  };
+\end{lstlisting}」
+
+\paragraph{}
+类类型完整对象和成员子对象不应该为零大小\footnote{基类子对象不受此限制。}。
+「注：类对象可以赋值，作为函数参数传递，以及由函数返回（除拷贝或移动被限制的类对
+象；见\ref{class.copy}）。其他合理的运算符，比如等性比较，可以由用户定义；见
+\ref{over.oper}。」
+
+\paragraph{}
+\nt{联合}是使用\nt{class-key} \tm{union}定义的类；其一次只能保存一个数据成员（
+\ref{class.union}）。「注：类类型聚合在\ref{dcl.init.aggr}中描述。」
+
+\paragraph{}
+一个\nt{平凡可拷贝类}指：
+\begin{enumerate}
+  \item{每一个拷贝构造函数，移动构造函数，拷贝赋值运算符和移动赋值运算符
+    （\ref{class.copy}，\ref{over.ass}）都要么被删除，要么是平凡的，}
+  \item{具有至少一个未删除拷贝构造函数，移动构造函数，拷贝赋值运算符或移动赋值运
+    算符，}
+  \item{具有平凡的，未删除析构函数（\ref{class.dtor}）}
+\end{enumerate}
+的类。\nt{平凡类}指平凡可拷贝且具有一个或多个缺省构造函数（\ref{class.ctor}），
+均为平凡或删除的且至少有一个未被删除的类。「注：特别地，平凡可拷贝类或平凡类不具
+有虚函数或虚基类。」
+
+\paragraph{}
+类\tm{S}是\nt{标准布局}类，如果其：
+\begin{enumerate}
+  \item{不具有非标准布局类型（或此类型数组）的非静态数据成员或引用，}
+  \item{不具有虚函数（\ref{class.virtual}）和虚基类（\ref{class.mi}），}
+  \item{所有非静态数据成员具有相同访问控制（第\ref{class.access}章），}
+  \item{不具有非标准布局基类，}
+  \item{具有任何给定类型的至多一个基类子对象，}
+  \item{类及其基类的所有非静态数据成员和位域都首先声明于同一个类内，且}
+  \item{不具有类型集合\nt{M}\tm{(S)}中的元素作为其基类\footnote{这可以确保具有相
+    同类类型且属于相同最终派生对象的两个子对象不会分配到同一个地址
+    （\ref{expr.eq}）}。}
+\end{enumerate}
+\nt{M}\tm{(X)}定义如下：
+\begin{enumerate}
+  \setcounter{enumi}{7}
+  \item{如果\tm{X}是一个不具有（可能派生（第\ref{class.derived}章）的）非静态数
+    据成员的非联合类类型，则\nt{M}\tm{(X)}为空。}
+  \item{如果\tm{X}是非联合类类型，其首个非静态数据成员具有类型\tm{X\tsub{0}}（所
+    述成员可能是匿名联合），则集合\nt{M}\tm{(X)}由\tm{X\tsub{0}}和
+    \nt{M}\tm{(X\tsub{0})}的元素组成。}
+  \item{如果\tm{X}是联合类型，则集合\nt{M}\tm{(X)}是所有
+    \nt{M}\tm{(U}\nt{\tsub{i}}\tm{)}和包含所有\tm{U}\nt{\tsub{i}}的集合的并集，
+    其中每一个\tm{U}\nt{\tsub{i}}是\tm{X}的第\nt{i}个非静态数据成员的类型。}
+  \item{如果\tm{X}是元素类型为\tm{X}\nt{\tsub{e}}的数组类型，集合\nt{M}\tm{(X)}
+    由\tm{X}\nt{\tsub{e}}和\nt{M}\tm{(X\tsub{e})}的元素组成。}
+  \item{如果\tm{X}不是类、数组类型，则集合\nt{M}\tm{(X)}为空。}
+\end{enumerate}
+「注：\nt{M}\tm{(X)}是\tm{X}中在标准布局类中保证处于零偏移的非基类子对象的类型
+集合。」「例：
+\begin{lstlisting}
+  struct B { int i; };            // standard-layout class
+  struct C : B { };               // standard-layout class
+  struct D : C { };               // standard-layout class
+  struct E : D { char : 4; };     // not a standard-layout class
+  struct Q {};
+  struct S : Q { };
+  struct T : Q { };
+  struct U : S, T { };            // not a standard-layout class
+\end{lstlisting}」
+
+\paragraph{}
+\nt{标准布局结构}指使用\nt{class-key} \tm{struct}或\nt{class-key} \tm{class} 定
+义的标准布局类。\nt{标准布局联合}指使用\nt{class-key} \tm{union}定义的标准布局类
+。
+
+\paragraph{}
+「注：标准布局类对使用其他编程语言所写代码进行通信是有用的。其布局在
+\ref{class.mem}中说明。」
+
+\paragraph{}
+\nt{POD结构}\footnote{缩写POD指``plain old data''。}指即是平凡类也是标准布局类，
+且不具有非POD结构、非POD联合类型（或此类类型数组）静态数据成员的非联合类。类似的
+\nt{POD联合}指即是平凡类也是标准布局类，且不具有非POD结构、非POD联合类型（或此类
+类型数组）静态数据成员的联合。\nt{POD类}指要么是POD结构要么是POD联合的类。「例：
+\begin{lstlisting}
+  struct N {                    // neither trivial nor standard-layout
+    int i;
+    int j;
+    virtual ~N();
+  };
+
+  struct T {                    // trivial but not standard-layout
+    int i;
+  private:
+    int j;
+  };
+
+  struct SL {                   // standard-layout but not trivial
+    int i;
+    int j;
+    ~SL();
+  };
+
+  struct POD {                  // both trivial and standard-layout
+    int i;
+    int j;
+  };
+\end{lstlisting}」
+
+\paragraph{}
+如果\nt{class-head-name}中包含一个\nt{nested-name-specifier}，则
+\nt{class-specifier}应该引用已经在\nt{nested-name-specifier}引用的类或命名空间中
+或在该命名空间的内联命名空间集（\ref{namespace.def}）的某元素中（即不是仅派生或
+由\nt{using-declaration}引入）直接声明的类，并且\nt{class-specifier}应该出现在包
+含先前的声明的命名空间中。在这样的类中，定义的\nt{class-head-name}的
+\nt{nested-name-specifier}不应该以\nt{decltype-specifier}开头。
 
 \sect{类名}{class.name}
+\paragraph{}
+类定义引入新类型。「例：
+\begin{lstlisting}
+  struct X { int a; };
+  struct Y { int a; };
+  X a1;
+  Y a2;
+  int a3;
+\end{lstlisting}
+声明三个不同类型的变量。这意味着
+\begin{lstlisting}
+  a1 = a2;                    // error: Y assigned to X
+  a1 = a3;                    // error: int assigned to x
+\end{lstlisting}
+是类型不匹配，且
+\begin{lstlisting}
+  int f(X);
+  int f(Y);
+\end{lstlisting}
+声明重载函数（第\ref{over}章）\tm{f()}而不是声明\tm{f()}两次。同理，
+\begin{lstlisting}
+  struct S { int a; };
+  struct S { int a; };        // error, double definition
+\end{lstlisting}
+是病态的，因为\tm{S}定义了两次。」
+
+\paragraph{}
+类声明向其声明处作用域引入类名并隐藏其包含作用域中的任何同名的类、变量、函数或其
+他声明（\ref{basic.scope}）。如果类名声明在同名变量、函数或枚举也声明了的作用域
+中，则两种声明都处于作用域中，类名只能通过\nt{elaborated-type-specifier}来引用
+（\ref{basic.lookup.elab}）。「例：
+\begin{lstlisting}
+  struct stat {
+    // ...
+  };
+
+  stat gstat;                 // use plain stat to define variable;
+
+  int stat(struct stat*);     // redeclare stat as function
+
+  void f() {
+    struct stat* ps;          // struct prefix needed to name struct stat
+    stat(ps);                 // call stat()
+  };
+\end{lstlisting}」
+只包含\nt{class-key identifier} \tm{;}的声明要么是当前作用域中名字的重声明，要么
+是作为类名的标识符的前向声明。其向当前作用域引入类名。「例：
+\begin{lstlisting}
+  struct s { int a; };
+
+  void g() {
+    struct s;               // hides global struct s with block-scope
+                            // declaration
+    s* p;                   // refer to local struct s
+    struct s { char* p; };  // define local struct s
+    struct s;               // redeclaration, has no effect
+  }
+\end{lstlisting}」
+「注：这样声明允许类定义彼此引用。「例：
+\begin{lstlisting}
+  class Vector;
+
+  class Matrix {
+    // ...
+    friend Vector operator*(const Matrix&, const Vector&);
+  };
+
+  class Vector {
+    // ...
+    friend Vector operator*(const Matrix&, const Vector&);
+  };
+\end{lstlisting}
+\tm{friend}声明在\ref{class.friends}中描述，运算符函数在\ref{over.oper}中描
+述。」」
+
+\paragraph{}
+「注：\nt{elaborated-type-specifier}（）也可以用作\nt{type-specifier}作为声明的
+一部分。其与类声明不同点在于如果详名类处于作用域中的话则详名引用此类。」「例：
+\begin{lstlisting}
+  struct s { int a; };
+
+  void g(int s) {
+    struct s* p = new struct s;       // global s
+    p->a = s;                         // parameter s
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：类名声明在类定义或\nt{elaborated-type-specifier}中的\nt{标识符}之后立即生
+效。比如，                                                                    \\
+\mbox{\qquad\tm{class A * A}}                                                 \\
+首先指定\tm{A}为类名，然后重定义为指向该类对象的指针。这意味着必须使用详尽形式
+\tm{class A}来引用该类。这种名字的技巧容易引起困惑，最好避免使用。」
+
+\paragraph{}
+命名一个类类型或其cv限定版本的\nt{typedef-name}（\ref{dcl.typedef}）也是一个
+\nt{class-name}。如果在需要\nt{class-name}的位置使用命名cv限定版本的类类型的
+\nt{typedef-name}，则忽略cv限定符。\nt{typedef-name}不应该用于\nt{class-head}中
+的\nt{identifier}。
 
 \sect{类成员}{class.mem}
+
+\synsym{member-specification}
+  \synprd{\nt{member-declaration member-specification\tsub{opt}}}
+  \synprd{\nt{access-specifier} \tm{:} \nt{member-specification\tsub{opt}}}
+\synsym{member-declaration}
+  \synprd{\nt{attribute specifier-seq\tsub{opt} decl-specifier-seq\tsub{opt}
+    member-declarator-list\tsub{opt}} \tm{;}}
+  \synprd{\nt{function-definition}}
+  \synprd{\nt{using-declaration}}
+  \synprd{\nt{static\_assert-declaration}}
+  \synprd{\nt{template-declaration}}
+  \synprd{\nt{deduction-guide}}
+  \synprd{\nt{alias-declaration}}
+  \synprd{\nt{empty-declaration}}
+\synsym{member-declarator-list}
+  \synprd{\nt{member-declarator}}
+  \synprd{\nt{member-declarator-list} \tm{,} \nt{member-declarator}}
+\synsym{member-declarator}
+  \synprd{\nt{declarator virt-specifier-seq\tsub{opt} pure-specifier\tsub{opt}}}
+  \synprd{\nt{declarator brace-or-equal-initializer\tsub{opt}}}
+  \synprd{\nt{identifier\tsub{opt} attribute-specifier-seq\tsub{opt}} \tm{:}
+    \nt{constant-expression}}
+\synsym{virt-specifier-seq}
+  \synprd{\nt{virt-specifier}}
+  \synprd{\nt{virt-specifier-seq virt-specifier}}
+\synsym{virt-specifier}
+  \synprd{\tm{override}}
+  \synprd{\tm{final}}
+\synsym{pure-specifier}
+  \synprd[]{\tm{= 0}}
+
+\paragraph{}
+类定义中的\nt{member-specification}声明了类成员的完整集合；其他地方不能再添加成
+员。类\tm{X}的\nt{直接成员}（\nt{direct member}）指首次于\tm{X}的
+\nt{member-specification}中声明的\tm{X}的某个成员，包括匿名联合对象
+（\ref{class.union.anon}）及其直接成员。一个类的成员包括数据成员，成员函数
+（\ref{class.mfct}），嵌套类型，枚举子和成员模板（\ref{temp.mem}）及其特例化。
+「注：静态数据成员模板特例化是一个静态数据成员。成员函数模板特例化是成员函数。
+成员类模板特例化是一个嵌套类。」
+
+\paragraph{}
+\nt{member-declaration}不声明类的新成员，如果它是
+\begin{enumerate}
+  \item{一个友元声明（\ref{class.friends}），}
+  \item{一个\nt{static\_assert-declaration}，}
+  \item{一个\nt{using-declaration}（\ref{namespace.udecl}），或者是}
+  \item{一个\nt{empty-declaration}。}
+\end{enumerate}
+对任何其他\nt{member-declaration}，声明的每一个不是无名位域（\ref{class.bit}）的
+实体是该类的一个成员，且每一个这样的\nt{member-declaration}都应该要么声明至少一
+个该类的成员名，要么声明至少一个无名位域。
+
+\paragraph{}
+\nt{数据成员}指由\nt{member-declarator}引入的非函数成员。\nt{成员函数}指的是函数
+类型的成员。嵌套类型指类中声明的类（\ref{class.name}，\ref{class.nest}）或枚举以
+及通过使用typedef声明（\ref{dcl.typedef}）或\nt{alias-declaration}声明为成员的任
+意类型。类中定义的无作用域枚举（\ref{dcl.enum}）的枚举子是该类的成员。
+
+\paragraph{}
+数据成员或成员函数可能在其\nt{member-declaration}中定义为\tm{static}，此时它是该
+类的一个\nt{静态成员}（见\ref{class.static}）（分别为\nt{静态数据成员}
+（\ref{class.static.data}）或\nt{静态成员函数}（\ref{class.static.mfct}））。任
+何其他数据成员或成员函数为\nt{非静态成员}（分别为\nt{非静态数据成员}
+（\ref{class.mfct.non-static}）或\nt{非静态成员函数}）。「注：非引用类型的非静态
+数据成员为类对象的成员子对象（\ref{intro.object}）。」
+
+\paragraph{}
+在\nt{member-specification}中一个成员不应该声明两次，除非
+\begin{enumerate}
+  \item{嵌套类或成员类模板可以声明并随后进行定义，且}
+  \item{枚举可以通过\nt{opaque-enum-declaration}引入并随后使用
+    \nt{enum-specifier}进行重声明。}
+\end{enumerate}
+「注：如果其类型足以区分的话，单个名字可以表示多个成员函数（第\ref{over}章）。」
+
+\paragraph{}
+一个类在\nt{class-specifier}的结尾\tm{\}}之后被当作是一个完整定义的对象类型
+（\ref{basic.types}）（或完整类型）。在类的\nt{member-specification}中，类在函数
+体，缺省参数，\nt{nonexcept-specifier}和缺省成员初始化（包括嵌套类中的这些结构）
+中被当作是完整的。其他情况下在其自身的类\nt{member-specification}中被当作是不完
+整的。
+
+\paragraph{}
+在\nt{member-declarator}中，如果\nt{declarator-id}具有函数类型，紧跟在
+\nt{declarator}之后的\tm{=}解释为\nt{pure-specification}，否则被解释为
+\nt{brace-or-equal-initializer}。「例：
+\begin{lstlisting}
+  struct S {
+    using T = void();
+    T * p = 0;                    // OK: brace-or-equal-initializer
+    virtual T f = 0;              // OK: pure-specifier
+  };
+\end{lstlisting}」
+
+\paragraph{}
+\nt{brace-or-equal-initializer}应该仅出现数据成员的声明中。（对静态数据成员，见
+\ref{class.static.data}；对非静态数据成员，见\ref{class.base.init}和
+\ref{dcl.init.aggr}）。非静态数据成员的\nt{brace-or-equal-initializer}指定成员的
+\nt{缺省成员初始化}，且不应该直接或间接地导致包含类的缺省化的缺省构造函数的隐式
+定义，或该构造函数的异常规范的隐式定义。
+
+\paragraph{}
+成员不应该使用\tm{extern} \nt{storage-class-specifier}来声明。在类定义中，除非也
+使用了\tm{static}，成员不应该使用\tm{thread\_local} \nt{storage-class-specifier}
+来声明。
+
+\paragraph{}
+只能省略构造函数、析构函数和转换函数声明中的\nt{decl-specifier-seq}；当声明另一
+种类型的成员时\nt{decl-specifier-seq}应该包含不是\nt{cv-qualifier}的
+\nt{type-specifier}。\nt{member-declarator-list}只有在\nt{class-specifier}或
+\nt{enum-specifier}或一个\tm{friend}声明（\ref{class.friends}）之后才可以省略。
+\nt{pure-specifier}只能用于非\tm{friend}声明的虚函数（\ref{class.virtual}）声明
+中。
+
+\paragraph{}
+\nt{member-declaration}中可选的\nt{attribute-specifier-seq}用于
+\nt{member-declarator}声明的每一个实体；如果可选的\nt{member-declarator-list}被
+省略则其不应该再出现。
+
+\paragraph{}
+\nt{virt-specifier-seq}应该包括每一个\nt{virt-specifier}的至多一个。
+\nt{virt-specifier-seq}应该只出现在虚成员函数（\ref{class.virtual}）的声明中。
+
+\paragraph{}
+非静态数据成员不应该具有不完整类型。特别的，一个类\tm{C}不应该包含类\tm{C}的非
+静态成员，但是可以包含类\tm{C}的对象指针或引用。
+
+\paragraph{}
+「注：见\ref{expr.prim}关于非静态数据成员和非静态成员函数的使用限制。」
+
+\paragraph{}
+「注：非静态成员函数的类型为普通函数类型，且非静态数据成员的类型为普通对象类型。
+没有特别的成员函数类型或数据成员类型。」
+
+\paragraph{}
+「例：一个简单的类定义示例为
+\begin{lstlisting}
+  struct tnode {
+    char tword[20];
+    int count;
+    tnode* left;
+    tnode* right;
+  };
+\end{lstlisting}
+该类包含一个20个字符的数组，一个整数，两个指向同一类型的对象指针。给定这样的定义
+后，声明
+\begin{lstlisting}
+  tnode s, *sp;
+\end{lstlisting}
+声明\tm{s}为\tm{tnode}，\tm{sp}为指向\tm{tnode}的指针。有了这些声明，
+\tm{sp->count}指的是\tm{sp}所指对象的成员\tm{count}；\tm{s.left}指的是对象\tm{s}
+的\tm{left}左子树指针；\tm{s.right->tword[0]}指的是\tm{s}的\tm{right}右子树的成
+员\tm{tword}的首字符。」
+
+\paragraph{}
+（非联合）类的具有相同访问控制（第\ref{class.access}）的非静态数据成员按后声明成
+员具有高地址的方式进行分配。具有不同访问控制的非静态数据成员分配顺序未指明
+（第\ref{class.access}）。实现对齐需求可能导致两个相邻成员不会紧接着另一个进行分
+配；用于管理虚函数（\ref{class.virtual}）和虚基类（\ref{class.mi}）的空间要求也
+是如此。
+
+\paragraph{}
+如果\tm{T}是类的名字，则以下每一个应该有与\tm{T}不同的名字：
+\begin{enumerate}
+  \item{类\tm{T}的每一个静态成员；}
+  \item{类\tm{T}的每一个成员函数「注：该限制不适用于成员函数，成员函数没有名字
+    （\ref{class.ctor}）」；}
+  \item{类\tm{T}的本身是类型的每一个成员；}
+  \item{类\tm{T}的每一个成员模板；}
+  \item{类\tm{T}的无作用域枚举类型的成员的每一个枚举子；以及}
+  \item{类\tm{T}的每一个匿名联合的每一个成员。}
+\end{enumerate}
+
+\paragraph{}
+此外，如果类\tm{T}具有一个用户声明构造函数（\ref{class.ctor}），则类\tm{T}的每一
+个非静态数据成员应该具有与\tm{T}不同的名字。
+
+\paragraph{}
+两个标准布局结构（第\ref{class}章）类型的\tm{公共初始序列}（\nt{common initial
+sequence}）指按照声明顺序，以每一个结构中第一个这样的实体开始的最长非静态数据成
+员和位域，使得对应实体具有布局兼容类型且要么两个实体都不是位域，要么两者都是具有
+同位宽的位域。「例：
+\begin{lstlisting}
+  struct A { int a; char b; };
+  struct B { const int b1; volatile char b2; };
+  struct C { int c; unsigned : 0; char b; };
+  struct D { int d; char b : 4; };
+  struct E { unsigned int e; char b; };
+\end{lstlisting}
+\tm{A}和\tm{B}的公共初始序列由任一个的所有成员构成。\tm{A}和\tm{C}以及\tm{A}和
+\tm{D}的公共初始序列分别由第一个成员构成。\tm{A}和\tm{E}的公共初始序列为空。」
+
+\paragraph{}
+两个标准布局结构类型（第\ref{class}章）是\nt{布局兼容类}
+（\nt{layout-compatible class}），如果其公共初始序列由每个类的所有成员和位域组成
+（\ref{basic.types}）。
+
+\paragraph{}
+两个标准布局联合是布局兼容的，如果其具有相同数目的非静态数据成员且对应非静态数据
+成员（任意顺序）具有布局兼容类型（\ref{basic.types}）。
+
+\paragraph{}
+在一个活动成员（\ref{class.union}）类型为结构\tm{T1}的标准布局联合中，允许读另一
+个类型为结构\tm{T2}的联合成员的数据成员\tm{m}，如果\tm{m}是\tm{T1}和\tm{T2}的公
+共初始序列的一部分；该行为如同使用了\tm{T1}的对应成员。「例：
+\begin{lstlisting}
+  struct T1 { int a, b; };
+  struct T2 { int c; double d; };
+  union U { T1 t1; T2 t2; };
+  int f() {
+    U u = { { 1, 2 } };                 // active member of t1
+    return u.t2.c;                      // OK, as if u.t1.a were nominated
+  }
+\end{lstlisting}」「注：通过非易失广义左值来读取易失对象是未定义行为
+（\ref{dcl.type.cv}）。」
+
+\paragraph{}
+如果标准布局类对象具有任何非静态数据成员，其地址与其第一个非静态数据成员的地址相
+同。否则，其地址与其第一个基类子对象地址相同（如果有）。「注：因此，为达到合适的
+对齐，在标准布局结构对象中可能有无名填充，但不是在其开始处。」「注：对象及其第一
+个子对象可以指针互转换（\ref{basic.compound}，\ref{expr.static.cast}）。」
+
 \ssect{成员函数}{class.mfct}
+\paragraph{}
+成员函数可能在其类定义中定义（\ref{dcl.fct.def}），此时它是一个内联成员函数
+（\ref{dcl.inline}），或者可以在其类定义之外定义，如果它已声明但是未在类定义中进
+行定义。出现在类定义之外的成员函数定义应该出现在包含类定义的命名空间中。除出现在
+类定义之外的成员函数定义以及出现在类定义之外的类模板成员函数和成员函数模板
+（\ref{temp.spec}）的特例化之外，成员函数不应该重声明。
+
+\paragraph{}
+内联成员函数（无论是静态或非静态）也可以在其类定义之外定义，如果其在类定义中的声
+明或其在类定义之外的定义声明函数为\tm{inline}或\tm{constexpr}。「注：在命名空间
+作用域中的类成员函数具有该类的链接。局部类（\ref{class.local}）成员函数无链接。
+见\ref{basic.link}。」
+
+\paragraph{}
+「注：一个程序中非内联成员函数最多只能有一个定义。程序中\tm{inline}成员函数可能
+具有多个定义。见\ref{basic.def.odr}和\ref{dcl.inline}。」
+
+\paragraph{}
+如果成员函数定义词法上处于类定义之外，则成员函数名需要使用类名通过\tm{::}运算符
+来限定。「注：成员函数定义所用的名字（即处于包含缺省参数
+（\ref{dcl.fct.default}）的\nt{parameter-declaration-clause}中或处于成员函数体
+中）按\ref{basic.lookup}所述进行查询。」「例：
+\begin{lstlisting}
+  struct X {
+    typedef int T;
+    static T count;
+    void f(T);
+  };
+  void x::f(T t = count) { }
+\end{lstlisting}
+类\tm{X}的成员函数\tm{f}在全局作用域中定义；记号\tm{X::f}指定函数\tm{f}是类
+\tm{X}的成员且处于类\tm{X}的作用域中。在函数定义中，参数类型\tm{T}引用的是类
+\tm{X}中声明的类型定义成员\tm{T}，而缺省参数引用的是类\tm{X}中声明的静态数据成员
+\tm{count}。」
+
+\paragraph{}
+「注：成员函数中的一个\tm{static}局部变量或局部类型总是引用相同实体，无论成员函
+数是否为\tm{inline}。」
+
+\paragraph{}
+先前声明的成员函数可以在\tm{friend}声明中提及。
+
+\paragraph{}
+局部类的成员函数如果被定义的话则应该在其类定义中定义。
+
+\paragraph{}
+「注：成员函数可以使用函数类型的类型定义来声明（但未定义）。所产生的成员函数具有
+与显式使用函数声明子所声明函数完全相同的类型，见\ref{dcl.fct}。比如，
+\begin{lstlisting}
+  typedef void fv();
+  typedef void fvc() const;
+  struct S {
+    fv memfunc1;                // equivalent to: void memfunc1();
+    void memfunc2();
+    fvc memfunc3;               // equivalent to: void memfunc3() const;
+  };
+  fv  S::* pmfv1 = &S::memfunc1;
+  fv  S::* pmfv2 = &S::memfunc2;
+  fvc S::* pmfv3 = &S::memfunc3;
+\end{lstlisting}
+见\ref{temp.arg}。」
+
 \ssect{非静态成员函数}{class.mfct.non-static}
+\paragraph{}
+非静态成员函数可以使用类成员访问语法为其类类型对象或为其类类型派生类对象而调用
+（\ref{expr.ref}，\ref{over.match.call}）。非静态成员函数也可以在其类或派生类的
+成员函数体中使用函数调用语法来调用（\ref{expr.call}，\ref{over.match.call}）。
+
+\paragraph{}
+如果类\tm{X}的非静态成员函数为非类型\tm{X}或派生自\tm{X}的对象而调用则行为未定
+义。
+
+\paragraph{}
+当一个不是类成员访问语法（\ref{expr.ref}）的一部分且没有用于形成成员指针的
+\tm{id-expression}（\ref{expr.prim}）用于类\tm{X}的成员中可以使用\tm{this}的上下
+文中（\ref{expr.prim.this}），如果名字查询（\ref{basic.lookup }）将
+\nt{id-expression}中的名字解析为某个类\tm{C}的非静态非类型成员，且如果要么该
+\nt{id-expression}为潜在求值的，要么\tm{C}是\tm{X}或\tm{X}的基类，则该
+\nt{id-expression}被转换成使用\tm{(*this)}（\ref{class.this}）作为\tm{.}运算符左
+端的\nt{postfix-expression}的类成员访问表达式（\ref{expr.ref}）。「注：如果
+\tm{C}不是\tm{X}或\tm{X}的基类，则类成员访问表达式为病态。」类似的在名字查询过程
+中，当一个用于类\tm{X}的成员函数定义中的\nt{unqualified-id}（\ref{expr.prim}）解
+析为静态成员，枚举子或类\tm{X}或其基类的嵌套类型时，该\nt{unqualified-id}被转换
+成一个\nt{qualified-id}（\ref{expr.prim}），其中\nt{nested-name-specifier}命名成
+员函数的类。这些转换在模板定义上下文中不适用（\ref{temp.dep.type}）。「例：
+\begin{lstlisting}
+  struct tnode {
+    char tword[20];
+    int count;
+    tnode* left;
+    tnode* right;
+    void set(const char*, tnode* l, tnode* r);
+  };
+
+  void tnode::set(const char* w, tnode* l, tnode* r) {
+    count = strlen(w)+1;
+    if (sizeof(tword)<=count)
+      perror("tnode string too long");
+    strcpy(tword,w);
+    left = l;
+    right = r;
+  }
+
+  void f(tnode n1, tnode n2) {
+		n1.set("abc",&n2,0);
+		n1.set("def",0,0);
+  }
+\end{lstlisting}
+在成员函数\tm{tnode::set}的函数体中，成员名\tm{tword}，\tm{count}，\tm{left}和
+\tm{right}引用的是调用函数的对象的成员。因此，在调用\tm{n1.set("abc",&n2,0)}中，
+\tm{tword}引用的是\tm{n1.tword}，而在调用\tm{n2.set("def",0,0)}中，\tm{tword}引
+用的是\tm{t2.tword}。函数\tm{strlen}，\tm{perror}和\tm{strcpy}不是类\tm{tnode}的
+成员，应在别处声明。\footnote{比如，见\tm{<cstring>}（24.5）。}」
+
+\paragraph{}
+非静态成员函数可能使用\tm{const}，\tm{volatile}或\tm{const volatile}来声明。这些
+\nt{cv-qualifier}影响的是\tm{this}指针的类型（\ref{class.this}）。它们也会影响成
+员函数的函数类型（\ref{dcl.fct}）；声明为\tm{const}的成员函数是一个\nt{const}成
+员函数，声明为\tm{volatile}的成员函数是一个\nt{volatile}成员函数，声明为
+\tm{const volatile}的成员函数为\nt{const volatile}成员函数。「例：
+\begin{lstlisting}
+  struct X {
+    void g() const;
+    void h() const volatile;
+  };
+\end{lstlisting}
+\tm{X::g}是一个\tm{const}成员函数，\tm{X::h}是一个\tm{const volatile}成员函数。」
+
+\paragraph{}
+一个非静态成员函数可使用\nt{ref-qualifier}来声明；见\ref{over.match.funcs}。
+
+\paragraph{}
+一个非静态成员函数可以声明为\nt{虚函数}（\nt{virtual}）（\ref{class.virtual}）或
+\nt{纯虚函数}（\nt{pure virtual}）（\ref{class.abstract}）。
+
 \sssect{this指针}{class.this}
+\paragraph{}
+在非静态成员（\ref{class.mfct}）函数体内部，关键字\tm{this}是一个纯右值表达式，
+其值是调用函数的对象地址。类\tm{X}的成员函数内\tm{this}的类型为\tm{X*}。如果成员
+函数声明为\tm{const}，则\tm{this}的类型为\tm{const X*}，如果成员函数声明为
+\tm{volatile}，则\tm{this}的类型为\tm{volatile X*}，如果成员函数声明为
+\tm{const volatile}，则\tm{this}的类型为\tm{const volatile X*}。「注：因此在一个
+\tm{const}成员函数中，调用函数的对象通过一个\tm{const}访问路径进行访问。」「例：
+\begin{lstlisting}
+  struct s {
+    int a;
+    int f() const;
+    int g() { return a++; }
+    int h() const { return a++; } // error
+  };
+
+  int s::f() const { return a; }
+\end{lstlisting}
+\tm{s::h}函数体中\tm{a++}是病态的，因其尝试修改调用\tm{s::h()}的（一部分）对象。
+因为\tm{this}是指向\tm{const}的指针，这在\tm{const}成员函数中是不允许的；即
+\tm{*this}具有\tm{const}类型。」
+
+\paragraph{}
+类似的，\tm{volatile}成员函数中在访问对象及其非静态数据成员时，\tm{volatile}语义
+（\ref{dcl.type.cv}）适用。
+
+\paragraph{}
+一个cv限定的成员函数只有在对象表达式具有与成员函数相同的cv限定或更少限定时才可以
+使用对象表达式来调用（\ref{expr.ref}）。「例：
+\begin{lstlisting}
+  void k(s& x, const s& y) {
+    x.f();
+    x.g();
+    y.f();
+    y.g();            // error
+  }
+\end{lstlisting}
+调用\tm{y.g()}是病态的因为\tm{y}是\tm{const}且\tm{s::g()} 非\tm{const}成员函数，
+即\tm{s::g()}比对象表达式\tm{y}具有更少的限定。」
+
+\paragraph{}
+构造函数（\ref{class.ctor}）和析构函数（\ref{class.dtor}）不应该声明为\tm{const}
+或\tm{volatile}或\tm{const volatile}。「注：但是可以调用这些函数创建或销毁cv限定
+类型的对象，见\ref{class.ctor}和\ref{class.dtor}。」
 
 \ssect{静态成员}{class.static}
+\paragraph{}
+类\tm{X}的静态成员\tm{s}可以使用\nt{qualified-id}表达式\tm{X::s}来引用；引用静态
+成员不是必须使用类成员访问语法（\ref{expr.ref}）。静态成员可以使用类成员访问语
+法，此时对象表达式会进行求值。「例：
+\begin{lstlisting}
+  struct process {
+    static void reschedule();
+  };
+  process& g();
+
+  void f() {
+    process::reschedule();        // OK: no object necessary
+    g().reschedule();             // g() is called;
+  }
+\end{lstlisting}」
+
+\paragraph{}
+静态成员可以其类或派生自其类（\ref{class.derived}）的作用域中直接引用；这种情况
+下，静态成员如同使用了\nt{qualified-id}表达式进行引用，\nt{qualified-id}的
+\nt{nested-name-specifier}命名引用静态成员有类作用域。「例：
+\begin{lstlisting}
+  int g();
+  struct X {
+    static int g();
+  };
+  struct Y : X {
+    static int i;
+  };
+  int Y::i = g();               // equivalent to Y::g();
+\end{lstlisting}」
+
+\paragraph{}
+如果在带有成员\nt{declarator-id}的静态成员定义中使用一个\nt{unqualified-id}
+（\ref{expr.prim}），且名字查询（\ref{basic.lookup.unqual}）查询到
+\nt{unqualified-id}引用静态成员，枚举子或成员类（或其基类）的嵌套类型，则
+\nt{unqualified-id}被转换成一个\nt{qualified-id}表达式，其中
+\nt{nested-name-specifier}命名引用成员的类作用域。「注：见\ref{expr.prim}关于使
+用非静态数据成员和非静态成员函数的限制。」
+
+\paragraph{}
+静态成员遵循常规类访问规则（第\ref{class.access}章）。当用于类成员声明中时，
+\tm{static}说明符应该只用于出现在类定义的\nt{member-specification}中的成员声明。
+「注：不能用于出现在命名空间作用域中的成员声明中。」
+
 \sssect{静态成员函数}{class.static.mfct}
+\paragraph{}
+「注：\ref{class.mfct}中所述规则适用于静态成员函数。」
+
+\paragraph{}
+「注：静态成员函数没有\tm{this}指针（\ref{class.this}）。」静态成员函数不应该是
+\tm{virtual}。不应该有同名同参数类型（\ref{over.load}）的静态和非静态成员函数。
+静态成员函数不应该声明为\tm{const}，\tm{volatile}或\tm{const volatile}。
+
 \sssect{静态数据成员}{class.static.data}
+\paragraph{}
+静态数据成员不是类的子对象的一部分。如果静态数据成员声明为\tm{thread\_local}，则
+每个线程具有成员的一份拷贝。如果静态数据成员未声明为\tm{thread\_local}，则类的所
+有对象共享数据成员的一份拷贝。
+
+\paragraph{}
+类定义中非内联静态数据成员的声明不是定义，且可以是除\nt{cv} \tm{void}之外的不完
+整类型。类定义中未定义为内联的静态数据成员的定义应该出现在包含成员的类定义的命名
+空间作用域中。在命名空间作用域中的定义中，静态数据成员的名字应该使用\tm{::}运算
+符通过其类名进行限定。静态数据成员定义中的\nt{initializer}表达式处于其类的作用域
+中（\ref{basic.scope.class}）。「例：
+\begin{lstlisting}
+  class process {
+    static process* run_chain;
+    static process* running;
+  };
+
+  process* process::running = get_main();
+  process* process::run_chain = running;
+\end{lstlisting}
+类\tm{process}的静态数据成员\tm{run\_chain}定义于全局作用域中；记法
+\tm{process::run\_chain}指定成员\tm{run\_chain}是类\tm{process}的成员且处于类
+\tm{process}的作用域中。在静态数据成员的定义中，\nt{initializer}表达式引用类
+\tm{porcess}的静态数据成员\tm{running}。」
+
+「注：一旦静态数据成员定义之后，即使未创建其类的对象，该成员也是存在的。「例：
+在上面的例子中，即使程序没有创建类\tm{process}的对象，\tm{run\_chain}和
+\tm{running}也是存在的。」」
+
+\paragraph{}
+如果非volatile、非内联\tm{const}静态数据成员具有整型或枚举类型，则其在类定义中的
+声明可以指定\nt{brace-or-equal-initializer}，其中每一个是
+\nt{assignment-expression}的\nt{initializer-clause}是一个常量表达式
+（\ref{expr.const}）。如果在程序中是odr-used（\ref{basic.def.odr}），则成员仍然
+应该在命名空间作用域中定义，且命名空间作用域定义不应该包含\nt{initializer}。一个
+内联静态数据成员可以在类定义中定义，且可以指定一个
+\nt{brace-or-equal-initializer}。如果成员使用\tm{constexpr}说明符声明，则可以在
+命名空间作用域中不带初始化进行重声明（该用法已经废弃；见D.1）。其他静态数据成员
+的声明不应该指定\nt{brace-or-equal-initializer}。
+
+\paragraph{}
+「注：程序中odr-used（\ref{basic.def.odr}）的静态数据成员应该仅有一个定义；无需
+诊断。」无名类以及直接或间接包含在无名类中的类不应该包含静态数据成员。
+
+\paragraph{}
+「注：命名空间作用域中类的静态数据成员具有该类的链接（\ref{basic.link}）。局部类
+不能有静态数据成员（\ref{class.local}）。」
+
+\paragraph{}
+静态数据成员与非局部变量一样进行初始化和销毁（\ref{basic.start.static}，
+\ref{basic.start.dynamic}，\ref{basic.start.term}）。
+
+\paragraph{}
+静态数据成员不应该是\tm{mutable}（\ref{dcl.stc}）。
 
 \ssect{位域}{class.bit}
+\paragraph{}
+形如                                                                          \\
+\mbox{\qquad{\nt{identifier\tsub{opt} attribute-specifier-seq\tsub{opt}} \tm{:}
+  \nt{constant-expression}}}                                                  \\
+的\nt{member-declarator}指定一个位域；其长度在位域名后跟冒号指定。可选的
+\nt{attribute-specifier-seq}应用于所声明实体。位域属性不是类成员类型的一部分。
+\nt{constant-expression}应该是一个整型常表达式，其值大于等于零。整型常量表达式的
+值可能大于位域类型的对象表示（\ref{basic.types}）的位数；此时使用额外的位作为填
+充位，这些填充位不参与位域的对象表示（\ref{basic.types}）。类对象位域的分配是实
+现定义的。位域的对齐是实现定义的。位域被打包成某些可寻址单元。「注：某些机器上位
+域跨分配单元，有些不是。某些机器上位域自右向左赋值，有些机器上自左向右赋值。」
+
+\paragraph{}
+省略了\nt{identifier}的位域声明声明一个\nt{无名位域}。无名位域不是成员，不能被初
+始化。「注：一个无名位域可用于填充以满足外部要求的布局。」作为一种特殊情形，零长
+的无名位域指定下一个位域按分配单元边界对齐。只有当声明一个无名位域时
+\nt{constant-expression}的值才能等于零。
+
+\paragraph{}
+位域不应该是静态成员。位域应该具有整型或枚举类型（\ref{basic.fundamental}）。一
+个\tm{bool}值可以成功的存储到任何非零长位域中。取地址运算符\tm{\&}不应该应用于位
+域，因此没有指向位域的指针。非const引用不应用绑定到位域（\ref{dcl.init.ref}）。
+「注：如果类型\tm{const T\&}的引用的初始化是一个引用位域的左值，则引用绑定到一个
+初始化以存储位域值的临时对象；引用不是直接绑定到位域。见\ref{dcl.init.ref}。」
+
+\paragraph{}
+如果值\tm{true}或\tm{false}存储到任意大小（包括一位位域）的\tm{bool}类型的位域，
+则原\tm{bool}值和位域的值应该相等。如果枚举子的值被存储到同一枚举类型的位域且位
+域的位数足够大以存储枚举类型的所有值（\ref{dcl.enum}），则原枚举子的值应该与位域
+的值相等。「例：
+\begin{lstlisting}
+  enum BOOL { FALSE = 0, TRUE = 1 };
+  struct A {
+    BOOL b:1;
+  };
+  A a;
+  void f() {
+    a.b = TRUE;
+    if (a.b == TRUE)                // yields true
+      { /* ... */ }
+  }
+\end{lstlisting}」
+
 \ssect{嵌套类声明}{class.nest}
+\paragraph{}
+类可以声明于另一个类内部。声明于另一个类内部的类称为\nt{嵌套}类。嵌套类的名字局
+部于其包含类。嵌套类处于其包含类的作用域中。「注：见\ref{expr.prim}关于非静态数
+据成员和非静态成员函数使用上的限制。」
+
+「例：
+\begin{lstlisting}
+  int x;
+  int y;
+
+  struct enclose {
+    int x;
+    static int s;
+
+    struct inner {
+      void f(int i) {
+        int a = sizeof(x);            // OK: operand of sizeof is an unevaluated
+                                      // operand
+        x = i;                        // error: assign to enclose::x
+        s = i;                        // OK: assign to enclose::s
+        ::x = i;                      // OK: assign to global x
+        y = i;                        // OK: assign to global y
+      }
+      void g(enclose* p, int i) {
+        p->x = i;                     // OK: assign to enclose::x
+      }
+    };
+  };
+
+  inner* p = 0;                       // error: inner not in scope
+\end{lstlisting}」
+
+\paragraph{}
+嵌套类的成员函数和静态数据成员可以在包含其类定义的命名空间作用域中定义。「例：
+\begin{lstlisting}
+  struct enclose {
+    struct inner {
+      static int x;
+      void f(int i);
+    };
+  };
+
+  int enclose::inner::x = 1;
+  void enclose::inner::f(int i) { /* ... */ }
+\end{lstlisting}」
+
+\paragraph{}
+如果类\tm{X}定义于命名空间作用域中，嵌套类\tm{Y}可以声明于类\tm{X}中，随后在类
+\tm{X}的定义中定义，或在包含类\tm{X}定义的命名空间作用域中定义。「例：
+\begin{lstlisting}
+  class E {
+    class I1;           // forward declaration of nested class
+    class I2;
+    class I1 { };       // definition of nested class
+  };
+  class E::I2 { };      // definition of nested class
+\end{lstlisting}」
+
+\paragraph{}
+与成员函数一样，声明于嵌套类中的友元函数（\ref{class.friends}）处于该类的词法作
+用域中；其与该类的静态成员函数（\ref{class.static}）一样遵守名字绑定规则，但其没
+有包含类的成员的特殊访问权限。
+
 \ssect{嵌套类型名}{class.nested.type}
+\paragraph{}
+类型名与其他名字一样遵循完全相同的作用域规则。特别的，定义于类定义中的类型名不能
+在其类外无限定地引用。「例：
+\begin{lstlisting}
+  struct X {
+    typedef int I;
+    class Y { /* ... */ };
+    I a;
+  };
+
+  I b;                      // error
+  Y c;                      // error
+  X::Y d;                   // OK
+  X::I e;                   // OK
+\end{lstlisting}」
 
 \sect{联合}{class.union}
+\paragraph{}
+在联合中，如果非静态数据成员的名字引用一个生命期已开始未结束（\ref{basic.life}）
+的对象则该数据成员是\nt{活动}的。任何时候联合类型的对象都只有一个非静态数据成员
+是活动的，即任何时候都只有一个非静态数据成员的值可以存储于联合中。「注：为简化联
+合的使用有一个特殊的保证：如果标准布局联合包含共享公共初始序列
+（\ref{class.mem}）的多个标准布局结构，且如果该标准布局联合类型对象的非静态数据
+成员是活动的，同时是一个标准布局结构，则允许检查任何标准布局成员的公共初始序列；
+见\ref{class.mem}。」
+
+\paragraph{}
+联合的大小足够存储其非静态数据成员中最大的一个。每一个非静态数据成员如同其是结构
+的唯一成员一样进行分配。「注：标准布局联合对象和其非静态成员是指针可转换的
+（\ref{basic.compound}，\ref{expr.static.cast}）。其结果就是这样的联合对象的所有
+非静态数据成员具有相同的地址。」
+
+\paragraph{}
+联合可以具有成员函数（包括构造函数和析构函数），但不应该有虚函数
+（\ref{class.virtual}）。联合不能有基类。联合不能用作基类。如果联合包含引用类型
+的非静态数据成员，则程序为病态。「注：缺少缺省成员初始化（\ref{class.mem}），如
+果联合的任何非静态数据成员具有非平凡缺省构造函数（\ref{class.ctor}），拷贝构造函
+数（\ref{class.copy}），移动构造函数（\ref{class.copy}），拷贝赋值运算符
+（\ref{class.copy}），移动赋值运算符（\ref{class.copy}）或析构函数
+（\ref{class.dtor}），则联合的对应成员函数必须是用户提供的，否则缺省地其将从联合
+中删除（\ref{dcl.fct.def.delete}）。」
+
+\paragraph{}
+「例：考虑如下联合：
+\begin{lstlisting}
+  union U {
+    int i;
+    float f;
+    std::string s;
+  };
+\end{lstlisting}
+因为\tm{std::string}（24.3）声明了所有特殊成员函数的非平凡版本，\tm{U}应该具有隐
+式删除的缺省构造函数，拷贝/移动构造函数，拷贝/移动赋值运算符以及构造函数。为了使
+用\tm{U}，这些成员函数的某些或全部必须是用户提供的。」
+
+\paragraph{}
+当赋值运算符的左操作数涉及到一个提及到联合成员的成员访问表达式（\ref{expr.ref}）
+时，按如下所述，其可能使该联合成员的生命期开始。对表达式\tm{E}，定义\tm{E}的子表
+达式集合\tm{S(E)}如下：
+\begin{enumerate}
+  \item{如果\tm{E}形如\tm{A.B}，则\tm{S(E)}包含\tm{S(A)}的元素，且如果\tm{B}命名
+    一个非类、非数组类型或带有未删除的平凡缺省构造函数的类类型或其数组类型的联合
+    成员，则也包含\tm{A.B}。}
+  \item{如果\tm{E}具有形如\tm{A[B]}且解析为内置数组下标运算符，则如果\tm{A}是数
+    组类型，\tm{S(E)}为\tm{S(A)}，如果\tm{B}是数组类型，\tm{S(E)}为\tm{S(B)}，否
+    则为空。}
+  \item{否则，\tm{S(E)}为空。}
+\end{enumerate}
+如果赋值表达式形如\tm{E1 = E2}，使用内置赋值运算符（\ref{expr.ass}）或平凡赋值运
+算符（\ref{class.copy}），对\tm{S(E1)}的每一个元素\tm{X}，如果\tm{X}的修改在
+\ref{basic.life}下具有未定义行为，则在所提及的存储中隐式创建类型\tm{X}的对象，不
+进行初始化且其生命期的开始后序于左/右操作数的计算，前序于赋值。「注：这将会终止
+之前活动的联合成员，如果有的话（\ref{basic.life}）。」「例：
+\begin{lstlisting}
+  union A { int x; int y[4]; };
+  struct B { A a; };
+  union C { B b; int k; };
+  int f() {
+    C c;                // does not start lifttime of any union member
+    c.b.a.y[3] = 4;     // OK: S(c.b.a.y[3]) contains c.b and c.b.a.y;
+                        // creates objects to hold union members c.b and c.b.a.y
+    return c.b.a.y[3];  // OK: c.b.a.y refers to newly created object (see 6.8)
+  }
+
+  struct X { const int a; int b; };
+  union Y { X x; int k; };
+  void g() {
+    Y y = { { 1, 2 } }; // OK, y.x is active union member (12.2)
+    int n = y.x.a;
+    y.k = 4;            // OK: ends lifetime of y.x, y.k is active member of
+                        // union
+    y.x.b = n;          // undefined behavior: y.x.b modified outside its
+                        // lifetime, S(y.x.b) is empty because X's default
+                        // constructor is deleted, so union member y.x's
+                        // lifetime does not implicitly start
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：一般地，你必须使用显式析构函数调用和放置\nt{new-expression}来改变联合的活
+动成员。」「例：考虑具有类型\tm{M}的非静态数据成员\tm{m}和类型\tm{N}的非静态数据
+成员\tm{n}的联合类型\tm{U}的对象\tm{u}。如果\tm{M}具有非平凡函数且\tm{N}具有非平
+凡构造函数（比如，如果他们声明或继承了虚函数），则\tm{u}的活动成员可以使用析构函
+数和放置\nt{new-expression}按如下安全的从\tm{m}切换到\tm{n}：
+\begin{lstlisting}
+  u.m.~M();
+  new (&u.n) N;
+\end{lstlisting}」
+
 \ssect{匿名联合}{class.union.anon}
+\paragraph{}
+形如                                                                          \\
+\mbox{\qquad{\tm{union \{} \nt{member-specification} \tm{\} ;}}}              \\
+的联合称为\nt{匿名联合}；其定义了一个无名类型和一个该类型的无名对象，称为
+\nt{匿名联合对象}。匿名联合的\nt{member-specification}中的每一个
+\nt{member-declaration}应该定义一个非静态数据成员或一个
+\nt{static\_assert-declaration}。「注：嵌套类型，匿名联合以及函数不能定义于匿名
+联合中。」匿名联合成员的名字应该不同于匿名联合声明所在作用域中任何其他实体的名
+字。为了名字查询，在匿名联合定义之后，匿名联合的成员被认为在匿名联合声明所在作用
+域中已定义。「例：
+\begin{lstlisting}
+  void f() {
+    union { int a; const char* p; };
+    a = 1;
+    p = "Jennifer";
+  }
+\end{lstlisting}
+此处\tm{a}和\tm{p}像普通（非成员）变量一样使用，但因为其是联合成员，它们具有相同
+地址。」
+
+\paragraph{}
+声明于具名的命名空间或全局命名空间中的匿名联合应该被声明为\tm{static}。声明于块
+作用域的匿名联合应该声明具有块作用域变量所允许的存储类，或不具有存储类。不允许在
+类作用域中使用存储类声明匿名联合。匿名联合不应该具有\tm{private}或\tm{protected}
+成员（\ref{class.access}）。匿名联合不能有成员函数。
+
+\paragraph{}
+用于声明对象，指针或引用的联合不是匿名联合。「例：
+\begin{lstlisting}
+  void f() {
+    union { int aa; char* p; } obj, *ptr = &obj;
+    aa = 1;           // error
+    ptr->aa = 1;      // OK
+  }
+\end{lstlisting}
+仅对\tm{aa}赋值是病态的，因为在联合外成员名不可见，且即使可见，其并没有关联于任
+何对象。」「注：使用非用户声明构造函数初始化联合在\ref{dcl.init.aggr}中描述。」
+
+\paragraph{}
+\nt{类联合式类}（\nt{union-like class}）指联合或具有匿名联合作为直接成员的类。类
+联合类\tm{X}具有一组\nt{可变成员}（\nt{variant member}）。如果\tm{X}是联合，
+\tm{X}的非匿名联合的非静态数据成员称为\tm{X}的可变成员。此外，作为\tm{X}的成员的
+匿名联合的非静态数据成员也是\tm{X}的可变成员。联合至多有一个可变成员可以有缺省成
+员有初始化。「例：
+\begin{lstlisting}
+  union U {
+    int x = 0;
+    union { int k; };
+    union {
+      int z;
+      int y = 1;        // error: initialization for second variant member of U
+    };
+  };
+\end{lstlisting}」
 
 \sect{局部类声明}{class.local}
+\paragraph{}
+类可以在函数定义中声明；这样的类称作\tn{局部类}。局部类名局部于其包含作用域。局
+部类处于其包含作用域中，与包含函数一样可以访问函数外的名字。局部类中的声明不应该
+odr-use（\ref{basic.def.odr}）包含作用域中的具有自动存储期的变量。「例：
+\begin{lstlisting}
+  int x;
+  void f() {
+    static int s;
+    int x;
+    const int N = 5;
+    extern int q();
+
+    struct local {
+      int  g() { return x; }    // error: odr-use of automatic variable x
+      int  h() { return s; }    // OK
+      int  k() { return ::x; }  // OK
+      int  l() { return q(); }  // OK
+      int  m() { return N;   }  // OK: not an odr-use
+      int* n() { return &N; }   // error: odr-use of automatic variable N
+    }
+  }
+
+  local* p = 0;                 // error: local not in scope
+\end{lstlisting}
+
+\paragraph{}
+包含函数不具有局部类成员的特殊访问；遵循常规访问规则（第\ref{class.access}）。局
+部类的成员函数如果定义的话，应该在其类定义中定义。
+
+\paragraph{}
+如果类\tm{X}是局部类，嵌套类\tm{Y}可以声明于类\tm{X}中，然后定义于类\tm{X}的定义
+中，或者随后定义于与类\tm{X}相同的作用域中。嵌套于局部类中的类为局部类。
+
+\paragraph{}
+局部类不应该有静态数据成员。

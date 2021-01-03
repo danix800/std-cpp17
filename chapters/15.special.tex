@@ -1,27 +1,1824 @@
 %% 15. special
 
 \chptr{特殊成员函数}{special}
+\paragraph{}
+缺省构造函数（\ref{class.ctor}），拷贝构造函数和拷贝赋值运算符
+（\ref{class.copy}），移动构造函数和移动赋值运算符（\ref{class.copy}）以及析构函
+数（\ref{class.dtor}）为\nt{特殊成员函数}。「注：当程序没有显式声明时，实现将为
+某些类隐式声明这些成员函数。如果是odr-used（\ref{basic.def.odr}），实现将隐式地
+定义它们。见\ref{class.ctor}，\ref{class.dtor}和\ref{class.copy}。」隐式声明的特
+殊成员函数在\nt{class-specifier}的结尾\tm{\}}处声明。程序不应该定义隐式声明的特
+殊成员函数。
+
+\paragraph{}
+程序可能显式引用隐式声明的特殊成员函数。「例：程序可能显式调用，取地址或者形成指
+向隐式声明特殊成员函数的指针。
+\begin{lstlisting}
+  struct A { };                   // implicitly declared A::operator=
+  struct B : A {
+    B& operator=(const B &);
+  };
+  B& B::operator=(const B& s) {
+    this->A::operator=(s);        // well formed
+    return *this;
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：特殊成员函数影响类类型对象的创建、拷贝、移动和销毁方式，以及值如何转换成其
+他类型的值。通常这些特殊成员函数都是隐式地调用。」
+
+\paragraph{}
+特殊成员函数遵循常规访问规则（第\ref{class.access}章）。「例：声明构造函数为保护
+的可以确保只有派生类和友元可以用它来创建对象。」
+
+\paragraph{}
+对类而言，其非静态数据成员，非虚直接基类，以及如果类不是抽象类
+（\ref{class.abstract}），其虚基类统称作其\nt{潜在构建子对象}。
 
 \sect{构造函数}{class.ctor}
+\paragraph{}
+构造函数没有名字。在构造函数声明中，\nt{declarator}是具有形如                 \\
+\mbox{\qquad{\nt{ptr-declarator} \tm{(} \nt{parameter-declaration-clause} \tm{)}
+  \nt{noexcept-specifier\tsub{opt} attribute-specifier-seq\tsub{opt}}}}       \\
+的函数声明子（\ref{dcl.fct}），其中的\nt{ptr-declarator}只由一个
+\nt{id-expression}，一个可选的\nt{attribute-specifier-seq}和可选的包含括号组成，
+且\nt{id-expression}具有如下形式之一：
+\begin{enumerate}
+  \item{在属于类的\nt{member-specification}但不是友元声
+    明的\nt{member-declaration}中，\nt{id-expression}是一个确定直接包含类的当前
+    实例的（第\ref{class}章）\nt{class-name}；或者}
+  \item{在属于类模板的\nt{member-specification}但不是友元声
+    明的\nt{member-declaration}中，\nt{id-expression}是一个确定直接包含类模板的
+    当前实例的（\ref{temp.dep.type}）\nt{class-name}；或者}
+  \item{在命名空间作用域中或友元声明中，\nt{id-expression}是一个确定构造函数
+    （\ref{class.qual}）的\nt{qualifier-id}。}
+\end{enumerate}
+\nt{class-name}不应该是一个\nt{typedef-name}。在构造函数声明中，可选
+\nt{decl-specifier-seq}中的每一个\nt{decl-specifier}应该是\tm{friend}，
+\tm{inline}，\tm{explicit}或\tm{constexpr}。「例：
+\begin{lstlisting}
+  struct S {
+    S();        // declares the constructor
+  };
+
+  S::S() { }    // defines the constructor
+\end{lstlisting}」
+
+\paragraph{}
+构造函数用于初始化其类类型对象。因构造函数没有名字，在名字查询时不会被查询到；但
+一个使用函数式记法（\ref{expr.type.conv}）的显式类型转换将调用构造函数来初始化一
+个对象。「注：对类类型对象初始化，见\ref{class.init}。」
+
+\paragraph{}
+构造函数可以为\tm{const}，\tm{volatile}或\tm{const volatile}对象而调用。
+\tm{const}和\tm{volatile}语义（\ref{dcl.type.cv}）对正在构建的对象不适用。它们在
+最终派生对象（\ref{intro.object}）构建结束后生效。
+
+\paragraph{}
+类\tm{X}的\nt{缺省}构造函数指类\tm{X}的一个构造函数，其每一个非函数参数包的参数
+都有一个缺省实参（包括不含参数的构造函数）。类\tm{X}如果没有用户声明的构造函数，
+则无参数非显式构造函数隐式声明为缺省（\ref{dcl.fct.def}）。一个隐式声明缺省构造
+函数是其类的内联公有成员。
+
+\paragraph{}
+类\tm{X}的缺省化构造函数定义为删除的，如果：
+\begin{enumerate}
+  \item{\tm{X}是一个联合，具有可变成员，这些成员有非平凡缺省构造函数，且\tm{X}的
+    可变成员没有缺省成员初始化，}
+  \item{\tm{X}是一个非联合类，具有可变成员\tm{M}，该成员带有非平凡缺省构造函数，
+    且包含\tm{M}的匿名联合的可变成员没有缺省成员初始化，}
+  \item{任何无缺省成员初始化的非静态数据成员（\ref{class.mem}）具有引用类型，}
+  \item{任何不带\nt{brace-or-equal-initializer}的const限定类型（或其数组）非可
+    变、非静态数据成员不具有用户提供的缺省构造函数，}
+  \item{\tm{X}是联合，其所有可变成员具有const限定类型（或其数组），}
+  \item{\tm{X}是非联合类型，且其所有匿名联合成员的成员具有const限定类型（或其数
+    组），}
+  \item{任何潜在构建子对象，除了带有\nt{brace-or-equal-initializer}的非静态数据
+    成员，具有类类型\tm{M}（或其数组），并且要么\tm{M}没有缺省构造函数，要么要来
+    查找\tm{M}对应构造函数的重载解析（\ref{over.match}）产生歧义，或者产生被删除
+    或从缺省化构造函数中不可访问的函数，或者，}
+  \item{任何潜在构建子对象具有一种类型，其构造函数被删除或从缺省化构造函数中不可
+    访问。}
+\end{enumerate}
+
+\paragraph{}
+一个缺省构造函数是\nt{平凡的}，如果它不是用户提供的，以及如果：
+\begin{enumerate}
+  \item{其类没有虚函数（\ref{class.virtual}）和虚基类（\ref{class.mi}），且}
+  \item{其类的非静态数据成员不具有缺省成员初始化（\ref{class.mem}），且}
+  \item{其类的所有直接基类具有平凡缺省构造函数，且}
+  \item{对其类的所有具有类类型（或其数组）的非静态数据成员，每一个这样的类具有平
+    凡缺省构造函数。}
+\end{enumerate}
+否则，缺省构造函数是\nt{非平凡的}。
+
+\paragraph{}
+缺省的但是未定义为删除的构造函数在odr-used（\ref{basic.def.odr}）以创建其类类型
+对象（\ref{intro.object}）或在其首次声明后显式缺省化时被\nt{隐式定义}。隐式声明
+的缺省构造函数进行类的初始化，如同用户提供的该类的没有\nt{ctor-initializer}
+（\ref{class.base.init}）且具有空的\nt{compound-statement}所进行的一样。如果该用
+户所写缺省构造函数是病态的，则程序是病态的。如果该用户提供的构造函数满足
+constexpr构造函数（\ref{dcl.constexpr}）的要求，则隐式定义缺省构造函数是
+\tm{constexpr}。在类的缺省化的缺省构造函数隐式定义前，其基类的所有非用户提供缺省
+构造函数和其非静态数据成员应该是隐式定义的。「注：一个隐式声明的缺省构造函数具有
+一个异常规范（\ref{except.spec}）。一个显式缺省化定义可能具有一个隐式异常规范，
+见\ref{dcl.fct.def}。」
+
+\paragraph{}
+缺省构造函数在创建未用初始化定义的静态，线程或自动存储期
+（\ref{basic.stc.static}，\ref{basic.stc.thread}，\ref{basic.stc.auto}）类对象时
+隐式调用，在用省略了\nt{new-initializer}（\ref{expr.new}）的\nt{new-expression}
+创建动态存储期（\ref{basic.stc.dynamic}）类对象时调用，或者在显式使用类型转换语
+法（\ref{expr.type.conv}）时调用。如果隐式使用了对象的缺省构造函数而该构造函数不
+可访问（第\ref{class.access}章），则程序是病态的。
+
+\paragraph{}
+「注：\ref{class.base.init}描述了基类和非静态数据成员的构造函数调用顺序以及调用
+构造函数如果指定参数。」
+
+\paragraph{}
+构造函数体中的\tm{return}语句不应该指定返回值。不能取构造函数地址。
+
+\paragraph{}
+函数式记法类型转换（\ref{expr.type.conv}）可以用于创建其类型的新对象。「注：该语
+法看起来像一个显式构造函数调用。」「例：
+\begin{lstlisting}
+  complex zz = complex(1,2.3);
+  cprint( complex(7.8,1.2) );
+\end{lstlisting}」
+
+\paragraph{}
+这种方式创建的对象没有名字。「注：\ref{class.temporary}描述临时对象的生命期。」
+「注：显式构造函数调用不会产生左值，见\ref{basic.lval}。」
+
+\paragraph{}
+「注：某些语言结构在用于构建过程中时具有特殊语义；见\ref{class.base.init}和
+\ref{class.cdtor}。」
+
+\paragraph{}
+在对象构建过程中，如果对象的值或其任何子对象通过一个广义左值来访问，该广义左值不
+是直接或间接通过构造函数的\tm{this}指针来获得，则如此获得的对象或子对象的值未指
+定。「例：
+\begin{lstlisting}
+  struct C;
+  void no_opt(C*);
+
+  struct C {
+    int c;
+    C() : c(0) { no_opt(this); }
+  };
+
+  const C cobj;
+
+  void no_opt(C* cptr) {
+    int i = cobj.c * 100;       // value of cobj.c is unspecified
+    cptr->c = 1;
+    cout << cobj.c * 100        // value of cobj.c is unspecified
+         << '\n';
+  }
+
+  extern struct D d;
+  struct D {
+    D(int a) : a(a), b(d,a) {}
+    int a, b;
+  };
+  D d = D(1);                   // value of d.b is unspecified
+\end{lstlisting}」
 
 \sect{临时对象}{class.temporary}
+\paragraph{}
+临时对象在以下情况下创建。
+\begin{enumerate}
+  \item{当物化纯右值使其可以用作广义左值（\ref{conv.rval}）时，}
+  \item{当实现需要传递或返回平凡可拷贝类型对象（见下文）时，以及}
+  \item{当抛出异常（\ref{except.throw}）时。「注：异常对象生命期在
+    \ref{except.throw}中描述。」}
+\end{enumerate}
+即使在临时对象的创建未求值时（第\ref{expr}章），所有的语义限制仍应像临时对象被创
+建及之后销毁一样遵守。「注：这包括可访问性（第\ref{class.access}章）以及所选构造
+函数和析构函数是否被删除。然而，在\nt{decltype-specifier}的操作数
+（\ref{expr.call}）的特殊情形中，不会引入临时对象，因此前述不适用于这样的纯右
+值。」
+
+\paragraph{}
+临时对象的物化会尽可能推迟以避免创建不必要的临时对象。「注：临时对象在以下情形下
+会物化：
+\begin{enumerate}
+  \item{当绑定引用到纯右值时（\ref{dcl.init.ref}，\ref{expr.type.conv}，
+    \ref{expr.dynamic.cast}，\ref{expr.static.cast}，\ref{expr.const.cast}，
+    \ref{expr.cast}），}
+  \item{在一个类的纯右值上进行成员访问时（\ref{expr.ref}，
+    \ref{expr.mptr.oper}），}
+  \item{在进行纯右值数组到指针转换或下标访问时（\ref{conv.array}，
+    \ref{expr.sub}），}
+  \item{在用\nt{braced-init-list}对\tm{std::initializer\_list<T>}类型对象进行初
+    始化时（\ref{dcl.init.list}），}
+  \item{对某些未求值操作数（\ref{expr.typeid}，\ref{expr.sizeof}），以及}
+  \item{当纯右值出现在弃值表达式（第\ref{expr}章）中时。}
+\end{enumerate}
+」「例：考虑以下代码：
+\begin{lstlisting}
+  class X {
+  public:
+    X(int);
+    X(const X&);
+    X& operator=(const X&);
+    ~X();
+  };
+
+  class Y {
+  public:
+    Y(int);
+    Y(Y&&);
+    ~Y();
+  };
+
+  X f(X);
+  Y g(Y);
+
+  void h() {
+    X a(1);
+    X b = f(X(2));
+    Y c = g(Y(3));
+    a = f(a);
+  }
+\end{lstlisting}
+\tm{X(2)}在用于存放\tm{f()}的参数的空间中构建，\tm{Y(3)}在用于存放\tm{g()}的参数
+的空间中构建。同样，\tm{f()}的结果在\tm{b}中直接构建，\tm{g()}的结果在\tm{c}中直
+接构建。另一方面，表达式\tm{a = f(a)}需要临时对象用于\tm{f(a)}的结果，物化以后使
+得\tm{A::operator=(const A\&)}的引用参数可以绑定到它。」
+
+\paragraph{}
+当一个类类型\tm{X}的对象传递到函数或从函数返回时，如果每一个拷贝构造函数，移动构
+造函数和\tm{X}的析构函数要么是平凡的要么被删除，且\tm{X}具有至少一个未删除拷贝或
+移动构造函数，则允许实现创建临时对象以存储函数参数或其返回值。临时对象分别从函数
+参数或返回值构建，且函数参数或返回值如同使用未删除平凡构造函数来拷贝临时对象一样
+进行初始化（即使该构造函数不可访问或不会被重载解析选中以进行拷贝或移动对象）。
+「注：对实现的放宽允许类类型对象通过寄存器进行传递或从函数返回。」
+
+\paragraph{}
+当实现引入具有非平凡构造函数（\ref{class.ctor}，\ref{class.copy}）的类的临时对象
+时，其应该确保对临时对象调用构造函数。类似的，对具有非平凡析构函数
+（\ref{class.dtor}）的临时对象应该调用析构函数。临时对象作为词法上包含创建它的点
+的全表达式（\ref{intro.execution}）求值的最后一步进行销毁。即使求值抛出异常这一
+点也成立。值计算及销毁临时对象只关联于全表达式，而不是任何特定子表达式。
+
+\paragraph{}
+存在三种上下文，其中临时变量在不同全表达式结束而在其他不同点销毁。第一种是当调用
+缺省构造函数来初始化没有对应初始化的（\ref{dcl.init}）数组元素。第二种是在拷贝整
+个数组时调用拷贝构造函数来拷贝数组的元素（\ref{expr.prim.lambda.capture}，
+\ref{class.copy}）。无论哪种情形，如果构造函数具有一个或多个缺省参数，则缺省参数
+中所创建的每一个临时对象的销毁前序于下一个数组元素（如果有）的构建。
+
+\paragraph{}
+第三种上下文是在引用绑定到临时变量时。\footnote{同样的规则对底层为临时数组的
+\tm{initializer\_list}对象（\ref{dcl.init.list}）的初始化也适用。}引用绑定的临时
+对象或引用绑定的是子对象的完整对象的临时对象为引用的生命期而持续，除非：
+\begin{enumerate}
+  \item{绑定到函数调用（\ref{expr.call}）中的引用参数的临时对象持续直到包含调用
+    的完整表达式结束。}
+  \item{函数返回语句（\ref{stmt.return}）中绑定到返回值的临时对象生命期不扩展；
+    返回语句中临时对象在全表达式结束处销毁。}
+  \item{\nt{new-initializer}（\ref{expr.new}）中绑定到引用的临时对象持续直到包含
+    \nt{new-initializer}的全表达式完成。「例：
+\begin{lstlisting}
+  struct S { int mi; const std::pair<int,int>& mp; };
+  S a { 1, {2,3} };
+  S* p = new S{ 1, {2,3} };   // Creates dangling reference
+\end{lstlisting}」
+「注：这可能会引入悬停引用，实现应该就此给出警告。」}
+\end{enumerate}
+
+\paragraph{}
+因绑定到引用但生命期未扩展的临时对象的销毁前序于同一全表达式中较早构建的任何临时
+对象的销毁。如果引用绑定的两个或多个临时对象的生命期在同一点结束，这些临时对象在
+该点按与构建完成顺序相反的顺序进行销毁。此外，绑定到引用的临时对象的销毁应该考虑
+静态、线程或自动存储期（\ref{basic.stc.static}，\ref{basic.stc.thread}，
+\ref{basic.stc.auto}）对象的销毁顺序；即如果\tm{obj1}是与临时对象具有相同存储期
+的对象，且创建于临时对象之前，则临时对象应在\tm{obj1}销毁之前销毁；如果\tm{obj2}
+是与临时对象具有相同存储期的对象且创建于临时对象之后，则临时对象应在\tm{obj2}销
+毁之后销毁。
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  struct S {
+    S();
+    S(int);
+    friend S operator+(const S&, const S&);
+    ~S();
+  };
+  S obj1;
+  const S& cr = S(16)+S(23);
+  S obj2;
+\end{lstlisting}
+表达式\tm{S(16) + S(23)}创建三个临时对象：第一个临时对象\tm{T1}存储表达式
+\tm{S(16)}的结果，第二个临时对象\tm{T2}保存表达式\tm{S(23)}的结果，第三个临时对
+象保存这两个表达式加法的结果。临时对象\tm{T3}随后绑定到引用\tm{cr}。\tm{T1}和
+\tm{T2}哪个先创建未指定。在一个实现中，如果\tm{T1}先于\tm{T2}创建，则\tm{T2}应该
+先于\tm{T1}销毁。临时对象\tm{T1}和\tm{T2}绑定到\tm{operator+}的引用参数；这些对
+象在包含调用\tm{operator+}的全表达式结束时销毁。绑定到\tm{cr}的临时对象\tm{T3}在
+\tm{cr}生命期结束时销毁，即在程序结束时。此外，\tm{T3}销毁顺序考虑到其他静态存储
+期对象的销毁顺序。即因\tm{obj1}早于\tm{T3}创建，而\tm{T3}早于\tm{obj2}的创建，
+\tm{obj2}应该早于\tm{T3}销毁，而\tm{T3}应该早于\tm{obj1}销毁。」
 
 \sect{转换}{class.conv}
+\paragraph{}
+类对象的类型转换可以通过构造函数和转换函数来指定。这些转换称为\nt{用户定义转换}
+且可用于隐式类型转换（第\ref{conv}章），初始化（\ref{dcl.init}）和显式类型转换
+（\ref{expr.cast}，\ref{expr.static.cast}）。
+
+\paragraph{}
+用户定义转换仅用于无歧义的地方（\ref{class.member.lookup}，
+\ref{class.conv.fct}）。转换遵循访问控制规则（第\ref{class.access}章）。访问控制
+在歧义解析之后应用（\ref{basic.lookup}）。
+
+\paragraph{}
+「注：见\ref{over.match}关于在函数调用中使用转换以及以下示例。」
+
+\paragraph{}
+至多一个用户定义转换（构造函数或转换函数）隐式应用于单个值。「例：
+\begin{lstlisting}
+  struct X {
+    operator int();
+  };
+
+  struct Y {
+    operator X();
+  };
+
+  Y a;
+  int b = a;        // error, a.operator X().operator int() not tried
+  int c = X(a);     // OK: a.operator X().operator int()
+\end{lstlisting}」
+
+\paragraph{}
+用户定义转换仅在无歧义时隐式使用。派生类中的转换函数不会隐藏基类中的转换函数，除
+非两个函数转换成相同类型。函数重载解析（\ref{over.match.best}）选择最佳转换函数
+进行转换。「例：
+\begin{lstlisting}
+  struct X {
+    operator int();
+  };
+
+  struct Y : X {
+    operator char();
+  };
+
+  void f(Y& a) {
+    if (a) {        // ill-formed: X::operator int() or Y::operator char()
+    }
+  }
+\end{lstlisting}」
+
 \ssect{构造函数转换}{class.conv.ctor}
+\paragraph{}
+未使用\nt{function-specifier} \tm{explicit}声明的构造函数指定从其参数（如果有）
+类型到其类类型的转换。这样的构造函数称为\nt{转换构造函数}。「例：
+\begin{lstlisting}
+  struct X {
+    X(int);
+    X(const char*, int =0);
+    X(int, int);
+  };
+
+  void f(X arg) {
+    X a = 1;          // a = X(1)
+    X b = "Jessie";   // b = X("Jessie",0)
+    a = 2;            // a = X(2)
+    f(3);             // f(X(3))
+    f({1,2});         // f(X(1,2))
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：显式（\tm{explicit}）构造函数就像非显式构造函数一样构建对象，但仅在使用直
+接初始化语法（\ref{dcl.init}）或显式使用强制转换（\ref{expr.static.cast}，
+\ref{expr.cast}）的时候；见\ref{over.match.copy}。一个缺省构造函数可能是一个显式
+构造函数；这样的构造函数将用于进行缺省初始化或值初始化（\ref{dcl.init}）。「例：
+\begin{lstlisting}
+  struct Z {
+    explicit Z();
+    explicit Z(int);
+    explicit Z(int, int);
+  };
+
+  Z a;                          // OK: default-initialization performed
+  Z b{};                        // OK: direct initialization syntax used
+  Z c = {};                     // error: copy-list-initialization
+  Z a1 = 1;                     // error: no implicit conversion
+  Z a3 = Z(1);                  // OK: direct initialization syntax used
+  Z a2(1);                      // OK: direct initialization syntax used
+  Z* p = new Z(1);              // OK: direct initialization syntax used
+  Z a4 = (Z)1;                  // OK: explicit cast used
+  Z a5 = static_cast<Z>(1);     // OK: explicit cast used
+  Z a6 = { 3, 4 };              // error: no implicit conversion
+\end{lstlisting}」」
+
+\paragraph{}
+非显式拷贝/移动构造函数（\ref{class.copy}）是一个转换构造函数。「注：一个隐式声
+明的拷贝/移动构造函数不是显式构造函数；可以调用它来隐式类型转换。」
+
 \ssect{转换函数}{class.conv.fct}
+\paragraph{}
+名字具有以下形式的类\tm{X}的无参数成员函数
+
+\synsym{conversion-function-id}
+  \synprd{\tm{operator} \nt{conversion-type-id}}
+\synsym{conversion-type-id}
+  \synprd{\nt{type-specifier-seq conversion-declarator\tsub{opt}}}
+\synsym{conversion-declarator}
+  \synprd[]{\nt{ptr-operator conversion-declarator\tsub{opt}}}
+
+指定从\tm{X}到\nt{conversion-type-id}所确定类型的转换。这样的函数称为\nt{转换函
+数}。转换函数的\nt{decl-specifier-seq}中的\nt{decl-specifier}（如果有）应该即不
+是\nt{defining-type-specifier}也不是\tm{static}。转换函数的类型
+（\ref{dcl.fct}）为``返回\nt{conversion-type-id}的无参函数''。转换函数不会用于转
+换一个（可能cv限定的）对象到（可能cv限定的）同一对象类型（或其引用），到一个（可
+能cv限定的）该类型的基类（或其引用），或到一个（可能cv限定的）空类型。
+\footnote{为重载解析的目的，这些转换被当作是标准转换（\ref{over.best.ics}，
+\ref{over.ics.ref}），初始化（\ref{dcl.init}）和显式转换
+（\ref{expr.static.cast}）。转换到\tm{void}不调用任何转换函数
+（\ref{expr.static.cast}。即使从不直接调用以进行转换，这样的转换函数仍可声明，且
+通过调用基类中虚转换函数而潜在地到达。}「例：
+\begin{lstlisting}
+  struct X {
+    operator int();
+    operator auto() -> short;   // error: trailing return type
+  };
+
+  void f(X a) {
+    int i = int(a);
+    i = (int)a;
+    i = a;
+  }
+\end{lstlisting}
+在所有的三种情形中所赋的值都将使用\tm{X::operator int()}转换。」
+
+\paragraph{}
+转换函数可以是显式的（\ref{dcl.fct.spec}），此时仅将其当作用户定义的用于直接初始
+化（\ref{dcl.init}）的转换。否则，用户定义转换在赋值和初始化中的使用不受限。
+「例：
+\begin{lstlisting}
+  class Y { };
+  struct Z {
+    explicit operator Y() const;
+  };
+
+  void h(Z z) {
+    Y y1(z);        // OK: direct-initialization
+    Y y2 = z;       // ill-formed: copy-initialization
+    Y y3 = (Y)z;    // OK: cast notation
+  }
+
+  void g(X a, X b) {
+    int i = (a) ? 1+a : 0;
+    int j = (a&&b) ? a+b : i;
+    if (a) {
+    }
+  }
+\end{lstlisting}」
+
+\paragraph{}
+\nt{conversion-type-id}不应该表示函数类型或数组类型。\nt{conversion-function-id}
+中的\nt{conversion-type-id}为可能形成\nt{conversion-type-id}的标记的最长序列。
+「注：这防止了声明子运算符\tm{*}和其表达式对应部分之间的歧义。「例：
+\begin{lstlisting}
+  &ac.operator int*i;   // syntax error
+                        // parsed as: &ac.operator int *)i
+                        // not as: &(ac.operator int)*i
+\end{lstlisting}
+这个\tm{*}是指针声明子，不是乘法运算符。」该规则也防止属性的歧义。「例：
+\begin{lstlisting}
+  operator int [[noreturn]] ();   // error: noreturn attribute applied to a type
+\end{lstlisting}」」
+
+\paragraph{}
+转换函数可以继承。
+
+\paragraph{}
+转换函数可以是虚函数。
+
+\paragraph{}
+转换函数模板不应该具有推断返回类型（\ref{dcl.spec.auto}）。「例：
+\begin{lstlisting}
+  struct S {
+    operator auto() const { return 10; }  // OK
+    template<class T>
+    operator auto() const { return 1.2; } // error: conversion function template
+  };
+\end{lstlisting}」
 
 \sect{析构函数}{class.dtor}
+\paragraph{}
+在析构函数的声明中，\nt{declarator}是一个函数声明子（\ref{dcl.fct}），形如    \\
+\mbox{\qquad{\nt{ptr-declarator} \tm{(} \nt{parameter-declaration-clause} \tm{)}
+  \nt{noexcept-specifier\tsub{opt} attribute-specifier-seq\tsub{opt}}}}       \\
+其中\nt{ptr-declarator}仅由\nt{id-expression}，一个可选的
+\nt{attribute-specifier-seq}和一个可选的包含括号组成，且\nt{id-expression}具有以
+下形式：
+\begin{enumerate}
+  \item{在一个属于类\nt{member-specification}但不是友元声明
+    （\ref{class.friends}）的\nt{member-declaration}中，\nt{id-expression}为
+    \tm{\~}\nt{class-name}，\nt{class-name}为直接包含类的注入类名
+    （第\ref{class}章）；}
+  \item{在一个属于类模板\nt{member-specification}但不是友元声明
+    （\ref{class.friends}）的\nt{member-declaration}中，\nt{id-expression}为
+    \tm{\~}\nt{class-name}，\nt{class-name}确定直接包含类模板的当前实例
+    （\ref{temp.dep.type}）；}
+  \item{在命名空间作用域中的声明或友元声明中，\nt{id-expression}为
+    \nt{nested-name-specifier} \tm{\~}\nt{class-name}，\nt{class-name}确定与
+    \nt{nested-name-specifier}相同的类。}
+\end{enumerate}
+\nt{class-name}不应该是\nt{typedef-name}。析构函数不应有参数（\ref{dcl.fct}）。
+析构函数声明的\nt{decl-specifier-seq}中每一个\nt{decl-specifier}（如果有）应该是
+\tm{friend}，\tm{inline}或\tm{virtual}。
+
+\paragraph{}
+析构函数用于销毁其类类型对象。不应取析构函数地址。析构函数可以调用于\tm{const}，
+\tm{volatile}或\tm{const volatile}对象。\tm{const}和\tm{volatile}语义
+（\ref{dcl.type.cv}）不适用正在销毁的对象。它们在最终派生对象
+（\ref{intro.object}）开始销毁时失效。
+
+\paragraph{}
+「注：不具有\nt{noexcept-specifier}的析构函数声明具有与隐式声明
+（\ref{except.spec}）时一样的异常规范。」
+
+\paragraph{}
+如果类没有用户声明析构函数，则隐式声明一个缺省析构函数（\ref{dcl.fct.def}）。一
+个隐式声明析构函数是其类的内联公有成员。
+
+\paragraph{}
+类\tm{X}的缺省析构函数被定义为删除的，如果：
+\begin{enumerate}
+  \item{\tm{X}为联合式类，具有无缺省析构函数的可变成员，}
+  \item{任何潜在构建子对象具有类类型\tm{M}（或其数组），\tm{M}具有删除的或从缺省
+    析构函数中不可访问的析构函数，}
+  \item{或者，对于虚析构函数，查询非数组释放函数产生歧义，或者产生删除的或从缺省
+    析构函数中不可访问的函数。}
+\end{enumerate}
+
+\paragraph{}
+析构函数是平凡的，如果其不是用户提供，以及：
+\begin{enumerate}
+  \item{该析构函数不是\tm{virtual}，}
+  \item{其类类型的所有直接基类具有平凡析构函数，且}
+  \item{其类的所有类类型（或其数组）非静态数据成员，每一个这样的类具有平凡析构函
+    数。}
+\end{enumerate}
+否则，析构函数为非平凡的。
+
+\paragraph{}
+缺省化但未定义为删除的析构函数在odr-used（\ref{basic.def.odr}）或当其首次声明后
+显式缺省化时被\nt{隐式定义}。
+
+\paragraph{}
+在类的缺省化析构函数的隐式定义之前，其基类所有非用户提供析构函数及其非静态数据成
+员应该被隐式定义。
+
+\paragraph{}
+在析构函数体执行结束及其内分配的自动对象销毁之后，类\tm{X}的析构函数调用类\tm{X}
+的直接非可变非静态成员的析构函数，\tm{X}的非虚直接基类的析构函数，以及如果\tm{X}
+为最终派生类（\ref{class.base.init}）类型，其析构函数调用\tm{X}的虚基类的析构函
+数。所有析构函数如同使用一个限定名来引用一样进行调用，即，忽略任何可能的更深层派
+生类重写的虚析构函数。基类和成员按与其构造函数（见\ref{class.base.init}）完成的
+顺序相反的顺序进行销毁。析构函数中的返回语句（\ref{stmt.return}）可能不能直接返
+回其调用者；在控制转换到调用者之前会调用成员和基类的析构函数。数组元素的析构函数
+按与其构建顺序相反的顺序进行调用（见\ref{class.init}）。
+
+\paragraph{}
+析构函数可以声明为虚函数（\ref{class.virtual}）或纯虚函数
+（\ref{class.abstract}）；如果该类或其派生类的任何对象在程序中被创建，则应该定义
+其析构函数。如果类具有含虚析构函数的基类，则其析构函数（无论用户声明还是隐式声
+明）也是虚函数。
+
+\paragraph{}
+「注：当用于销毁过程中时，某些语言结构具有特殊语义；见\ref{class.cdtor}。」
+
+\paragraph{}
+析构函数会
+\begin{enumerate}
+  \item{在程序终止时（\ref{basic.start.term}）为所构建的静态存储期
+    （\ref{basic.stc.static}）对象，}
+  \item{在线程结束时为所创建的线程存储期（\ref{basic.stc.thread}）对象，}
+  \item{在创建对象的块结束时为所构建的自动存储期（\ref{stmt.dcl}）对象，}
+  \item{在生命期结束时（\ref{conv.rval}，\ref{class.temporary}）为所创建的临时对
+    象}
+\end{enumerate}
+而隐式调用。在每一种情形中，调用上下文为对象的构建上下文。析构函数也会在使用
+\nt{delete-expression}（\ref{expr.delete}）于\nt{new-expression}
+（\ref{expr.new}）分析的构建对象上时隐式调用；该调用上下文为
+\nt{delete-expression}。「注：类类型数组包含多个子对象，其中每一个都会调用其析构
+函数。」析构函数也可以显式调用。析构函数如被调用或如\ref{expr.new}，
+\ref{class.base.init}和\ref{except.throw}中所指定为\nt{潜在调用}。如果被潜在调用
+析构函数被删除或在调用上下文中不可访问则程序为病态。
+
+\paragraph{}
+在虚析构函数的定义点（包括隐式定义（\ref{class.copy}）），非数组释放函数如同
+为出现在析构函数类的非虚析构函数中的表达式\tm{delete this}确定释放函数一样进行确
+定（见\ref{expr.delete}）。如果查询失败或如果释放函数被删除定义
+（\ref{dcl.fct.def}），则程序为病态。「注：这确保了一个对象的动态类型所对应的释
+放函数可用于\nt{delete-expression}（\ref{class.free}）。」
+
+\paragraph{}
+在一个显式析构函数调用中，析构函数使用\tm{\~}跟上指代析构函数类类型的
+\nt{type-name}或\nt{decltype-specifier}来指定。析构函数的调用受限于成员函数的常
+规规则（\ref{class.mfct}）；即如果对象不具有析构函数的类类型且不是派生于析构函数
+类类型的类（包括析构函数通过空指针值调用），则程序具有未定义行为。「注：在空指针
+上调用\tm{delete}不会调用析构函数；见\ref{expr.delete}。」「例：
+\begin{lstlisting}
+  struct B {
+    virtual ~B() { }
+  };
+  struct D : B {
+    ~D() { }
+  };
+
+  D D_object;
+  typedef B B_alias;
+  B* B_ptr = &D_object;
+
+  void f() {
+    D_object.B::~B();               // calls B's destructor
+    B_ptr->~B();                    // calls D's destructor
+    B_ptr->~B_alias();              // calls D's destructor
+    B_ptr->B_alias::~B();           // calls B's destructor
+    B_ptr->B_alias::~B_alias();     // calls B's destructor
+  }
+\end{lstlisting}」
+「注：显式析构函数调用必须总是写成使用成员访问运算符（\ref{expr.ref}）或
+\nt{qualified-id}的形式；特别的，成员函数中\nt{unary-expression} \tm{~X()}不是一
+个显式析构函数调用（\ref{expr.unary.op}）。」
+
+\paragraph{}
+「注：析构函数的显式调用很少会用到。其中的一种此类用法是为使用放置
+\nt{new-expression}而处于特殊地址的对象而调用。对象的这种显式放置和销毁的用法是
+必须的，用以处理特定硬件资源和用于写作内存管理功能。比如，
+\begin{lstlisting}
+  void* operator new(std::size_t, void* p) { return p; }
+  struct X {
+    X(int);
+    ~X();
+  };
+  void f(X* p);
+  void g() {                          // rare, specialized use:
+    char* buf = new char[sizeof(X)];
+    X* p = new(buf) X(222);           // use buf[] and initialize
+    f(p);
+    p->X::~X();                       // cleanup
+  }
+\end{lstlisting}」
+
+\paragraph{}
+一旦为对象调用构造函数后，对象即不再存在；如果为生命期终止（\ref{basic.life}）的
+对象调用析构函数则行为未定义。「例：如果析构函数为自动对象显式调用以后，而块处于
+会正常地隐式调用对象的析构函数的状态下，则行为未定义。」
+
+\paragraph{}
+「注：显式析构函数调用的写法可以用于任何标量类型名（\ref{expr.pseudo}）。允许这
+点使写代码而无需知道给定类型是否有析构函数成为可能。比如，
+\begin{lstlisting}
+  typedef int I;
+  I* p;
+  p->I::~I();
+\end{lstlisting}」
 
 \sect{自由存储}{class.free}
+\paragraph{}
+类\tm{T}的任何分配函数是一个静态成员（即使未显式声明为\tm{static})。
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  class Arena;
+  struct B {
+    void* operator new(std::size_t, Arena*);
+  };
+  struct D1 : B {
+  };
+
+  Arena* ap;
+  void foo(int i) {
+    new (ap) D1;      // calls B::operator new(std::size_t, Arena*)
+    new D1[i];        // calls ::operator new[](std::size_t)
+    new D1;           // ill-formed: ::operator new(std::size_t) hidden
+  };
+\end{lstlisting}」
+
+\paragraph{}
+当对象使用\nt{delete-expression}（\ref{expr.delete}）删除时，（隐式）调用一个释
+放函数（非数组对象的\tm{operator delete()}或数组的\tm{operator delete[]}）来回收
+对象所占存储（\ref{basic.stc.dynamic.deallocation}）。
+
+\paragraph{}
+类特定的释放函数查询是通用释放函数查询（\ref{expr.delete}）的一部分，且按如下出
+现。如果\nt{delete-expression}用于释放类对象，其静态类型具有虚析构函数，则释放函
+数为动态类型的析构函数（\ref{class.dtor}）定义点所选择的那个。\footnote{类似条款
+对数组版本的\tm{operator delete}是不需要的，因为\ref{expr.delete}在此情况下需要
+待删除对象的静态类型与其动态类型一样。}否则，如果\nt{delete-expression}用于释放
+类\tm{T}的对象或其数组，则对象的静态和动态类型应该一样且释放函数的名字在\tm{T}的
+作用域中查询。如果查询未能找到名字，则继续通用释放函数查询
+（\ref{expr.delete}）。如果查询结果有歧义或不可访问，或如果查询选择放置释放函数
+则程序为病态。
+
+\paragraph{}
+类\tm{X}的任何释放函数是静态成员（即使未显式声明为\tm{static}）。「例：
+\begin{lstlisting}
+  class X {
+    void operator delete(void*);
+    void operator delete[](void*, std::size_t);
+  };
+
+  class Y {
+    void operator delete(void*, std::size_t);
+    void operator delete[](void*);
+  };
+\end{lstlisting}」
+
+\paragraph{}
+成员分配和释放函数是静态的，因此不能是虚函数。「注：但当\nt{delete-expression}的
+\nt{cast-expression}引用类类型对象时，因为实际调用的释放函数在对象的动态类型类作
+用域中查询，如果析构函数是虚函数，则效果是一致的。比如，
+\begin{lstlisting}
+  struct B {
+    virtual ~B();
+    void operator delete(void*, std::size_t);
+  };
+
+  struct D : B {
+    void operator delete(void*);
+  };
+
+  void f() {
+    B* bp = new D;
+    delete bp;          // 1: uses D::operator delete(void*)
+  }
+\end{lstlisting}
+这里，由于虚析构函数，类\tm{D}的非数组对象的存储由\tm{D::operator delete()}释
+放。」「注：当\nt{delete-expression}的\nt{cast-expression}引用类类型对象数组时，
+虚析构函数对实际调用的释放函数无影响。比如，
+\begin{lstlisting}
+  struct B {
+    virtual ~B();
+    void operator delete[](void*, std::size_t);
+  };
+
+  struct D : B {
+    void operator delete[](void*, std::size_t);
+  };
+
+  void f(int i) {
+    D* dp = new D[i];
+    delete [] dp;       // uses D::operator delete[](void*, std::size_t)
+    B* bp = new D[i];
+    delete[] bp;        // undefined behavior
+  }
+\end{lstlisting}」
+
+\paragraph{}
+释放函数的访问静态地检查。因此，即使实际执行的可能是不同的函数，静态可见释放函数
+也需要是可访问的。「例：对上例中行"// 1"中的调用，如果\tm{B::operator delete()}
+是私有的，则删除表达式是病态的。」
+
+\paragraph{}
+「注：如果释放函数无显式\nt{noexcept-specifier}，则其具有不抛出异常规范
+（\ref{except.spec}）。」
 
 \sect{初始化}{class.init}
+\paragraph{}
+当（可能cv限定的）类类型对象（或其数组）未指定初始化时，或初始化具有形式\tm{()}
+则对象按\ref{dcl.init}进行初始化。
+
+\paragraph{}
+类类型（或其数组）对象可以显式初始化；见\ref{class.expl.init}和
+\ref{class.base.init}。
+
+\paragraph{}
+当类对象数组被初始化（无论显式还是隐式）且元素由构造函数初始化，则应该按下标顺序
+为数组每一个元素调用构造函数；见\ref{dcl.array}。「注：数组元素的析构函数按与其
+构建顺序相反的顺序进行调用。」
+
 \ssect{显式初始化}{class.expl.init}
+\paragraph{}
+类类型对象可以使用带括号的\nt{expression-list}进行初始化，其中
+\nt{expression-list}解释成调用以初始化对象的构造函数的参数列表。或者可以使用初始
+化的\tm{=}形式将单个\nt{assignment-expression}指定为初始化。直接初始化语义和拷贝
+初始化语义均适用；见\ref{dcl.init}。「例：
+\begin{lstlisting}
+  struct complex {
+    complex();
+    complex(double);
+    complex(double,double);
+  };
+
+  complex sqrt(complex,complex);
+
+  complex a(1);             // initialize by a call of complex(double)
+  complex b = a;            // initialize by a copy of a
+  complex c = complex(1,2); // construct complex(1,2) using
+                            // complex(double,double), copy/move it into c
+  complex d = sqrt(b,c);    // call sqrt(complex,complex) and copy/move the
+                            // result into d
+  complex e;                // initialize by a call of complex()
+  complex f = 3;            // construct complex(3) using complex(double),
+                            // copy/move it into f
+  complex g = { 1, 2 };     // initialize by a call of complex(double, double)
+\end{lstlisting}」
+「注：赋值运算符重载（\ref{over.ass}）对初始化无效果。」
+
+\paragraph{}
+类类型对象也可以使用\nt{braced-init-list}初始化。适用列表初始化语义；见
+\ref{dcl.init}和\ref{dcl.init.list}。「例：
+\begin{lstlisting}
+  complex v[6] = { 1, complex(1,2), complex(), 2 };
+\end{lstlisting}
+此处调用\tm{complex::complex(double)}来初始化\tm{v[0]}和\tm{v[3]}，调用
+\tm{complex::complex(double, double)}来初始化\tm{v[1]}，调用
+\tm{complex::complex()}来初始化\tm{v[2]}，\tm{v[4]}和\tm{v[5]}。另一个例子为，
+\begin{lstlisting}
+  struct X {
+    int i;
+    float f;
+    complex c;
+  } x = { 99, 88.8, 77.7 };
+\end{lstlisting}
+这里\tm{x.i}初始化为\tm{99}，\tm{x.f}初始化为\tm{88.8}，并调用
+\tm{complex::complex(double)}来初始化\tm{x.c}。」「注：对任何聚合类型
+\nt{initializer-list}的括号可以省略，即使聚合具有含用户定义类型转换的类类型成
+员；见\ref{dcl.init.aggr}。」
+
+\paragraph{}
+「注：如果\tm{T}是无缺省构造函数的类类型，类型\tm{T}（或其数组）的对象的任何声明
+如果没有显式指定初始化则为病态的（见\ref{class.init}和\ref{dcl.init}）。」
+
+\paragraph{}
+「注：静态或线程存储期对象初始化顺序在\ref{basic.start.dynamic}和\ref{stmt.dcl}
+中描述。」
+
 \ssect{初始化基类与成员}{class.base.init}
+\paragraph{}
+在类的构造函数定义中，直接和虚基类子对象以及非静态数据成员初始化可以通过
+\nt{ctor-initializer}指定，形如
+
+\synsym{ctor-initializer}
+  \synprd{\tm{:} \nt{mem-initializer-list}}
+\synsym{mem-initializer-list}
+  \synprd{\nt{mem-initializer} \tm{...}\nt{\tsub{opt}}}
+  \synprd{\nt{mem-initializer-list} \tm{,} \nt{mem-initializer}
+    \tm{...}\nt{\tsub{opt}}}
+\synsym{mem-initializer}
+  \synprd{\nt{mem-initializer-id} \tm{(} \nt{expression-list\tsub{opt}} \tm{)}}
+  \synprd{\nt{mem-initializer-id} \nt{braced-init-list}}
+\synsym{mem-initializer-id}
+  \synprd{\nt{class-or-decltype}}
+  \synprd[]{\nt{identifier}}
+
+\paragraph{}
+在\nt{mem-initializer-id}中一个初始未限定\nt{identifier}在构造函数的类作用域中查
+询，如果在该作用域中未找到，则在包含构造函数定义的作用域中查询。「注：如果构造函
+数的类包含一个带有同名成员作为类的直接或虚基类，则确定成员或基类且由单个标识符组
+成的\nt{mem-initializer-id}引用类的成员。隐藏基类的\nt{mem-initializer-id}可以通
+过限定名来指定。」除了\nt{mem-initializer-id}确定构造函数的类，构造函数的类的一
+个非静态数据成员，或者该类的直接或虚基类之外的\nt{mem-initializer}是病态的。
+
+\paragraph{}
+一个\nt{mem-initializer-list}可以使用任何代表基类类型的\nt{class-or-decltype}来
+初始化一个基类。「例：
+\begin{lstlisting}
+  struct A { A(); };
+  typedef A global_A;
+  struct B { };
+  struct C: public A, public B { C(); };
+  C::C(): global_A() { }          // mem-initializer for base A
+\end{lstlisting}」
+
+\paragraph{}
+如果一个\nt{mem-initializer-id}因为即表示一个直接非虚基类又表示一个继承虚基类而
+具有歧义，则\nt{mem-initializer}为病态。「例：
+\begin{lstlisting}
+  struct A { A(); };
+  struct B: public virtual A { };
+  struct C: public A, public B { C(); };
+  C::C(): A() { }                 // ill-formed: which A?
+\end{lstlisting}」
+
+\paragraph{}
+一个\nt{ctor-initializer}可以初始化构造函数类的可变成员。如果一个
+\nt{ctor-initializer}为同一成员或基类指定了超过一个\nt{mem-initializer}，则
+\nt{ctor-initializer}为病态。
+
+\paragraph{}
+一个\nt{mem-initializer-list}可以使用任何代表构造函数类本身的
+\nt{class-or-decltype}代理到构造函数类的另一个构造函数。如果
+\nt{mem-initializer-id}指代构造函数类，其应该是唯一的\nt{mem-initializer}；该构
+造函数是\nt{代理构造函数}（\nt{delegating constructor}），且由
+\nt{mem-initializer}所选择的构造函数为\nt{目标构造函数}（\nt{targeting
+constructor}）。目标构造函数由重载解析所选。一旦目标构造函数返回，代理构造函数体
+开始执行。如果构造函数直接或间接代理到其自身，则程序为病态，无需诊断。「例：
+\begin{lstlisting}
+  struct C {
+    C( int ) { }                // #1: non-delegating constructor
+    C(): C(42) { }              // #2: delegates to #1
+    C( char c ) : C(42.0) { }   // #3: ill-formed due to recursion with #4
+    C( double d ) : C('a') { }  // #4: ill-formed due to recursion with #3
+  };
+\end{lstlisting}」
+
+\paragraph{}
+根据\ref{dcl.init}关于直接初始化的规则，\nt{mem-initializer}中一个
+\nt{expression-list}或\nt{braced-init-list}用于初始化所指代的子对象（或在代理构
+造函数的情况下，完整的类对象）。「例：
+\begin{lstlisting}
+  struct B1 { B1(int); /* ... */ };
+  struct B2 { B2(int); /* ... */ };
+  struct D : B1, B2 {
+    D(int);
+    B1 b;
+    const int c;
+  };
+
+  D::D(int a) : B2(a+1), B1(A+2), c(a+3), b(a+4) { /* ... */ }
+  D d(10);
+\end{lstlisting}」
+「注：由每一个\nt{mem-initializer}所进行的初始化构成全表达式
+（\ref{intro.execution}）。\nt{mem-initializer}中的任何表达式作为进行初始化的全
+表达式的一部分进行求值。」\nt{mem-initializer-id}代表虚基类的
+\nt{mem-initializer}在非最终派生类构造函数执行过程中被忽略。
+
+\paragraph{}
+\nt{mem-initializer}中绑定到引用成员的临时表达式为病态。「例：
+\begin{lstlisting}
+  struct A {
+    A() : v(42) { }   // error
+    const int& v;
+  };
+\end{lstlisting}」
+
+\paragraph{}
+在非代理构造函数中，如果一个给定的潜在构建子对象没有用\nt{mem-initializer-id}指
+定（包括因构造函数没有\nt{ctor-initializer}而无\nt{mem-initializer-list}的情形）
+则
+\begin{enumerate}
+  \item{如果实体是一个具有缺省成员初始化（\ref{class.mem}）的非静态数据成员，且
+    要么
+    \begin{enumerate}
+      \item{构造函数的类为联合（\ref{class.union}），且该没有其他可变成员由
+        \nt{mem-initializer-id}所指代，要么}
+      \item{构造函数的类不是联合，并且，如果实体是一个匿名联合的成员，该联合没有
+        其他成员由\nt{mem-initializer-id}指代，}
+    \end{enumerate}
+    该实体按\ref{dcl.init}中所指定使用其缺省成员初始化进行初始化；}
+  \item{否则，如果实体是一个匿名联合或一个可变成员（\ref{class.union.anon}），则
+    不进行初始化；}
+  \item{否则，实体进行缺省初始化（\ref{dcl.init}）。}
+\end{enumerate}
+「注：抽象类（\ref{class.abstract}不会是最终派生类，因此其构造函数不会初始化虚基
+类，因此对应的\nt{mem-initializer}可以忽略。」尝试初始化联合的超过一个非静态数据
+成员使程序为病态。「注：在为类\tm{X}的自动或动态存储期对象调用构造函数结束后，如
+果构造函数未作为值初始化的一部分调用，且\tm{X}的一个成员即没有初始化也没有在构造
+函数体的\nt{compound-statement}执行过程中赋值，则该成员具有不确定值。」「例：
+\begin{lstlisting}
+  struct A {
+    A();
+  };
+
+  struct B {
+    B(int);
+  };
+
+  struct C {
+    C() { }           // initializes members as follows:
+    A a;              // OK: calls A::A()
+    const B b;        // error: B has no default constructor
+    int i;            // OK: i has indeterminate value
+    int j = 6;        // OK: j has the value 5
+  };
+\end{lstlisting}」
+
+\paragraph{}
+如果一个给定的非静态数据成员即有缺省成员初始化又有\nt{mem-initializer}，则进行由
+\nt{mem-initializer}所指定的初始化，而非静态数据成员的缺省成员初始化被忽略。
+「例：给定
+\begin{lstlisting}
+  struct A {
+    int i = /* some integer expression with side effects */;
+    A(int arg) : i(arg) { }
+    // ...
+  };
+\end{lstlisting}
+构造函数\nt{A(int)}将简单地初始化\tm{i}的值为\tm{arg}，而\tm{i}的缺省成员初始化
+的副作用不会发生。」
+
+\paragraph{}
+从缺省成员初始化中绑定临时表达式到引用成员是病态的。「例：
+\begin{lstlisting}
+  struct A {
+    A() = default;        // OK
+    A(int ) : v(v) { }    // OK
+    const int& v = 42;    // OK
+  };
+  A a1;                   // error: ill-formed binding of temporary to reference
+  A a2(1);                // OK, unfortunately
+\end{lstlisting}」
+
+\paragraph{}
+在非代理构造函数中，类类型的每一个潜在构建子对象的析构函数会潜在被调用
+（\ref{class.dtor}）。「注：该条款确保析构函数在抛出异常（\ref{except.ctor}）时
+为完全构建的子对象而调用。」
+
+\paragraph{}
+在非代理构造函数中，初始化按如下顺序进行：
+\begin{enumerate}
+  \item{首先，只针对最终派生类（\ref{intro.object}）的构造函数，虚基类按其在基类
+    的有向无环图深度优先自左向右遍历时所出现的顺序进行初始化，这里``自左向右''指
+    基类在派生类\nt{base-specifier-list}中出现顺序。}
+  \item{然后，直接基类按其在\nt{base-specifier-list}中出现的声明顺序初始化（无关
+    \nt{mem-initializer}的顺序）。}
+  \item{然后，非静态数据成员按其在类定义中声明顺序进行初始化（同样无关
+    \nt{mem-initializer}的顺序）。}
+  \item{最后执行构造函数体的\nt{compound-statement}。}
+\end{enumerate}
+「注：声明顺序是强制的以确保基类和成员子对象按初始化相反的顺序进行销毁。」
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  struct V {
+    V();
+    V(int);
+  };
+
+  struct A : virtual V {
+    A();
+    A(int);
+  };
+
+  struct B : virtual V {
+    B();
+    B(int);
+  };
+
+  struct C : A, B, virtual V {
+    C();
+    C(int);
+  };
+
+  A::A(int i) : V(i) { /* ... */ }
+  B::B(int i) { /* ... */ }
+  C::C(int i) { /* ... */ }
+
+  V v(1);       // use V(int)
+  A a(2);       // use V(int)
+  B b(3);       // use V()
+  C c(4);       // use V()
+\end{lstlisting}」
+
+\paragraph{}
+\nt{mem-initializer}的\nt{expression-list}或\nt{braced-init-list}中的名字在指定
+\nt{mem-initializer}的构造函数作用域中求值。「例：
+\begin{lstlisting}
+  class X {
+    int a;
+    int b;
+    int i;
+    int j;
+  public:
+    const int& r;
+    X(int i): r(a), b(i), i(i), j(this->i) { }
+  };
+\end{lstlisting}
+\tm{X::r}初始化为引用\tm{X::a}，\tm{X::b}使用构造函数参数\tm{i}的值初始化，
+\tm{X::i}使用构造函数参数\tm{i}的值初始化，\tm{X::j}使用\tm{X::i}的值初始化；这
+在每次创建类\tm{X}的对象时都会发生。」「注：因为\nt{mem-initializer}在构造函数作
+用域中求值，\tm{this}指针可用于\nt{mem-initializer}的\nt{expression-list}来引用
+正在初始化的对象。」
+
+\paragraph{}
+可以调用正在创建对象的成员函数（包括虚成员函数，\ref{class.virtual}）。类似的，
+正在创建对象可以作为运算符\tm{typeid}（\ref{expr.typeid}）或\tm{dynamic\_cast}
+（\ref{expr.dynamic.cast}）的操作数。然而如果这些操作在\nt{ctor-initializer}（或
+来自\nt{ctor-initializer}的直接或间接函数调用）中在所有基类的
+\nt{mem-initializer}完成之前进行，则程序具有未定义行为。「例：
+\begin{lstlisting}
+  class A {
+  public:
+    A(int);
+  };
+
+  class B : public A {
+    int j;
+  public:
+    int f();
+    B() : A(f()),       // undefined: calls member function but base A not yet
+                        // initialized
+    j(f()) { }          // well-defined: bases are all initialized
+  };
+
+  class C {
+  public:
+    C(int);
+  };
+
+  class D : public B, C {
+    int i;
+  public:
+    D() : C(f()),       // undefined: calls member function but base C not yet
+                        // initialized
+    i(f()) { }          // well-defined: bases are all initialized
+  };
+\end{lstlisting}」
+
+\paragraph{}
+「注：\ref{class.cdtor}描述了有定义情形下虚函数调用，\tm{typeid}和
+\tm{dynamic\_cast}的结果； 即描述了正在构建对象的\nt{多态行为}。」
+
+\paragraph{}
+\nt{mem-initialized}跟上省略号是一个包展开（\ref{temp.variadic}），初始化类的
+\nt{base-specifier-list}中包展开所指定的基类。「例：
+\begin{lstlisting}
+  template<class... Mixins>
+  class X : public Mixins... {
+  public:
+    X(const Mixins&... mixins) : Mixins(mixins)... { }
+  };
+\end{lstlisting}」
+
 \ssect{继承构造函数初始化}{class.inhctor.init}
+\paragraph{}
+当类型\tm{B}的构造函数被调用以初始化不同类型\tm{D}的对象时（即当构造函数被继承时
+（\ref{namespace.udecl}）），初始化如同一个缺省化的缺省构造函数用于初始化\tm{D}
+对象和构造函数继承自的每一个基类子对象一样进行初始化，除了\tm{B}子对象由调用该继
+承的构造函数初始化。完整的初始化被认为是单个函数调用；特别的，继承构造函数参数的
+初始化前序于\tm{D}对象任何部分的初始化。「例：
+\begin{lstlisting}
+  struct B1 {
+    B1(int, ...) { }
+  };
+
+  struct B2 {
+    B2(double) { }
+  };
+
+  int get();
+
+  struct D1 : B1 {
+    using B1::B1;       // inherits B1(int, ...)
+    int x;
+    int y = get();
+  };
+
+  void test() {
+    D1 d(2, 3, 4);      // OK: B1 is initialized by calling B1(2, 3, 4), then
+                        // d.x is default-initialized (no initialization i
+                        // performed), then d.y is initialized by calling get()
+    D1 e;               // error: D1 has a deleted default constructor
+  }
+
+  struct D2 : B2 {
+    using B2::B2;
+    B1 b;
+  };
+
+  D2 f(1.0);            // error: B1 has a deleted default constructor
+
+  struct W { W(int); };
+  struct X : virtual W { using W::W; X() = delete; };
+  struct Y : X { using X::X; };
+  struct Z : Y, virtual W { using Y::Y; };
+  Z z(0);               // OK: initialization of Y does not invoke default
+                        // constructor of X
+
+  template<class T> struct Log : T {
+    using T::T;         // inherits all constructors from class T
+    ~Log() { std::clog << "Destroying wrapper" << std::endl; }
+  };
+\end{lstlisting}
+类模板\tm{Log}封装任何类并转发其所有构造函数，当类\tm{Log}的对象销毁时向标准日志
+输出一条消息。
+
+\paragraph{}
+如果构造函数继承自类型\tm{B}的多基类子对象，则程序为病态。「例：
+\begin{lstlisting}
+  struct A { A(int); };
+  struct B : A { using A::A; };
+
+  struct C1 : B { using B::B; };
+  struct C2 : B { using B::B; };
+
+  struct D1 : C1, C2 {
+    using C1::C1;
+    using C2::C2;
+  };
+
+  struct V1 : virtual B { using B::B; };
+  struct V2 : virtual B { using B::B; };
+
+  struct D2 : V1, V2 {
+    using V1::V1;
+    using V2::V2;
+  };
+
+  D1 d1(0);     // ill-formed: ambiguou
+  D2 d2(0);     // OK: initializes virtual B base class, which initializes the
+                // A base class, then initializes the V1 and V2 base classes a
+                // if by a defaulted default constructor
+
+  struct M { M(); M(int); };
+  struct N : M { using M::M; };
+  struct O : M {};
+  struct P : N, O { using N::N; using O::O; };
+  P p(0);       // OK: use M(0) to initialize N's base class,
+                // use M() to initialize O's base cla
+\end{lstlisting}」
+
+\paragraph{}
+当一个对象由继承构造函数初始化时，对象初始化在所有子对象初始化完成后完成。
 
 \sect{构造与析构}{class.cdtor}
+\paragraph{}
+对于带有非平凡构造函数的对象，在构造函数开始执行之间引用对象的任何非静态成员或基
+类导致未定义行为。对于带有非平凡析构函数的对象，在析构函数执行完成之后引用对象的
+任何非静态成员或基类导致未定义行为。「例：
+\begin{lstlisting}
+  struct X { int i; };
+  struct Y : X { Y(); };                // non-trivial
+  struct A { int a; };
+  struct B : public A { int j; Y y; };  // non-trivial
+
+  extern B bobj;
+  B* pb = &bobj;                        // OK
+  int* p1 = &bobj.a;                    // undefined, referes to base cla
+                                        // member
+  int* p2 = &bobj.y.i;                  // undefined, referes to member's member
+
+  A* pa = &bobj;                        // undefined, upcast to a base class type
+  B bobj;                               // definition of bobj
+
+  extern X xobj;
+  int* p3 = &xobj.i;                    // OK, X is a trivial cla
+  X xobj;
+\end{lstlisting}
+另一个例子，
+\begin{lstlisting}
+  struct W { int j; };
+  struct X : public virtual W { };
+  struct Y {
+    int* p;
+    X x;
+    Y() : p(&x.j) {                     // undefined, x is not yet constructed
+    }
+  };
+\end{lstlisting}」
+
+\paragraph{}
+为显式或隐式转换一个引用类\tm{X}的对象指针（广义左值）到一个指向\tm{X}的直接或间
+接基类\tm{B}的指针（引用），\tm{X}的构建及其直接或间接派生自\tm{B}的所有直接或间
+接基类的构建应该已经开始，而这些类的销毁应该尚未完成，否则转换将导致未定义行为。
+为形成指向（或访问其值）对象\tm{obj}的一个直接非静态成员，\tm{obj}的构建应该已经
+开始，其销毁应该尚未完成，否则指针值的计算（或访问成员值）导致未定义行为。「例：
+\begin{lstlisting}
+  struct A { };
+  struct B : virtual A { };
+  struct C : B { };
+  struct D : virtual A { D(A*); };
+  struct X { X(A*); };
+
+  struct E : C, D, X {
+    E() : D(this),    // undefined: upcast from E* to A* might use path
+                      // E* -> D* -> A* but D is not constructed
+
+                      // "D((C*)this)" would be defined: E* -> C* is defined
+                      // because E() has started, and C* -> A* is defined
+                      // because C is fully constructed
+
+    X(this) {}        // defined: upon construction of X, C/B/D/A sublattice i
+                      // fully constructed
+
+  };
+\end{lstlisting}」
+
+\paragraph{}
+成员函数，包括虚函数（\ref{class.virtual}），可以在构建或销毁
+（\ref{class.base.init}）过程中调用。当虚函数从构造函数或析构函数中直接或间接被
+调用时，包括在类的非静态数据成员的构建和析构过程中，并且所调用对象为正在构建或销
+毁的对象（称其为\tm{x}），则所调用函数为构造函数或析构函数类的最终重写而不是最终
+派生类中重写它的函数。如果虚函数调用使用使用显式类成员访问（\ref{expr.ref}）且对
+象表达式引用\tm{x}的完整对象或该对象基类子对象但不是\tm{x}的其中一个或其基类子对
+象，则行为未定义。「例：
+\begin{lstlisting}
+  struct V {
+    virtual void f();
+    virtual void g();
+  };
+
+  struct A : virtual V {
+    virtual void f();
+  };
+  struct B : virtual V {
+    virtual void g();
+    B(V*, A*);
+  };
+
+  struct D : A, B {
+    virtual void f();
+    virtual void g();
+    D() : B((A*)this, this) { }
+  };
+
+  B::B(V* v, A* a) {
+    f();          // calls V::f, not A::f
+    g();          // calls B::g, not D::g
+    v->g();       // v is base of B, the call is well-defined, calls B::g
+    a->f();       // undefined behavior, a's type not a base of B
+  }
+\end{lstlisting}」
+
+\paragraph{}
+\tm{typeid}运算符（\ref{expr.typeid}）可在构建和销毁（\ref{class.base.init}）过
+程中使用。当\tm{typeid}用于构造函数中（包括\nt{mem-initializer}或非静态数据成员
+的缺省成员初始化（\ref{class.mem}）或用于析构函数中，或用于构造函数或析构函数所
+（直接或间接）调用的函数中，如果\tm{typeid}的操作数引用的是正在构建或销毁的对象
+则\tm{typeid}产生\tm{std::type\_info}对象，表示构造函数或析构函数的类。如果
+\tm{typeid}的操作数引用的是正在构建或销毁的对象且操作数的静态类型既不是构造函数
+或析构函数的类也不是其基类之一，则行为未定义。
+
+\paragraph{}
+\tm{dynamic\_cast}（\ref{expr.dynamic.cast}）可用于构建和销毁
+（\ref{class.base.init}）过程中。当\tm{dynamic\_cast}用于构造函数（包括
+\nt{mem-initializer}或非静态数据成员的缺省成员初始化（\ref{class.mem}）或用于析
+构函数中，或用于构造函数或析构函数所（直接或间接）调用的函数中，如果
+\tm{dynamic\_cast}的操作数引用的是正在构建或销毁的对象，则该对象被当作是具有构造
+函数或析构函数类类型的最终派生对象。如果\tm{dynamic\_cast}的操作数引用的正在构建
+或销毁的对象且操作数的静态类型不是一个构造函数或析构函数自身的类或其基类的指针或
+对象，由\tm{dynamic\_cast}产生未定义行为。「例：
+\begin{lstlisting}
+  struct V {
+    virtual void f();
+  };
+
+  struct A : virtual V { };
+
+  struct B : virtual V {
+    B(V*, A*);
+  };
+
+  struct D : A, B {
+    D() : B((A*)this, this) { }
+  };
+
+  B::B(V* v, A* a) {
+    typeid(*this);        // type_info for B
+    typeid(*v);           // well-defined: *v has type V, a base of B yield
+                          // type_info for B
+    typeid(*a);           // undefined behavior: type A not a base of B
+    dynamic_cast<B*>(v);  // well-defined: v of type V*, V base of B results in
+                          // B*
+    dynamic_cast<B*>(a);  // undefined behavior, a has type A*, A not a base of
+                          // B
+  }
+\end{lstlisting}」
 
 \sect{拷贝与移动类对象}{class.copy}
+\paragraph{}
+类对象可以按两种方式拷贝或移动：通过初始化（\ref{class.ctor}，\ref{dcl.init}），
+包括函数参数传递（\ref{expr.call}）和函数值返回（\ref{stmt.return}）；通过赋值
+（\ref{expr.ass}）。概念上这两个操作通过拷贝/赋值构造函数（\ref{class.ctor}）和
+拷贝/移动赋值运算符（\ref{over.ass}）来实现。
+
+\paragraph{}
+如果对象的拷贝/移动构造函数或拷贝/移动赋值运算符是隐式odr-used且该特殊成员函数不
+可访问（第\ref{class.access}章），则程序为病态。「注：使用拷贝/移动构造函数或拷
+贝/移动赋值运算符来拷贝/移动一个对象到另一个对象不改变任一个对象的布局或大小。」
+
 \ssect{拷贝与移动构造函数}{class.copy.ctor}
+\paragraph{}
+类\tm{X}的一个非模板构造函数是拷贝构造函数，如果其第一个参数具有类型\tm{X\&}，
+\tm{const X\&}，\tm{volatile X\&}或\tm{const volatile X\&}，且要么无其他参数要么
+所有其他参数具有缺省实参（\ref{dcl.fct.default}）。「例：\tm{X::X(const X\&)}和
+\tm{X::X(X\&,int=1)}为拷贝构造函数。
+\begin{lstlisting}
+  struct X {
+    X(int);
+    X(const X&, int = 1);
+  };
+  X a(1);             // calls X(int);
+  X b(a, 0);          // calls X(const X&, int);
+  X c = b;            // calls X(const X&, int);
+\end{lstlisting}」
+
+\paragraph{}
+类\tm{X}的一个非模板构造函数是移动构造函数，如果其第一个参数具有类型\tm{X\&\&}，
+\tm{const X\&\&}，\tm{volatile X\&\&}或\tm{const volatile X\&\&}，且要么无其他参
+数要么其他参数都有缺省实参（\ref{dcl.fct.default}）。「例：\tm{Y::Y(Y\&\&)}是一
+个移动构造函数。
+\begin{lstlisting}
+  struct Y {
+    Y(const Y&);
+    Y(Y&&);
+  };
+  extern Y f(int);
+  Y d(f(1));        // calls Y(Y&&)
+  Y e = d;          // calls Y(const Y&)
+\end{lstlisting}」
+
+\paragraph{}
+「注：拷贝/移动构造函数的所有形式都可以声明于一个类中。「例：
+\begin{lstlisting}
+  struct X {
+    X(const X&);
+    X(X&);          // OK
+    X(X&&);
+    X(const X&&);   // OK, but possibly not sensible
+  };
+\end{lstlisting}」」
+
+\paragraph{}
+「注：如果类\tm{X}只有单参数\tm{X\&}的拷贝构造函数，类型\tm{const X}或
+\tm{volatile X}的初始化不能初始化（可能cv限定的）类型\tm{X}的对象。「例：
+\begin{lstlisting}
+  struct X {
+    X();            // default constructor
+    X(X&);          // copy constructor with a non-const parameter
+  };
+  const X cx;
+  X x = cx;         // error: X::X(X&) cannot copy cx into x
+\end{lstlisting}」」
+
+\paragraph{}
+类\tm{X}的构造函数为病态，如果其第一个参数具有类型（可能cv限定的）\tm{X}，且要么
+无其他参数或其他参数都具有缺省实参。成员函数模板从不实例化以产生这样的构造函数签
+名。「例：
+\begin{lstlisting}
+  struct S {
+    template<typename T> S(T);
+    S();
+  };
+
+  S g;
+
+  void h() {
+    S a(g); // does not instantiate the member template to produce S::S<S>(S);
+            // uses the implicitly declared copy constructor
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果类定义没有隐式声明拷贝构造函数，则\nt{隐式}声明一个非显式的。如果类定义没有
+声明移动构造函数或移动赋值运算符，则隐式声明的构造函数定义为删除的；否则定义为缺
+省的（\ref{dcl.fct.def}）。后一种情形在类具有用户声明拷贝赋值运算符或用户声明析
+构函数时不建议使用。
+
+\paragraph{}
+类\tm{X}的隐式声明拷贝构造函数具有形式                                        \\
+\mbox{\qquad{\tm{X::X(const X\&)}}}                                           \\
+如果类类型\tm{M}（或其数组）的每一个潜在构建子对象具有第一个参数类型为
+\tm{const M\&}或\tm{const volatile M\&}的拷贝构造函数。\footnote{这意味着隐式声
+明拷贝构造函数的引用参数不能绑定到一个\tm{volatile}左值；见C.1.9。}否则，隐式声
+明拷贝构造函数具有形式                                                        \\
+\mbox{\qquad{\tm{X::X(X\&)}}}
+
+\paragraph{}
+如果类\tm{X}的定义没有显式声明一个移动构造函数，则隐式声明一个缺省化非显式的，当
+且仅当
+\begin{enumerate}
+  \item{\tm{X}不具有用户声明拷贝构造函数，}
+  \item{\tm{X}不具有用户声明拷贝赋值运算符，}
+  \item{\tm{X}不具有用户声明移动赋值运算符，且}
+  \item{\tm{X}不具有用户声明析构函数。}
+\end{enumerate}
+「注：当移动构造函数未隐式声明或显式提供，则原本会调用移动构造函数的表达式可能会
+改为调用拷贝构造函数。」
+
+\paragraph{}
+类\tm{X}的隐式声明移动构造函数具有形式                                        \\
+\mbox{\qquad{\tm{X::X(X\&\&)}}}
+
+\paragraph{}
+隐式声明的拷贝/移动构造函数是其类的内联公有成员。类\tm{X}的缺省化的拷贝/移动构造
+函数被定义为删除的（\ref{dcl.fct.def.delete}），如果\tm{X}具有：
+\begin{enumerate}
+  \item{带有非平凡构造函数的可变成员且\tm{X}为联合式的类，}
+  \item{一个潜在构建子对象类型\tm{M}（或其数组）不能被拷贝/赋值，因为重载解析
+    （\ref{over.match}）用于查询\tm{M}的对应构造函数时产生歧义或找到一个被删除函
+    数或从缺省构造函数中不可访问的函数，}
+  \item{任何潜在构建子对象，具有含被删除或从缺省构造函数中不可访问析构函数的类
+    型，或}
+  \item{对拷贝构造函数，右值引用类型的非静态数据成员。}
+\end{enumerate}
+定义为删除的缺省化移动构造函数将被重载解析忽略（\ref{over.match}，
+\ref{over.over}）。「注：否则删除的移动构造函数将干扰使用右值的初始化，这可以使
+用拷贝构造函数。」
+
+\paragraph{}
+类\tm{X}的拷贝/移动构造函数是平凡的，如果它不是用户提供且如果：
+\begin{enumerate}
+  \item{类\tm{X}不具有虚函数（\ref{class.virtual}）和虚基类（\ref{class.mi}），
+    且}
+  \item{选择用于拷贝/移动每一个直接基类子对象的构造函数是平凡的，且}
+  \item{对\tm{X}（或其数组）的每一个非静态数据成员，选择用于拷贝/移动该成员的构
+    造函数是平凡的；}
+\end{enumerate}
+否则拷贝/移动构造函数是非平凡的。
+
+\paragraph{}
+缺省化但未定义为删除的拷贝/移动构造函数为\nt{隐式定义}的，如果其是odr-used
+（\ref{basic.def.odr}）或当其首次声明后被显式缺省化。「注：即使实现忽略其
+odr-used（\ref{basic.def.odr}，\ref{class.temporary}），拷贝/移动构造函数也会隐
+式定义。」如果隐式定义构造函数满足constexpr构造函数（\ref{dcl.constexpr}）的要求
+隐式定义构造函数为\tm{constexpr}。
+
+\paragraph{}
+在类的缺省拷贝/移动构造函数隐式定义前，其潜在构建子对象的所有非用户提供拷贝/移动
+构造函数应该已被隐式定义。「注：隐式声明拷贝/移动构造函数有一个隐式异常规范
+（\ref{except.spec}）。」
+
+\paragraph{}
+非联合类\tm{X}的隐式定义拷贝/移动构造函数进行按成员拷贝/移动其基类和成员。「注：
+忽略非静态数据成员的缺省成员初始化。也见\ref{class.base.init}的示例。」初始化顺
+序与用户定义构造函数中的基类和成员初始化顺序一致（见\ref{class.base.init}）。设
+\tm{x}为构造函数参数，或对于移动构造函数，引用参数的亡值。每一个基类或非静态数据
+成员按对其类型合适的方式进行拷贝/移动：
+\begin{enumerate}
+  \item{如果成员是一个数组，每一个元素由\tm{x}的对应子对象进行直接初始化；}
+  \item{如果成员\tm{m}具有右值引用类型\tm{T\&\&}，使用
+    \tm{static\_cast<T\&\&>(x.m)}进行直接初始化；}
+  \item{否则，基类或成员使用\tm{x}的对应基类或成员进行直接初始化。}
+\end{enumerate}
+虚基类子对象应该只初始化一次，使用隐式定义的拷贝/移动构造函数
+（\ref{class.base.init}）。
+
+\paragraph{}
+联合\tm{X}的隐式定义拷贝/移动构造函数拷贝\tm{X}的对象表示（\ref{basic.types}）。
+
 \ssect{拷贝与移动赋值运算符}{class.copy.assign}
+\paragraph{}
+用户声明的\nt{拷贝}赋值运算符\tm{X::operator=}类\tm{X}的非静态非模板成员函数，具
+有仅一个参数，类型为\tm{X}、\tm{X\&}、\tm{volatile X\&}或
+\tm{const volatile X\&}。\footnote{因模板赋值运算符或接受右值引用参数的赋值运算
+符不会是拷贝赋值运算符，这种赋值运算符的存在不会抑制拷贝赋值运算符的隐式声明。这
+种赋值运算符参与其他赋值运算符的重载解析，包括拷贝赋值运算符，并且如果被选中，将
+被用于对象赋值。}「注：重载赋值运算符必须声明为具有仅一个参数；见
+\ref{over.ass}。」「注：如果类\tm{X}只有含参数类型\tm{X\&}的拷贝赋值运算符，一个
+类型为const \tm{X}的表达式不能被赋给类型\tm{X}的对象。「例：
+\begin{lstlisting}
+  struct X {
+    X();
+    X& operator=(X&);
+  };
+  const X cx;
+  X x;
+  void f() {
+    x = cx;           // error: X::operator=(X&) cannot assign cx into x
+  };
+\end{lstlisting}」」
+
+\paragraph{}
+如果类定义没有显式声明拷贝赋值运算符，则隐式定义一个。如果类定义声明一个移动构造
+函数或移动赋值运算符，则隐式声明的拷贝赋值运算符被定义为删除的；否则，其被定义为
+缺省的（\ref{dcl.fct.def}）。如果类具有用户声明的拷贝构造函数或用户声明的析构函
+数，则后一种情形不推荐使用。类\tm{X}的隐式声明的拷贝赋值运算符具有形式        \\
+\mbox{\qquad{\tm{X\& X::operator=(const X\&)}}}                               \\
+如果
+\begin{enumerate}
+  \item{\tm{X}的每一个直接基类\tm{B}具有拷贝赋值运算符，其参数具有类型
+    \tm{const B\&}，\tm{const volatile B\&}或\tm{B}，且}
+  \item{对\tm{X}的具有类型\tm{M}（或其数组）的所有非静态数据成员，每一个这样的类
+    类型具有一个拷贝赋值运算符，其参数具有类型\tm{const M\&}，
+  \tm{const volatile M\&}或\tm{M}。\footnote{这意味着隐式声明的拷贝赋值运算符的
+    引用参数不能绑定到一个\tm{volatile}左值；见C.1.9。}}
+\end{enumerate}
+否则隐式声明拷贝赋值运算符具有形式                                            \\
+\mbox{\qquad{\tm{X\& X::operator=(X\&)}}}
+
+\paragraph{}
+用户声明的移动赋值运算符\tm{X::operator=}是类\tm{X}的一个非静态非模板成员函数，
+具有仅一个参数，类型为\tm{X\&\&}，\tm{const X\&\&}，\tm{volatile X\&\&}或
+\tm{const volatile X\&\&}。「注：重载的赋值运算符必须声明为具有仅一个参数；见
+\ref{over.ass}。」「注：对一个类可以声明多于一种形式的移动赋值运算符。」
+
+\paragraph{}
+如果类\tm{X}的定义没有显式声明一个移动赋值运算符，将隐式声明一个缺省的，当且仅当
+\begin{enumerate}
+  \item{\tm{X}不具有用户声明拷贝构造函数，}
+  \item{\tm{X}不具有用户声明移动构造函数，}
+  \item{\tm{X}不具有用户声明拷贝赋值运算符，且}
+  \item{\tm{X}不具有用户声明析构函数。}
+\end{enumerate}
+「例：类定义
+\begin{lstlisting}
+  struct S {
+    int a;
+    S& operator=(const S&) = default;
+  };
+\end{lstlisting}
+不会具有隐式声明的缺省移动赋值运算符，因为拷贝赋值运算符已由用户定义。移动赋值运
+算符可以显式缺省化。
+\begin{lstlisting}
+  struct S {
+    int a;
+    S& operator=(const S&) = default;
+    S& operator=(S&&) = default;
+  };
+\end{lstlisting}」
+
+\paragraph{}
+类\tm{X}的隐式声明的移动赋值运算符具有形式                                    \\
+\mbox{\qquad{\tm{X\& X::operator=(X\&\&);}}}
+
+\paragraph{}
+类\tm{X}的隐式声明拷贝/移动赋值运算符具有返回类型\tm{X\&}；其返回赋值运算符所调
+用的对象，即被赋值的对象。隐式声明的拷贝/移动赋值运算符是其类的内联公有成员。
+
+\paragraph{}
+类\tm{X}的缺省化的拷贝/移动赋值运算符被定义为删除的，如果\tm{X}具有：
+\begin{enumerate}
+  \item{含非平凡的对应赋值运算符的可变成员且\tm{X}为联合式的类，或者}
+  \item{一个非静态数据成员，具有\tm{const}非类类型（或其数组），或者}
+  \item{一个非静态数据成员，具有引用类型，或者}
+  \item{一个类类型\tm{M}（或其数组）的直接非静态数据成员或一个直接基类\tm{M}，不
+    能拷贝/移动，因为重载解析（\ref{over.match}）应用于查询\tm{M}的对应赋值运算
+    符将产生歧义或者是一上删除的或从缺省化赋值运算符中不可访问的函数。}
+\end{enumerate}
+定义为删除的缺省化移动赋值运算符被重载解析（\ref{over.match}，\ref{over.over}）
+忽略。
+
+\paragraph{}
+因为如果用户未声明则一个拷贝/移动赋值运算符会为一个类隐式声明，基类拷贝/移动赋值
+运算符总是被派生类（\ref{over.ass}）对应的赋值运算符隐藏。使用
+\nt{using-declaration}从基类中引入赋值运算符，其参数类型可能是派生类拷贝/移动赋
+值运算符的参数类型，该\nt{using-declaration}不被当作是此运算符的显式声明，且不抑
+制派生类运算符的隐式声明；由\nt{using-declaration}引入的运算符被派生类中隐式声明
+的运算符所隐藏。
+
+\paragraph{}
+类\tm{X}的拷贝/移动赋值运算符是平凡的，如果其不是用户提供的，并且：
+\begin{enumerate}
+  \item{类\tm{X}不具有虚函数（\ref{class.virtual}）且不具有虚基类
+    （\ref{class.mi}），且}
+  \item{所选用于拷贝/移动每一个直接基类子对象的赋值运算符是平凡的，且}
+  \item{对\tm{X}的每一个类类型（或其数组）非静态数据成员，所选用于拷贝/移动该成
+    员的赋值运算符是平凡的；}
+\end{enumerate}
+否则拷贝/移动赋值运算符是非平凡的。
+
+\paragraph{}
+类\tm{X}的缺省但未定义为删除的拷贝/移动赋值运算符在其odr-used
+（\ref{basic.def.odr}）时被\nt{隐式定义}（即当其被重载解析选择用于赋值一个其类类
+型对象时）或当其在首次声明后显式缺省化的。隐式定义的拷贝/移动赋值运算符是
+\tm{constexpr}，如果
+\begin{enumerate}
+  \item{\tm{X}是字面类型，且}
+  \item{所选的用于拷贝/移动每一个直接基类子对象的赋值运算符是一个constexpr函数，
+    且}
+  \item{对\tm{X}的每一个具有类类型（或其数组）的非静态数据成员，所选用于拷贝/移
+    动该成员的赋值运算符是一个constexpr函数。}
+\end{enumerate}
+
+\paragraph{}
+在类的缺省化拷贝/移动赋值运算符被隐式定义前，其直接基类和其非静态数据成员的所有
+非用户提供的拷贝/移动赋值运算符应该已经被隐式定义。「注：隐式声明的拷贝/移动赋值
+运算符具有隐含的异常规范（\ref{except.spec}）。」
+
+\paragraph{}
+非联合类的隐式定义的拷贝/移动赋值运算符对其子对象进行按成员拷贝/移动赋值。\tm{X}
+的直接基类首先赋值，按其在\nt{base-specifier-list}中声明顺序，然后\tm{X}的直接非
+静态数据成员进行赋值，按其在类定义中的声明顺序。设\tm{X}为函数的参数或对于移动运
+算符为一个引用参数的亡值。每一个子对象以其类型合适的方式进行赋值：
+\begin{enumerate}
+  \item{如果子对象具有类类型，如同通过调用\tm{operator=}，使用子对象作为对象表达
+    式，且\tm{x}的对应子对象作为函数的单个实参（如同显式限定；即忽略更深层派生类
+    中任何可能的虚重写函数）；}
+  \item{如果子对象是一个数组，按对元素类型合适的方式每一个元素进行赋值；}
+  \item{如果子对象为标量类型，使用内置赋值运算符。}
+\end{enumerate}
+表示虚基类的子对象是否被隐式定义的拷贝/移动赋值运算符赋值多次未指定。「例：
+\begin{lstlisting}
+  struct V { };
+  struct A : virtual V { };
+  struct B : virtual V { };
+  struct C : B, A { };
+\end{lstlisting}
+虚基类子对象\tm{V}是否被\tm{C}的隐式定义拷贝/移动赋值运算符赋值两次未指定。」
+
+\paragraph{}
+联合\tm{X}的隐式定义拷贝赋值运算符拷贝\tm{X}的对象表示（\ref{basic.types}）。
+
 \ssect{拷贝与移动消除}{class.copy.elision}
+\paragraph{}
+当满足某些条件时，允许实现省略一个类对象的拷贝/移动构建，即使所选用于拷贝/移动操
+作的构造函数和/或对象的析构函数具有副作用。这种情况下，实现将省略的拷贝/移动操作
+的源和目标当作只是引用同一对象的两种不同方法。如果所选构造函数的第一个参数为对象
+类型的右值引用，则该对象的销毁出现在当目标应该被销毁时；否则销毁出现在无优化时本
+应销毁两个对象时的较晚的时候。\footnote{因为只有一个对象被销毁，并有有一个拷贝/
+移动构造函数没有执行，对每一个所创建对象仍有一个被销毁。}这种拷贝/移动操作的省略
+称为\nt{拷贝消除}（\nt{copy elision}），在以下情形中是允许的（可以组合起来消除多
+个拷贝）：
+\begin{enumerate}
+  \item{在函数类类型返回语句中，当表达式为非volatile自动对象的名字（除函数参数或
+    一个\nt{handler}（\ref{except.handle}）的\nt{exception-declaration}所引入的
+    变量），与函数返回类型具有相同类型（忽略cv限定），可能通过在函数调用返回对象
+    中直接构建自动对象来省略拷贝/移动操作}
+  \item{在一个\nt{throw-expression}（\ref{expr.throw}）中，当操作数是非volatile
+    自动对象的名字（除函数或catch-clause参数），其作用域不扩展到最内层包含
+    \nt{try-block}的结束，则从操作数到异常对象（\ref{except.throw}）拷贝/移动操
+  作可以通过在异常对象中直接构建自动对象来省略}
+  \item{当异常处理器（\ref{except}）的\nt{exception-declaration}声明一个与异常对
+    象（\ref{except.throw}）类型相同的（除了可能cv限定）对象时，拷贝操作可以通过
+    将\nt{exception-declaration}当作异常对象别名来省略，如果程序语义不会改变，除
+    了\nt{exception-declaration}所声明的对象的构造函数和析构函数的执行以外。
+    「注：异常对象不能移动，因为它总是个左值。」}
+\end{enumerate}
+当表达式在需要常表达式（\ref{expr.const}）和常量初始化
+（\ref{basic.start.static}）的上下文中求值时需要贝消除。「注：如果同一个表达式在
+别的上下文中求值时拷贝消除可以不会进行。」
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  class Thing {
+  public:
+    Thing();
+    ~Thing();
+    Thing(const Thing&);
+  };
+
+  Thing f() {
+    Thing t;
+    return t;
+  }
+
+  Thing t2 = f();
+
+  struct A {
+    void *p;
+    constexpr A() : p(this) {}
+  };
+
+  constexpr A g() {
+    A a;
+    return a;
+  }
+
+  constexpr A a;        // well-formed, a.p points to a
+  constexpr A b = g();  // well-formed, b.p points to b
+
+  void g() {
+    A c = g();          // well-formed, c.p may point to c or to an ephermeral
+                        // temporary
+  }
+\end{lstlisting}
+此处消除的准则能消除局部自动对象\tm{t}到函数调用\tm{f()}的返回结果对象的拷贝，即
+全局对象\tm{t2}。实际上局部对象\tm{t}的构建可以看作是直接初始化全局对象\tm{t2}，
+且该对象的销毁在程序结束时进行。添加一个移动构造函数秋\tm{Thing}具有相同效果，但
+此时消除的时局部自动对象到\tm{t2}的移动构建。」
+
+\paragraph{}
+在以下拷贝初始化上下文中，可以使用移动操作而不是拷贝操作：
+\begin{enumerate}
+  \item{如果返回语句（\ref{stmt.return}）中的表达式是一个（可能加括号）的
+    \nt{id-expression}，确定声明于最内层包含函数的函数体或\nt{lambda-expression}
+    的\nt{parameter-declaration-clause}中的自动存储期对象，或}
+  \item{如果\nt{throw-expression}（\ref{expr.throw}）的操作数为非volatile自动对
+    象（除函数或catch-clause参数），其作用域不扩展到最内层包含\nt{try-clause}的
+    结尾（如果有的话），}
+\end{enumerate}
+重载解析为拷贝所选的构造函数首先进行，如同对象由右值指定。如果第一次重载解析失败
+或未进行，或者如果所选构造函数的第一个参数类型不是对象类型（可能cv限定）的右值引
+用，则将对象当作是一个左值再次进行重载解析。「注：这个两阶段重载解析无论拷贝消除
+是否出现都必须进行。如果拷贝消除未进行，其确定待调用构造函数，且即使调用被消除，
+所选构造函数必须可访问。」
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  class Thing {
+  public:
+    Thing();
+    ~Thing();
+    Thing(Thing&&);
+  private:
+    Thing(const Thing&);
+  };
+
+  Thing f(bool b) {
+    Thing t;
+    if (b)
+      throw t;          // OK: Thing(Thing&&) used (or elided) to throw t
+    return t;           // OK: Thing(Thing&&) used (or elided) to return t
+  }
+
+  Thing t2 = f(false);  // OK: no extra copy/move performed, t2 constructed by
+                        // call to f
+
+  struct Weird {
+    Weird();
+    Weird(Weird&);
+  };
+
+  Weird g() {
+    Weird w;
+    return w;           // OK: first overload resolution fails, second overload
+                        // resolution selects Weird(Weird&)
+  }
+\end{lstlisting}」

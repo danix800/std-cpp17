@@ -114,14 +114,14 @@
 函数的左值。}
 
 \paragraph{}
-「注：见第16.4节中函数重载时的额外规则。」
+「注：见\ref{over.over}中函数重载时的额外规则。」
 
 \sect{临时物化转换}{conv.rval}
 \paragraph{}
-类型\texttt{T}的纯右值可以转换成类型\texttt{T}的失效值。该转换使用临时对象作为结
-果对象，通过纯右值的计算对临时对象（15.2）进行初始化，并产生指代该临时对象的失效
-值。\texttt{T}应该是完整类型。「注：如果\texttt{T}是类类型（或数组），它必须具有
-可访问未删除的析构函数；见第15.4节。」「例：
+类型\texttt{T}的纯右值可以转换成类型\tm{T}的失效值。该转换使用临时对象作为结果对
+象，通过纯右值的计算对临时对象（\ref{class.temporary}）进行初始化，并产生指代该
+临时对象的失效值。\tm{T}应该是完整类型。「注：如果\tm{T}是类类型（或数组），它必
+须具有可访问未删除的析构函数；见\ref{class.dtor}。」「例：
 \begin{lstlisting}
   struct X { int n; }
   int k = X().n;      // OK, X() prvalue is converted to xvalue

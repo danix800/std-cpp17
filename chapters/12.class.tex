@@ -566,7 +566,7 @@ sequence}）指按照声明顺序，以每一个结构中第一个这样的实�
 \paragraph{}
 当一个不是类成员访问语法（\ref{expr.ref}）的一部分且没有用于形成成员指针的
 \tm{id-expression}（\ref{expr.prim}）用于类\tm{X}的成员中可以使用\tm{this}的上下
-文中（\ref{expr.prim.this}），如果名字查询（\ref{basic.lookup }）将
+文中（\ref{expr.prim.this}），如果名字查询（\ref{basic.lookup}）将
 \nt{id-expression}中的名字解析为某个类\tm{C}的非静态非类型成员，且如果要么该
 \nt{id-expression}为潜在求值的，要么\tm{C}是\tm{X}或\tm{X}的基类，则该
 \nt{id-expression}被转换成使用\tm{(*this)}（\ref{class.this}）作为\tm{.}运算符左
@@ -600,10 +600,10 @@ sequence}）指按照声明顺序，以每一个结构中第一个这样的实�
   }
 \end{lstlisting}
 在成员函数\tm{tnode::set}的函数体中，成员名\tm{tword}，\tm{count}，\tm{left}和
-\tm{right}引用的是调用函数的对象的成员。因此，在调用\tm{n1.set("abc",&n2,0)}中，
-\tm{tword}引用的是\tm{n1.tword}，而在调用\tm{n2.set("def",0,0)}中，\tm{tword}引
-用的是\tm{t2.tword}。函数\tm{strlen}，\tm{perror}和\tm{strcpy}不是类\tm{tnode}的
-成员，应在别处声明。\footnote{比如，见\tm{<cstring>}（24.5）。}」
+\tm{right}引用的是调用函数的对象的成员。因此，在调用\tm{n1.set("abc",\&n2,0)}
+中，\tm{tword}引用的是\tm{n1.tword}，而在调用\tm{n2.set("def",0,0)}中，
+\tm{tword}引用的是\tm{t2.tword}。函数\tm{strlen}，\tm{perror}和\tm{strcpy}不是类
+\tm{tnode}的成员，应在别处声明。\footnote{比如，见\tm{<cstring>}（24.5）。}」
 
 \paragraph{}
 非静态成员函数可能使用\tm{const}，\tm{volatile}或\tm{const volatile}来声明。这些
@@ -1057,7 +1057,7 @@ sequence}）指按照声明顺序，以每一个结构中第一个这样的实�
 
 \sect{局部类声明}{class.local}
 \paragraph{}
-类可以在函数定义中声明；这样的类称作\tn{局部类}。局部类名局部于其包含作用域。局
+类可以在函数定义中声明；这样的类称作\nt{局部类}。局部类名局部于其包含作用域。局
 部类处于其包含作用域中，与包含函数一样可以访问函数外的名字。局部类中的声明不应该
 odr-use（\ref{basic.def.odr}）包含作用域中的具有自动存储期的变量。「例：
 \begin{lstlisting}

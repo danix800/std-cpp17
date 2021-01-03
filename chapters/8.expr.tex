@@ -333,14 +333,15 @@ arithmetic conversions}，定义如下：
 
 \ssect{Lambda表达式}{expr.prim.lambda}
 \synsym{lambda-expression}
-\synprd{\textit{lambda-introducer lambda-declarator$_{opt}$ compound-statement}}
+  \synprd{\textit{lambda-introducer lambda-declarator\tsub{opt}
+    compound-statement}}
 \synsym{lambda-introducer}
-\synprd{\texttt{[} \textit{lambda-capture$_{opt}$} \texttt{]}}
+  \synprd{\texttt{[} \textit{lambda-capture\tsub{opt}} \texttt{]}}
 \synsym{lambda-declarator}
-\synprd{\texttt{(} \textit{parameter-declaration-clause} \texttt{)}
-        \textit{decl-specifier-seq$_{opt}$}}
-  \synprd[]{\qquad \textit{noexcept-specifier$_{opt}$
-            attribute-specifier-seq$_{opt}$ trailing-return-type$_{opt}$}}
+  \synprd{\texttt{(} \textit{parameter-declaration-clause} \texttt{)}
+    \textit{decl-specifier-seq\tsub{opt}}}
+  \synprd[]{\qquad \textit{noexcept-specifier\tsub{opt}
+            attribute-specifier-seq\tsub{opt} trailing-return-type\tsub{opt}}}
 
 \paragraph{}
 Lambda表达式提供一种创建简单函数对象的准确方式。「例：
@@ -717,7 +718,7 @@ lambda表达式的到达作用域中声明的自动存储期变量。
   void test() {
     const int x = 17;
     auto g = [] (auto a) {
-      f(x) ;            // OK: calls #1, does not capture x
+      f(x);            // OK: calls #1, does not capture x
     };
     auto g2 = [=] (auto a) {
       int selector[sizeof(a) == 1 ? 1 : 2] {};
@@ -772,12 +773,12 @@ lambda表达式的到达作用域中声明的自动存储期变量。
         return [*this] {
           return ohseven;  // OK
         }
-      }() ;
+      }();
     }
     auto g() {
       return [] {
         return [*this] { }; // error: *this not captured by outer lambda-expression
-      }() ;
+      }();
     }
   };
 \end{lstlisting}」
@@ -860,7 +861,7 @@ odr-use）引用了被抓取引用绑定到的实体，而不是被抓取引用�
   int a = 1, b = 1, c = 1;
   auto m1 = [a, &b, &c]() mutable {
     auto m2 = [a, b, &c]() mutable {
-      std: : cout << a << b << c;
+      std::cout << a << b << c;
       a = 4; b = 4; c = 4;
     };
     a = 3; b = 3; c = 3;
@@ -943,7 +944,7 @@ odr-use）引用了被抓取引用绑定到的实体，而不是被抓取引用�
 \begin{lstlisting}
   template<typename ...Args>
   bool f(Args ...args) {
-    return (true && ... && args) ; // OK
+    return (true && ... && args); // OK
   }
   template<typename ...Args>
   bool f(Args ...args) {
@@ -1043,7 +1044,7 @@ odr-use）引用了被抓取引用绑定到的实体，而不是被抓取引用�
 
 \paragraph{}
 当调用函数时，每一个形参（\ref{dcl.fct}）应该由其对应的实参（\ref{dcl.init}，
-\ref{class.copy}，\ref{class.ctro}）初始化。如果函数是一个非静态成员函数，函数的
+\ref{class.copy}，\ref{class.ctor}）初始化。如果函数是一个非静态成员函数，函数的
 \tm{this}参数（\ref{class.this}）应使用指向如同显式类型转换（\ref{expr.cast}）后
 的调用对象的指针初始化。「注：该转换无访问或歧义检查；访问检查和去歧义是类成员访
 问运算符的一部分（可能隐式）。见\ref{class.member.lookup}，
@@ -1255,7 +1256,7 @@ odr-use）引用了被抓取引用绑定到的实体，而不是被抓取引用�
   struct B { };
   struct D : B { };
   void foo(D* dp) {
-    B* bp = dynamic_cast<B*>(dp) ; // equivalent to B* bp = dp;
+    B* bp = dynamic_cast<B*>(dp); // equivalent to B* bp = dp;
   }
 \end{lstlisting}」
 
@@ -1303,7 +1304,7 @@ odr-use）引用了被抓取引用绑定到的实体，而不是被抓取引用�
   void h() {
     F f;
     A* ap = &f;                    // succeeds: finds unique A
-    D* dp = dynamic_cast<D*>(ap) ; // fails: yields null; f has two D subobjects
+    D* dp = dynamic_cast<D*>(ap);  // fails: yields null; f has two D subobjects
     E* ep = (E*) ap;               // ill-formed: cast from virtual base
     E* ep1 = dynamic_cast<E*>(ap); // succeeds
   }
@@ -1808,7 +1809,7 @@ $n$为提升后类型的位数。结果类型为提升后的操作数的类型�
 中变量\tm{x}的推导类型。「例：
 \begin{lstlisting}
   new auto(1);            // allocated type is int
-  auto x = new auto(’a’); // allocated type is char , x is of type char*
+  auto x = new auto(’a’); // allocated type is char, x is of type char*
   template<class T> struct A { A(T, T); };
   auto y = new A{1, 2};   // allocated type is A<int>
 \end{lstlisting}」
@@ -2033,10 +2034,10 @@ delete[]}。「注：实现应该为全局分配函数提供缺省定义（\ref{
 \begin{lstlisting}
   struct S {
     // Placement allocation function:
-    static void* operator new(std: : size_t, std: : size_t) ;
+    static void* operator new(std::size_t, std::size_t);
 
     // Usual (non-placement) deallocation function:
-    static void operator delete(void*, std: : size_t) ;
+    static void operator delete(void*, std::size_t);
   };
   S* p = new (0) S; // ill-formed: non-placement deallocation function matches
                     // placement allocation function
@@ -2102,7 +2103,7 @@ delete[]}。「注：实现应该为全局分配函数提供缺省定义（\ref{
 \begin{enumerate}
   \item{如果待删除对象的\nt{new-expression}分配调用未被省略且分配未被扩展
     （\ref{expr.new}），则\nt{delete-expression}将调用释放函数
-    （\ref{base.stc.dynamic.deallocation}）。\nt{new-expression}分配调用的返回值
+    （\ref{basic.stc.dynamic.deallocation}）。\nt{new-expression}分配调用的返回值
     应该作为第一个参数传递给释放函数。}
   \item{否则，如果分配被扩展或由扩展另一个\nt{new-expression}的分析提供，且
     由扩展\nt{new-expression}提供存储的\nt{new-expression}所创建的每一个其他指针
@@ -2276,7 +2277,7 @@ delete[]}。「注：实现应该为全局分配函数提供缺省定义（\ref{
   void f()
   {
     const S cs;
-    int S::* pm = &S::i; // pm refers to mutable member S: : i
+    int S::* pm = &S::i; // pm refers to mutable member S::i
     cs.*pm = 88;         // ill-formed: cs is a const object
   }
 \end{lstlisting}」
@@ -2659,8 +2660,8 @@ delete[]}。「注：实现应该为全局分配函数提供缺省定义（\ref{
 \end{enumerate}
 
 \sect{抛出异常}{expr.throw}
-  \synsym{throw-expression}
-    \synprd[]{\tm{throw} \nt{assignment-expression\tsub{opt}}}
+\synsym{throw-expression}
+  \synprd[]{\tm{throw} \nt{assignment-expression\tsub{opt}}}
 
 \paragraph{}
 \nt{throw-expression}类型为\tm{void}。
@@ -2836,12 +2837,12 @@ expression}）：
     \begin{lstlisting}
       auto monad = [] (auto v) { return [=] { return v; }; };
       auto bind = [] (auto m) {
-        return [=] (auto fvm) { return fvm(m() ) ; };
+        return [=] (auto fvm) { return fvm(m() ); };
       };
 
       // OK to have captures to automatic objects created during constant
       // expression evaluation.
-      static_assert(bind(monad(2) ) (monad) () == monad(2) () ) ;
+      static_assert(bind(monad(2) ) (monad) () == monad(2) () );
     \end{lstlisting}」」}
   \item{从类型\nt{cv} \tm{void *}到对象类型指针的转换；}
   \item{动态转换（\ref{expr.dynamic.cast}）；}

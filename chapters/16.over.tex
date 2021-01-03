@@ -1,44 +1,1942 @@
 %% 16. over
 
 \chptr{重载}{over}
+\paragraph{}
+当同一作用域中的单个名字指定了两个或多个不同的声明时，该名字被称为\nt{重载}了。
+通过扩展，同一作用域中声明同名但不同类型的两个声明被称为\nt{重载声明}。只有函数
+和函数模板的声明可以重载；变量和类型的声明不能重载。
+
+\paragraph{}
+当重载函数名用在调用中时，引用哪一个重载函数声明通过比较使用点的实参类型和使用点
+可见的重载声明的形参类型来确定。该函数选择过程称为\nt{重载解析}，在
+\ref{over.match}中定义。「例：
+\begin{lstlisting}
+  double abs(double);
+  int abs(int);
+
+  abs(1);             // calls abs(int);
+  abs(1.0);           // calls abs(double);
+\end{lstlisting}」
 
 \sect{可重载声明}{over.load}
+\paragraph{}
+并不是所有函数声明都可以被重载。不能重载的情形在此说明。如果在同一作用域中包含两
+个这样的不可重载声明则程序为病态。「注：该限制适用作用域中的显式声明，以及这种声
+明与\nt{using-declaration}（\ref{namespace.udecl}）所引入的声明之间。不适用于名
+字查询（比如由于\nt{using-directives}）或重载解析（比如运算符函数）所构造的函数
+集。」
+
+\paragraph{}
+某些函数声明不能被重载：
+\begin{enumerate}
+  \item{只有返回类型、异常规范（\ref{except.spec}）不一样或两者都不一样的函数声
+    明。}
+  \item{同名和同参数类型列表（\ref{dcl.fct}）的成员函数声明如果其中任一个是静态
+    成员函数声明（\ref{class.static}）则不能重载。同样的，同名同参数以及相同模板
+    参数的成员函数模板声明如果其中任一个是静态成员函数模板声明则不能被重载。为了
+    重载解析（\ref{over.match.funcs}）的目的而为成员函数所构建的隐含对象参数的类
+    型在为执行此条规则而比较参数类型列表时不允考虑。相反，如果在同名同参数列表成
+    员函数集合中没有静态成员函数声明，且如果它们的隐含对象参数在类型上不同的话，
+    则这些成员函数声明可以被重载。「例：以下演示这些区别：
+\begin{lstlisting}
+  class X {
+    static void f();
+    void f();                 // ill-formed
+    void f() const;           // ill-formed
+    void f() const volatile;  // ill-formed
+    void g();
+    void g() const;           // OK: no static g
+    void g() const volatile;  // OK: no static g
+  };
+\end{lstlisting}」}
+  \item{同名同参数类型列表（\ref{dcl.fct}）的成员函数声明以及同名同参数类型列表
+    同模板参数列表的成员函数模板声明，如果任意一个但不是所有的具有
+    \nt{ref-qualifier}（\ref{dcl.fct}）则不能被重载。「例：
+\begin{lstlisting}
+  class Y {
+    void h() &;
+    void h() const &;         // OK
+    void h() &&;              // OK, all declarations have a ref-qualifier
+    void i() &;
+    void i() const;           // ill-formed, prior declaration of i has a
+                              // ref-qualifier
+  };
+\end{lstlisting}」}
+\end{enumerate}
+
+\paragraph{}
+「注：如\ref{dcl.fct}所述，具有相同参数声明的函数声明声明的是同一个函数，因此不
+能被重载：
+\begin{enumerate}
+  \item{仅在等价的typedef ``types''的使用有所不同的参数声明是等价的。
+    \tm{typedef}不是一个不同类型，只是另一个类型的同义词（\ref{dcl.typedef}）。
+    「例：
+\begin{lstlisting}
+  typedef int Int;
+
+  void f(int i);
+  void f(Int i);              // OK: redeclaration of f(int)
+  void f(int i) { /* ... */ }
+  void f(Int i) { /* ... */ } // error: redeclaration of f(int)
+\end{lstlisting}」
+    另一方面，枚举声明是不同类型，可用于区别重载函数声明。「例：
+\begin{lstlisting}
+  enum E { a };
+
+  void f(int i) { /* ... */ }
+  void f(E i)   { /* ... */ }
+\end{lstlisting}」}
+  \item{仅有指针\tm{*}对数组\tm{[]}不同的参数声明是等价的。即数组声明调整为指针
+    声明（\ref{dcl.fct}）。参数类型中只有第二及以后的数组维度有意义
+    （\ref{dcl.array}）。「例：
+\begin{lstlisting}
+  int f(char*);
+  int f(char[]);          // same as f(char*);
+  int f(char[7]);         // same as f(char*);
+  int f(char[9]);         // same as f(char*);
+
+  int g(char(*)[10]);
+  int g(char[5][10]);     // same as g(char(*)[10]);
+  int g(char[7][10]);     // same as g(char(*)[10]);
+  int g(char(*)[10]);     // different from g(char(*)[10]);
+\end{lstlisting}」}
+  \item{仅在函数类型和另一个指针同一函数类型的指针上不同的参数声明是等价的。即函
+    数类型被调整为函数类型的指针（\ref{dcl.fct}）。「例：
+\begin{lstlisting}
+  void h(int());
+  void h(int (*)());      // redeclaration of h(int())
+  void h(int x()) { }     // definition of h(int())
+  void h(int (*x)()) { }  // ill-formed: redefinition of h(int())
+\end{lstlisting}」}
+  \item{仅\tm{const}和/或\tm{volatile}的存在与否不同的参数声明是等价的。即在确定
+    声明、定义或调用哪一个函数时每一个参数类型的\tm{const}和\tm{volatile}类型说
+    明符被忽略。「例：
+\begin{lstlisting}
+  typedef const int cInt;
+
+  int f (int);
+  int f (const int);          // redeclaration of f(int)
+  int f (int) { /* ... */ }   // definition of f(int)
+  int f (cInt) { /* ... */ }  // error: redefinition of f(int)
+\end{lstlisting}」
+
+  只有参数类型规范最外层的\tm{const}和\tm{volatile}类型说明符按这种方式忽略；
+  隐藏在参数类型规范内部的\tm{const}和\tm{volatile}类型说明符是有意义的，可用于
+  区分重载函数声明。\footnote{当一个参数类型包含一个函数类型，比如指向函数的参数
+  类型的情形，\tm{const}和内层函数类型的参数类型规范最外层的\tm{volatile}类型说
+  明符也被忽略。}特别的，对任何类型\tm{T}，``指向\tm{T}的指针''，``指向
+  \tm{const T}的指针''和``指向\tm{volatile T}的指针''被当成是不同的参数类型，
+  ``\tm{T}的引用''，``\tm{const T}的引用''和``\tm{volatile T}的引用''也是如此。}
+  \item{只有缺省参数不同的两个参数声明是等价的。「例：考虑以下例子：
+\begin{lstlisting}
+  void f (int i, int j);
+  void f (int i, int j = 99);   // OK: redeclaration of f(int, int)
+  void f (int i = 88, int j);   // OK: redeclaration of f(int, int)
+  void f ();                    // OK: overloaded declaration of f
+
+  void prog() {
+    f (1, 2);                   // OK: call f(int, int)
+    f (1);                      // OK: call f(int, int)
+    f ();                       // error: f(int, int) or f()?
+  }
+\end{lstlisting}」}
+\end{enumerate}」
 
 \sect{声明匹配}{over.dcl}
+\paragraph{}
+两个同名的函数如果处于同一作用域中且具有等价参数声明（\ref{over.load}）则引用的
+是同一个函数。派生类函数成员与基类中同名的函数成员\nt{不}处于同一作用域。「例：
+\begin{lstlisting}
+  struct B {
+    int f(int);
+  };
+
+  struct D : B {
+    int f(const char*);
+  };
+\end{lstlisting}
+这里\tm{D::f(const char*)}隐藏了\tm{B::f(int)}而不是重载它。
+\begin{lstlisting}
+  void h(D* pd) {
+    pd->f(1);             // error: D::f(const char*) hides B::f(int)
+    pd->B::f(1);          // OK
+    pd->f("Ben");         // OK, calls D::f
+  }
+\end{lstlisting}」
+
+\paragraph{}
+局部声明的函数与包含作用域中的函数不处于同一作用域中。「例：
+\begin{lstlisting}
+  void f(const char*);
+  void g() {
+    extern void f(int);
+    f("asdf");                  // error: f(int) hides f(const char*)
+                                // so there is no f(const char*) in thi scope
+  }
+
+  void caller() {
+    extern void callee(int, int);
+    {
+      extern void callee(int);  // hides callee(int, int)
+      callee(88, 99);           // error: only callee(int) in scope
+    }
+  }
+\end{lstlisting}」
+
+\paragraph{}
+重载成员函数的不同版本可以有不同访问规则。「例：
+\begin{lstlisting}
+  class buffer {
+  private:
+    char* p;
+    int size;
+  protected:
+    buffer(int s, char* store) { size = s; p = store; }
+  public:
+    buffer(int s) { p = new char[size = s]; }
+  };
+\end{lstlisting}」
 
 \sect{重载解析}{over.match}
+\paragraph{}
+重载解析是一种在给定一组表达式列表作为调用参数和一组在调用上下文中可用于调用的
+\nt{候选函数}中选择最佳调用函数的机制。最佳函数的选择准则为参数数目，实参与候选
+函数的形参类型列表的匹配情况，对象（对非静态成员函数）与隐含对象参数的匹配情况，
+以及候选函数的某些其他属性。「注：重载解析所选的函数不保证适合于上下文。其他限制
+比如函数的可访问性，可能使其在调用中的使用成为病态。」
+
+\paragraph{}
+重载解析在语言中七个不同上下文中选择函数调用：
+\begin{enumerate}
+  \item{函数调用语法所确定的函数调用（\ref{over.call.func}）；}
+  \item{函数调用语法所确定的类对象上的函数调用运算符，指针到函数转换函数，引用到
+    指针到函数转换函数或引用到函数转换函数的调用（\ref{over.call.object}）；}
+  \item{表达式中引用的运算符的调用（\ref{over.match.oper}）；}
+  \item{类对象用于缺省或直接初始化（\ref{dcl.init}）的构造函数的调用
+    （\ref{over.match.ctor}）；}
+  \item{类对象用于拷贝初始化（\ref{dcl.init}）的用户定义转换函数的调用
+    （\ref{over.match.copy}）；}
+  \item{用于从类类型表达式对非类类型对象初始化的转换函数的调用
+    （\ref{over.match.conv}）；以及}
+  \item{用于转换一个广义左值或类的纯右值到引用直接绑定值的转换的转换函数的调用
+    （\ref{over.match.ref}）。}
+\end{enumerate}
+每一个上下文以其特有方式定义候选函数集合和参数列表。但是一旦候选函数和参数列表确
+定后，所有情况下最佳函数的选择都是一样的：
+\begin{enumerate}
+  \setcounter{enumi}{7}
+  \item{首先，候选函数的子集（具有合适参数数目且满足某些其他条件的函数）被选中作
+    为可用函数集合（\ref{over.match.viable}）。}
+  \item{然后基于匹配每一个实参到每一个可用函数的对应形参所需的隐式转换序列
+    （\ref{over.best.ics}）来选择最佳可用函数。}
+\end{enumerate}
+
+\paragraph{}
+如果最佳可用函数存在且唯一，则重载解析成功并以其作为结果。否则重载解析失败且调用
+为病态。当重载解析成功时，且最佳可用函数在其所使用的上下文中不可访问
+（第\ref{class.access}章）则程序为病态。
+
 \ssect{候选函数和参数列表}{over.match.funcs}
+\paragraph{}
+\ref{over.match.funcs}中条款描述重载解析中所用到的每一种上下文中提交给重载解析的
+候选函数集和参数列表。这些条款中定义的源变换和构建仅用于描述重载解析过程的目的。
+实现不要求使用这样的变换和构建。
+
+\paragraph{}
+候选函数集可以包含成员和非成员函数以针对同一参数列表进行解析。因此实参和形参列表
+在此异构集中可比较，成员函数被认为具有一个额外的参数，称为\nt{隐含对象参数}，表
+示成员调用的对象。为重载解析的目的，静态和非静态成员函数都具有隐含对象参数，但构
+造函数没有。
+
+\paragraph{}
+类似的在合适的情况下上下文可以构建包含代表所操作对象的隐式对象实参的实参列表。因
+为实参和形参在其对象列表中可以位置进行关联，惯例是隐含对象参数如果存在的话总是第
+一个参数而隐式对象实参如果存在的话总是第一个实参。
+
+\paragraph{}
+对非静态成员函数，隐含对象参数的类型为
+\begin{enumerate}
+  \item{未使用\nt{ref-qualifier}或使用\tm{\&} \nt{ref-qualifier}声明的函数的
+    ``\nt{cv} \tm{X}的左值引用''}
+  \item{使用\tm{\&\&} \nt{ref-qualifier}声明的函数的
+    ``\nt{cv} \tm{X}的右值引用''}
+\end{enumerate}
+其中\tm{X}是函数作为其成员的类，\nt{cv}是成员函数声明的cv限定。「例：对类\tm{X}
+的\tm{const}成员函数，额外参数假定具有类型``\tm{const X}的引用''。」为定义隐式对
+象参数的类型的目的，对转换函数，函数被当成是隐含对象参数的类的成员。对静态成员函
+数，隐含对象参数被当成是匹配任何对象（因为当选中函数以后该对象即被舍弃）。「注：
+不会为静态成员函数的隐含对象参数建立实际的类型，也不会尝试为该参数确定转换序列
+（\ref{over.match.best}）。」
+
+\paragraph{}
+在重载解析过程中，隐含对象参数与其他参数不可区分。但隐含对象参数保留其身份因为没
+有用户定义转换可用于得到一个与之匹配的类型。对未使用\nt{ref-qualifier}声明的非静
+态成员函数，适用一条额外的规则：
+\begin{enumerate}
+  \item{即使隐含对象参数不是const限定，只要在所有其他方面可以转换成隐含对象参数
+    的类型，一个右值也可以绑定到该参数。「注：这种参数为右值的事实并不影响隐式转
+    换序列的阶（\ref{over.ics.rank}）。」}
+\end{enumerate}
+
+\paragraph{}
+由在隐式转换序列中除了列表初始化外只允许有一种用户定义转换，在选择最佳用户定义转
+换（\ref{over.match.best}，\ref{over.best.ics}）时适用特殊规则。「例：
+\begin{lstlisting}
+  class T {
+  public:
+    T();
+  };
+
+  class C : T {
+
+  public:
+    C(int);
+  };
+  T a = 1;          // ill-formed: T(C(1)) not tried
+\end{lstlisting}」
+
+\paragraph{}
+在候选者是函数模板的每一种情况下，使用模板参数推导（\ref{temp.over}，
+\ref{temp.deduct}）来生成候选函数模板特例化。这些候选者随后按常规方式作为候选函
+数来处理。\footnote{参数推导的过程完全确定函数模板特例化的参数类型，即函数模板特
+例化的参数不包含模板参数类型。因此，除非另有说明，函数模板特例化和非模板函数
+（\ref{dcl.fct}）在重载解析剩余部分等价处理。}一个给定的名字可以引用一个或多个函
+数模板也可以引用一组重载的非模板函数。在这种情况下，从函数模板生成的候选函数与非
+模板候选函数组集成组合在一起。
+
+\paragraph{}
+一个定义为删除的缺省化移动构造函数或赋值运算符（\ref{class.copy}）在所有上下文中
+从候选函数集合中排除。
+
 \sssect{函数调用语法}{over.match.call}
+\paragraph{}
+在一个函数调用（\ref{expr.call}）                                             \\
+\mbox{\qquad{\nt{postfix-expression} \tm{(} \nt{expression-list\tsub{opt}}
+  \tm{)}}}                                                                    \\
+中，如果\nt{postfix-expression}表示一个重载函数和/或函数模板集合，重载解析按
+\ref{over.call.func}所述进行。如果\nt{postfix-expression}表示类类型对象，重载解
+析按\ref{over.call.object}所述进行。
+
+\paragraph{}
+如果\nt{postfix-expression}代表一组重载函数和/或函数模板的地址，重载解析使用以上
+所述集合来应用。如果重载解析所选函数为非静态成员函数，则程序为病态。「注：其他上
+下文中一个重载集合的地址解析在\ref{over.over}中描述。」
+
 \ssssect{调用命名函数}{over.call.func}
+\paragraph{}
+在\ref{over.call.func}中有意思的只有那些其中的\nt{postfix-expression}最终包含一
+个代表一个或多个可能会被调用的函数的那些函数调用。这种\nt{postfix-expression}，
+可能嵌套于任意层括号中，具有以下形式之一：
+
+\synsym{postfix-expression}
+  \synprd{\nt{postfix-expression} \tm{,} \nt{id-expression}}
+  \synprd{\nt{postfix-expression} \tm{->} \nt{id-expression}}
+  \synprd[]{\nt{primary-expression}}
+
+这表示函数调用的两种语法子范畴：限定函数调用和未限定函数调用。
+
+\paragraph{}
+在限定函数调用中，待解析的名字为一个\nt{id-expression}且前面为\tm{->}或\tm{.}运
+算符。因结构\tm{A->B}通常等价于\tm{(*A).B}，第\ref{over}章剩余部分假定不失一般性
+地所有成员函数调用都规范化为使用一个对象和\tm{.}运算符的形式。更进一步，第
+\ref{over}章假定\tm{.}运算符的左操作数\nt{postfix-expression}具有类型
+``\nt{cv} \tm{T}''，其中\tm{T}代表一个类\footnote{注意类型对象的cv限定符在广义左
+值和类纯右值对象上的重载解析都有意义。}。在这一假定之下，调用中的
+\nt{id-expression}按类中名字查询规则（\ref{class.member.lookup}）在\tm{T}的成员
+函数中查询。由该查询所找到的函数声明构成候选函数集合。参数列表为调用中的
+\nt{expression-list}加上规范化成员函数调用中的\tm{.}运算符的左操作数作为隐含对象
+参数（\ref{over.match.funcs}）。
+
+\paragraph{}
+在未限定函数调用中，名字没有使用\tm{->}或\tm{.}运算符限定且具有更一般的
+\nt{primary-expression}的形式。名字按函数调用中名字查询规则
+（\ref{basic.lookup}）在函数调用上下文中查询。该查询所找到的函数声明构成候选函数
+集合。因为名字查询规则，候选函数集合包括（1）全部非成员函数，或者（2）某个类
+\tm{T}的全部成员函数。在情形（1）中，参数列表与调用中的\nt{expression-list}相
+同。在情形（2）中，参数列表为调用中的\nt{expression-list}加上与限定函数调用中一
+样的隐含对象参数。如果关键字\tm{this}（\ref{class.this}）在作用域中且引用类
+\tm{T}，或\tm{T}的派生类，则隐含对象参数为\tm{(*this)}。中如果关键字\tm{this}不
+在作用域中或引用另一个类，则类型\tm{T}的虚构对象成为隐含对象参数\footnote{
+必须虚构隐含对象参数以对应重载解析过程中属于成员函数的隐含对象参数。在所选函数调
+用中不会使用到它。因为成员函数都具有相同的隐含对象参数，虚构对象不会成为选择或者
+否决一个函数的原因。}。如果参数列表由虚构对象补充且重载解析选择了\tm{T}的非静态
+成员函数之一，同调用为病态。
+
 \ssssect{调用类类型对象}{over.call.object}
+\paragraph{}
+如果函数调用语法中的\nt{primary-expression} \tm{E}求值为类型``\nt{cv} \tm{T}''的
+类对象，则候选函数集合包括至少一个\tm{T}的函数调用运算符。\tm{T}的函数调用运算符
+通过在\tm{(E).operator()}的上下文中名字\tm{operator()}的常规查询来获得。
+
+\paragraph{}
+此外，对声明于\tm{T}中具有形式为                                              \\
+\mbox{\quad{\tm{operator} \nt{conversion-type-id} \tm{()} \nt{cv-qualifier
+ref-qualifier\tsub{opt} noexcept-special\tsub{opt}
+attribute-specifier-seq\tsub{opt}}}}                                          \\
+的每一个非显式转换函数，其中\nt{cv-qualifier}是与\nt{cv}相同或比其更严限定的cv限
+定，\nt{conversion-type-id}代表``指向返回\tm{R}，参数为\tm{(P1,...,Pn)}的函数指
+针''类型，或``引用指向返回\tm{R}，参数为\tm{(P1,...,Pn)}的函数指针''类型，或``引
+用返回\tm{R}，参数为\tm{(P1,...,Pn)}的函数''类型，一个具有唯一名字
+\nt{call-function}且具有形式为                                                \\
+\mbox{\qquad{\tm{R} \nt{call-function} \tm{(} \nt{conversion-type-id} \tm{F, P1
+a1, ..., P}\nt{\tsub{n}} \tm{a}\nt{\tsub{n}}\tm{) \{ return F(a1, ..., a}
+\nt{\tsub{n}}\tm{); \}}}}                                                     \\
+的\nt{替代调用函数}（\nt{surrogate call function}）也被当作是候选函数。类似的，
+如果函数在\tm{T}中未被某个中间声明所隐藏，替代调用函数会为\tm{T}的基类中声明的每
+一个转换函数而加入候选函数集合中去\footnote{注意该结构可能产生重载解析不能区分彼
+此的候选调用函数，因为这些函数具有等价声明或只有返回类型不同。如果重载解析不能选
+择比这种不可区分函数唯一更好的匹配则调用具有歧义。}。
+
+\paragraph{}
+如果重载解析选择了这样的替代调用函数，将调用对应的转换函数来转换\tm{E}为合适的函
+数指针或引用，然后使用调用参数来调用函数。如果转换函数不能被调用（比如具有歧义）
+则程序为病态。
+
+\paragraph{}
+提交给重载解析的参数列表由函数调用语法中的参数表达式前加隐含对象参数（\tm{E}）组
+成。「注：当调用与函数调用运算符比较时，隐含对象参数与函数调用运算符的隐式对象参
+数进行比较。当调用与替代调用函数比较时，隐含对象参数与替代调用函数的第一个参数进
+行比较。从替代调用函数而来的转换函数将用于该参数的转换序列，因其转换隐含对象参数
+到第一个参数所需要的合适的函数指针或引用。」「例：
+\begin{lstlisting}
+  int f1(int);
+  int f2(float);
+  typedef int (*fp1)(int);
+  typedef int (*fp2)(float);
+  struct A {
+    operator fp1() { return f1; }
+    operator fp2() { return f2; }
+  } a;
+  int i = a(1);                   // calls f1 via pointer returned from
+                                  // conversion function
+\end{lstlisting}」
+
 \sssect{表达式中的运算符}{over.match.oper}
-\sssect{使用构造函数初始化}{over.match.ctor}
-\sssect{自定义转换引起的类拷贝初始化}{over.match.copy}
+\paragraph{}
+如果表达式中运算符的操作数没有具有类或枚举类型，则运算符假定为内置运算符且依第
+\ref{expr}章进行解释。「注：因为\tm{.}，\tm{.*}和\tm{::}不能重载，这些运算符总是
+内置运算符，按第\ref{expr}章进行解释。\tm{?:}不能被重载，但当具有类或枚举类型
+时，本节中的规则用于确定应用于第二和第三操作数的转换（\ref{expr.cond}）。」
+「例：
+\begin{lstlisting}
+  struct String {
+    String (const String&);
+    String (const char*);
+    operator const char* ();
+  };
+  String operator + (const String&, const String&);
+
+  void f() {
+    const char* p= "one" + "two"; // ill-formed because neither operand has
+                                  // class or enumeration type always evaluate
+                                  // to 2 even if class or enumeration types
+                                  // exist that would perform the operation.
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果任一个操作数具有类或枚举类型，则一个用户定义运算符函数可能被声明来实现该运算
+符或者一个用户定义转换可以是转换操作数到适合于内置运算符的类型所必须的。在这种情
+况下，重载解析被用于确定哪一个运算符函数或内置运算符被调用以实现该运算符。因此，
+按表\ref{tab:funcoprels}所总结的（其中\tm{@}表示指定章节所覆盖的运算符中的一个），运算符记法首先转
+换成等价函数调用记法。但是，操作数按内置运算符（第\ref{expr}章）所述顺序进行排序。
+\begin{table}[h!]
+  \centering
+  \caption{运算符与函数调用记法间的关系}
+  \begin{tabular}{|l|l|l|l|}
+    \hline
+    章节              & 表达式    & 作为成员函数 & 作为非成员函数             \\
+    \hline \hline
+    \ref{over.unary}  & \tm{@a}   & \tm{(a).operator@ ()}                      &
+      \tm{operator@(a)}                                                       \\
+    \ref{over.binary} & \tm{a@b}  & \tm{(a).operator@ (b)}                     &
+      \tm{operator@(a, b)}                                                    \\
+    \ref{over.ass}    & \tm{a=b}  & \tm{(a).operator= (b)} &                  \\
+    \ref{over.sub}    & \tm{a[b]} & \tm{(a).operator[](b)} &                  \\
+    \ref{over.ref}    & \tm{a->}  & \tm{(a).operator->()}  &                  \\
+    \ref{over.inc}    & \tm{a@}   & \tm{(a).operator@ (0)} &                  \\
+    \hline
+  \end{tabular}
+  \label{tab:funcoprels}
+\end{table}
+
+\paragraph{}
+对带有类型的非cv限定版本为\tm{T1}的操作数的一元运算符\tm{@}，以及对带有类型的非
+cv限定版本为\tm{T1}的左操作数和类型的非cv限定版本为\tm{T2}的右操作数的二元运算符
+三组候选函数集合，称作\nt{成员候选}，\nt{非成员候选}和\nt{内置候选}，按以下进行
+构建：
+\begin{enumerate}
+  \item{如果\tm{T1}是完整类类型或当前正在定义的类，则成员候选集为
+    \tm{T1::operator@}的限定查询的结果（\ref{over.call.func}）；否则成员候选集合
+    为空。}
+  \item{非成员候选集合为\tm{operator@}在表达式上下文中未限定查询的结果，根据未限
+    定函数调用（\ref{basic.lookup.argdep}）中名字查询的常规规则，除了成员函数都
+    被忽略掉。但是，如果没有操作数为类类型则只有那有具有第一个参数类型为
+    ``\nt{cv} \tm{T1}的引用''，当\tm{T1}为枚举类型，或（如果有右操作数）第二个参
+    数类型为\tm{T2}或``\nt{cv} \tm{T2}的引用''，当\tm{T2}为枚举类型的查询集合中
+    的非成员函数是候选函数。}
+  \item{对运算符\tm{,}，一元运算符\tm{\&}或运算符\tm{->}，内置候选集为空。对所有
+    其他运算符，内置候选集包括\ref{over.built}中定义的所有候选候选运算符函数，与
+    给定运算符相比，
+    \begin{enumerate}
+      \item{具有相同运算符名，且}
+      \item{接受相同个数的操作数，且}
+      \item{接受操作数类型，给定操作数可以根据\ref{over.best.ics}转换到该类型，
+        且}
+      \item{不具有与任何非函数模板特例化的非成员候选相同的参数类型列表。}
+    \end{enumerate}}
+\end{enumerate}
+
+\paragraph{}
+对于内置赋值运算符，左操作数的转换有如下限制：
+\begin{enumerate}
+  \item{不会引入临时变量来存储左操作数，且}
+  \item{没用用户定义转换应用于左操作数来获得匹配于内置候选的最左操作数的类型。}
+\end{enumerate}
+
+\paragraph{}
+对所有其他操作数没有这样的限制。
+
+\paragraph{}
+重载解析的候选函数集合为成员候选，非成员候选和内置候选的并集。参数列表包含运算符
+的所有操作数。最佳函数按\ref{over.match.viable}和\ref{over.match.best}从候选函数
+集合中选择。\footnote{如果候选函数集合为空则重载解析失败。}「例：
+\begin{lstlisting}
+  struct A {
+    operator int();
+  };
+  A operator+(const A&, const A&);
+  void m() {
+    A a, b;
+    a + b;                        // operator+(a, b) chosen over int(a) + int(b)
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果重载解析选择了内置候选，则类类型操作数被转换到所选操作函数对应参数的类型，除
+了用户定义转换序列（\ref{over.ics.user}）的第二标准转换序列不适用。然后运算符被
+当作对应的内置运算符并按第\ref{expr}章进行解释。「例：
+\begin{lstlisting}
+  struct X {
+    operator double();
+  };
+
+  struct Y {
+    operator int*();
+  };
+
+  int *a = Y() + 100.0    // error: pointer arithmetic requires integral operand
+  int *b = Y() + X();     // error: pointer arithmetic requires integral operand
+\end{lstlisting}」
+
+\paragraph{}
+在选择\tm{operator->}函数时运算符\tm{->}的第二操作数被忽略，且当\tm{operator->}
+函数被调用时不是一个实参。当\tm{operator->}返回时，\tm{operator->}使用原第二操作
+数应用于返回值。\footnote{如果\tm{operator->}函数返回值具有类类型，可能会导致选
+择并调用另一个\tm{operator->}函数。重复这一过程直到某个\tm{operator->}函数返回非
+类类型值为止。}
+
+\paragraph{}
+如果运算符是\tm{,}，一元运算符\tm{\&}或运算符\tm{->}且没有可用函数，则运算符假定
+为内置运算符并按第\ref{expr}章进行解释。
+
+\paragraph{}
+「注：表达式中运算符查询规则不同于函数调用中运算符函数名的查询规则，如下示例：
+\begin{lstlisting}
+  struct A { };
+  void operator + (A, A);
+
+  struct B {
+    void operator + (B);
+    void f ();
+  };
+
+  A a;
+
+  void B::f() {
+    operator+ (a,a);          // error: global operator hidden by member
+    a + a;                    // OK: calls global operator+
+  }
+\end{lstlisting}」
+
+\sssect{构造函数初始化}{over.match.ctor}
+\paragraph{}
+当类类型对象进行直接初始化（\ref{dcl.init}），从同一类类型或派生类类型表达式进行
+拷贝初始化（\ref{dcl.init}）或进行缺省初始化（\ref{dcl.init}）时，重载解析选择构
+造函数。对于不在拷贝上下文中的直接初始化或缺省初始化，候选函数为被初始化对象类的
+所有构造函数。对拷贝初始化，候选函数为该类的所有转换构造函数
+（\ref{class.conv.ctor}）。参数列表为\nt{initializer}的\nt{expression-list}或
+\nt{assignment-expression}。
+
+\sssect{用户定义转换导致的类拷贝初始化}{over.match.copy}
+\paragraph{}
+在\ref{dcl.init}所指定的条件下，作为类类型对象的拷贝初始化的一部分，一个用户定义
+转换可以调用来转换初始化表达式到被初始化对象的类型。重载解析用于选择调用的用户转
+换。「注：从非直接绑定到可能cv限定类类型引用的转换按对应非引用拷贝初始化来确
+定。」假定``\nt{cv1} \tm{T}''为待初始化对象的类型，\tm{T}为类类型，则候选函数按
+以下选择：
+\begin{enumerate}
+  \item{\tm{T}的转换构造函数（\ref{class.conv.ctor}）是候选函数。}
+  \item{当初始化表达式的类型为类类型``\nt{cv} \tm{S}''时，考虑\tm{S}的非显式转换
+    函数及其基类。当初始化一个临时变量以绑定到构造函数的第一个参数，其中参数具有
+    类型``可能cv限定的\tm{T}的引用''且当使用单参数在类型``\nt{cv2} \tm{T}''的对
+    象直接初始化上下文中调用构造函数时，也考虑显式转换函数。那些在\tm{S}中未被隐
+    藏且产生cv限定版本与\tm{T}或其派生类相同的类的转换函数是候选函数。返回
+    ``\tm{X}的引用''的转换函数返回左值或亡值，依赖于引用的类型，\tm{X}的类型且为
+    选择候选函数的目的而被认为是产生\tm{X}的。}
+\end{enumerate}
+
+\paragraph{}
+在这两个种情况下，参数列表具有一个参数，即初始化表达式。「注：该参数将与构造函数
+第一个参数进行比较，并与转换函数的隐含对象参数进行比较。」
+
 \sssect{转换函数引起的初始化}{over.match.conv}
-\sssect{转换函数引起为直接引用绑定的初始化}{over.match.ref}
+\paragraph{}
+在\ref{dcl.init}节所述条件下，作为非类类型对象初始化的一部分，可以调用转换函数来
+转换类类型表达式初始化到待初始化对象的类型。使用重载解析来选择待调用转换函数。假
+定``\nt{cv1} \tm{T}''为待初始化对象的类型，且``\nt{cv} \tm{S}''为初始化表达式的
+类型，其中\tm{S}为类类型，候选函数按如下进行选择：
+\begin{enumerate}
+  \item{考虑\tm{S}的转换函数及其基类。那些\tm{S}中未被隐藏且产生类型\tm{T}或通过
+    标准转换序列（\ref{over.ics.scs}）可以转换到类型\tm{T}的非显式转换函数为候选
+    函数。对于直接初始化，那些\tm{S}中未被隐藏且产生类型\tm{T}或通过限定转换
+    （\ref{conv.qual}）可以转换到类型\tm{T}的显式转换函数为候选函数。为选择候选
+    函数的目的，返回cv限定类型的转换函数被认为是产生该类型的非cv限定版本。返回
+    ``\nt{cv2} \tm{X}的引用''的转换函数返回左值或亡值，依赖于引用的类型，
+    ``\nt{cv2} \tm{X}''的类型且为选择候选函数的目的而被认为是产生\tm{X}的。}
+\end{enumerate}
+
+\paragraph{}
+参数列表具有一个实参，即初始化表达式。「注：实参将与转换函数的隐含对象参数进行比
+较。」
+
+\sssect{直接引用绑定的转换函数导致初始化}{over.match.ref}
+\paragraph{}
+在\ref{dcl.init.ref}所述条件下，引用可以直接绑定到应用转换函数到初始化表达式的结
+果的广义左值或类纯右值。使用重载解析来选择待调用转换函数。假定
+``\nt{cv1} \tm{T}的引用''为待初始化引用的类型，``\nt{cv} \tm{S}''为初始化表达式
+的类型，其中\tm{S}为类类型，候选函数按如下进行选择：
+\begin{enumerate}
+  \item{考虑\tm{S}及其基类的转换函数。那些\tm{S}中未被隐藏且产生``\nt{cv2}
+    \tm{T2}的左值引用''类型（当初始化一个左值引用或函数的右值引用时}）或
+    ``\nt{cv2} \tm{T2}''类型或``\nt{cv2} \tm{T2}的右值引用''类型（当初始化右值引
+    用或函数的左值引用时）的非显式转换函数为候选函数，其中``\nt{cv1} \tm{T}''与
+    ``\nt{cv2} \tm{T2}''引用兼容（\ref{dcl.init.ref}）。对于直接初始化，那些
+    \tm{S}中未被隐藏且对应地产生``\nt{cv2} \tm{T2}的左值引用''类型或
+    ``\nt{cv2} \tm{T2}''类型或``\nt{cv2} \tm{T2}的右值引用''类型的显式转换函数也
+    是候选函数，其中\tm{T2}是与\tm{T}相同的类型，或使用限定转换
+    （\ref{conv.qual}）可以转换到类型\tm{T}。
+\end{enumerate}
+
+\paragraph{}
+参数列表具有一个参数，即初始化表达式。「注：该参数将与转换函数的隐含对象参数进行
+比较。」
+
 \sssect{列表初始化引起初始化}{over.match.list}
+\paragraph{}
+当非聚合类类型\tm{T}的对象进行列表初始化时，如\ref{dcl.init.list}指定根据本节所
+述规则进行重载解析时，重载解析分两阶段选择构造函数：
+\begin{enumerate}
+  \item{开始时，候选函数为类\tm{T}的初始化列表构造函数（\ref{dcl.init.list}）且
+    参数列表包含初始化列表作为单个参数。}
+  \item{如果没有找到可用初始化列表构造函数，则再次进行重载解析，其中候选函数为类
+    \tm{T}的所有构造函数，参数列表包含初始化列表的元素。}
+\end{enumerate}
+如果初始化列表无元素且\tm{T}具有缺省构造函数，则忽略第一阶段。在拷贝列表初始化中
+如果一个\tm{explicit}构造函数被选中，则初始化为病态。「注：这与其他情形
+（\ref{over.match.ctor}，\ref{over.match.copy}）不同，其中只考虑转换构造函数来进
+行拷贝初始化。该限定仅在初始化是重载解析最终结果的一部分时适用。」
+
 \sssect{类模板参数推导}{over.match.class.deduct}
+\paragraph{}
+形成包含以下的函数和函数模板集合：
+\begin{enumerate}
+  \item{对\nt{template-name}所指定主类模板的每一个构造函数，如果模板有定义，具有
+    参下属性的函数模板：
+    \begin{enumerate}
+      \item{模板参数为类模板参数跟上构造函数模板参数（包括缺省模板参数），如果有
+        的话。}
+      \item{函数参数类型为构造函数的参数类型。}
+      \item{返回类型为由\nt{template-name}和从类模板获得的模板参数所对应的模板实
+        参所指定的类模板特例化。}
+    \end{enumerate}}
+  \item{如果主类模板\tm{C}未定义或未声明任何构造函数，则如上从假想构造函数
+    \tm{C()}派生出一个额外的函数模板。}
+  \item{如上从假想构造函数\tm{C()}派生出来的一个额外函数模板称为
+    \nt{拷贝推导候选}（\nt{copy deduction candidate}）。}
+  \item{对每一个\nt{推导指南}（\nt{deduction-guide}），具有以下属性的函数或函数
+    模板：
+    \begin{enumerate}
+      \item{模板参数，如果有的话，以及函数参数为\nt{推导指南}的参数。}
+      \item{返回类型为\nt{推导指南}的\nt{simple-template-id}。}
+    \end{enumerate}}
+\end{enumerate}
+
+\paragraph{}
+初始化和重载解析按\ref{dcl.init}和\ref{over.match.ctor}、\ref{over.match.copy}或
+\ref{over.match.list}（适合于进行初始化的类型）所述对假想类类型对象进行，其中，
+为形成重载集合，所选函数和函数模板被当成是该类类型的构造函数，且初始化由进行类模
+板参数推导所在上下文提供。如果函数或函数模板是从声明为显式的构造函数或
+\nt{推导指南}生成的则每一个这种概念上的构造函数被当成是显式的。所有这种概念上的
+构造函数被当成是假想类类型的公有成员。
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  template <class T> struct A {
+    explicit A(const T&, ...) noexcept;   // #1
+    A(T&&, ...);                          // #2
+  };
+
+  int i;
+  A a1 = { i, i };  // error: explicit constructor #1 selected in copy-list-
+                    // initialization during deduction, cannot deduce from non-
+                    // forwarding rvalue reference in #2
+
+  A a2{i, i};       // OK, #1 deduces to A<int> and also initializes
+  A a3{0, i};       // OK, #2 deduces to A<int> and also initializes
+  A a4 = {0, i};    // OK, #2 deduces to A<int> and also initializes
+
+  template <class T> A(const T&, const T&) -> A<T&>;  // #3
+  template <class T> explicit A(T&&, T&&) -> A<T>;    // #4
+
+  A a5 = {0, 1};    // error: explicit deduction guide #4 selected in copy-list-
+                    // initialization during deduction
+  A a6{0,1};        // OK, #4 deduces to A<int> and #2 initializes
+  A a7 = {0, i};    // error: #3 deduces to A<int&>, #1 and #2 declare same
+                    // constructor
+  A a8{0,i};        // error: #3 deduces to A<int&>, #1 and #2 declare same
+                    // constructor
+
+  template <class T> struct B {
+    template <class U> using TA = T;
+    template <class U> B(U, TA<U>);
+  };
+
+  B b{(int*)0, (char*)0};   // OK, deduces B<char*>
+\end{lstlisting}
 
 \ssect{可用函数}{over.match.viable}
+\paragraph{}
+从给定上下文（\ref{over.match.funcs}）所构建的候选函数集合中选择一组可用函数，通
+过为最佳匹配（\ref{over.match.best}）而比较参数转换序列从该集合中选择最佳函数。
+可用函数的选择考虑实参和函数形参而不是转换序列的阶之前的关系。
+
+\paragraph{}
+首先，要成为可用函数，候选函数应该具有足够的参数与列表中的实参相匹配。
+\begin{enumerate}
+  \item{如果列表中有\nt{m}个实参，所有具有\nt{m}个形参的候选函数为可用。}
+  \item{少于\nt{m}个形参的候选函数仅在其参数列表中有省略号（\ref{dcl.fct}）才可
+    用。为重载解析的目的，没有对应形参的实参``匹配省略号''
+    （\ref{over.ics.ellipsis}）。}
+  \item{具有多于\nt{m}个形参的候选函数仅在第\nt{m+1}的形参具有缺省实参
+    （\ref{dcl.fct}）时才可用。\footnote{根据\ref{dcl.fct}，跟在第\nt{m+1}个参数
+    之后的参数也必须具有缺省实参。}。为重载解析的目的，参数列表右侧截断，使其具
+    有恰好\nt{m}个形参。}
+\end{enumerate}
+
+\paragraph{}
+第二，\tm{F}要成为可用函数，对每一个实参应该具有一个\nt{隐式转换序列}
+（\ref{over.best.ics}）转换该实参到\tm{F}的对应形参。如果形参为引用类型，隐式转
+换序列包括绑定引用的操作，且非const左值引用不能绑定到右值和右值引用不能绑定到左
+值的事实会影响函数可用性（见\ref{over.ics.ref}）。
+
 \ssect{最佳可用函数}{over.match.best}
+\paragraph{}
+\bgroup % for ICSi(F)
+\newcommand{\ics}[2]{ICS\nt{\tsub{#1}}(\tm{#2})}
+定义\ics{i}{F}如下：
+\begin{enumerate}
+  \item{如果\tm{F}是静态成员函数，\ics{1}{F}定义为使得\ics{1}{F}对任何函数\tm{G}
+    即不好也不坏且对称的\ics{1}{G}比\ics{1}{F}即不好也不坏；\footnote{如果函数是
+    静态成员函数，该定义意味着第一个参数，即隐含对象参数，对确定函数是否比另一个
+    函数更好还是更坏无影响。}否则，}
+  \item{假定\ics{i}{F}表示转换列表中第\nt{i}个实参到可用函数\tm{F}的第\nt{i}个形
+    参类型的隐式转换序列。\ref{over.best.ics}定义了隐式转换序列，
+    \ref{over.ics.rank}定义了一个隐式转换序列比另一个转换序列更好或更坏的涵义。}
+\end{enumerate}
+给定这些定义，一个可用函数\tm{F1}定义为比另一个可用函数\nt{更好}，如果对所有实参
+\nt{i}，\ics{i}{F1}不比\ics{i}{F2}更差，并且
+\begin{enumerate}
+  \setcounter{enumi}{2}
+  \item{对某些实参\nt{j}，\ics{j}{F1}是比\ics{j}{F2}更好的转换序列，或者如果不是
+    话，}
+  \item{上下文为用户定义转换的初始化（见\ref{dcl.init}，\ref{over.match.conv}和
+    \ref{over.match.ref}）且从\tm{F1}的返回类型到目标类型（即初始化实体的类型）
+    的标准转换序列比从\tm{F2}的返回类型到目标类型的标准转换序列更好「例：
+\begin{lstlisting}
+  struct A {
+    A();
+    operator int();
+    operator double();
+  } a;
+  int i = a;        // a.operator int() followed by no conversion is better than
+                    // a.operator double() followed by a conversion to int
+  float x = a;      // ambiguous: both possibilities require conversions,
+                    // and neither is better than the other
+\end{lstlisting}」
+    或者如果不是的话，}
+  \item{上下文为由函数类型引用的直接引用绑定（\ref{over.match.ref}）的转换函数进
+    行的初始化，\tm{F1}的返回类型与被初始化引用是同一种引用（即左值或右值），而
+    \tm{F2}的返回类型不是「例：
+\begin{lstlisting}
+  template <class T> struct A {
+    operator T&();  // #1
+    operator T&&(); // #2
+  };
+  typedef int Fn();
+  A<Fn> a;
+  Fn& lf = a;       // calls #1
+  Fn&& rf = a;       // calls #2
+\end{lstlisting}」或者如果不是的话，}
+    \item{\tm{F1}不是函数模板特例化且\tm{F2}是函数模板特例化，如果不是的话，}
+    \item{\tm{F1}和\tm{F2}是函数模板特例化，且根据\ref{temp.func.order}中的偏序
+      规则，\tm{F1}的函数模板比\tm{F2}的模板更特殊，如果不是的话，}
+    \item{\tm{F1}从推导指南（\ref{over.match.class.deduct}）生成，\tm{F2}不是，
+      如果不是的话，}
+    \item{\tm{F1}是拷贝推导候选（\ref{over.match.class.deduct}）而\tm{F2}不是，
+      如果不是的话，}
+    \item{\tm{F1}从非模板构造函数生成，\tm{F2}从模板构造函数生成。「例：
+\begin{lstlisting}
+  template <class T> struct A {
+    using value_type = T;
+    A(value_type);        // #1
+    A(const A&);          // #2
+    A(T, T, int);         // #3
+    template<class U>
+      A(int, T, U);       // #4
+    // #5 is the copy deduction candidate, A(A)
+  };
+
+  A x(1, 2, 3);           // uses #3, generated from a non-template constructor
+
+  template <class T>
+  A(T) -> A<T>;           // #6, less specilized than #5
+
+  A a(42);                // uses #6 to deduce A<int> and #1 to initialize
+  A b = a;                // uses #5 to deduce A<int> and #2 to initialize
+
+  template <class T>
+  A(A<T>) -> A<A<T>>;     // #7, as specialized as #5
+
+  A b2 = a;               // uses #7 to deduce A<A<int>> and #1 to initialize
+\end{lstlisting}」
+    }
+\end{enumerate}
+\egroup % for ICSi(F)
+
+\paragraph{}
+如果存在恰好一个可用函数比所有其他可用函数更好，则其为重载解析所选；否则调用为病
+态。\footnote{选择最佳可用函数的算法相对可用函数的数目是线性的。运行一个简单的比
+赛来找到不比其所面对的任何对手差的函数\tm{W}。尽管另一个\tm{W}没有面对的函数
+\tm{F}可能和\tm{W}至少一样好，\tm{F}也不会是最佳函数，因为在比赛的同一点\tm{F}遇
+到另一个函数\tm{G}使得\tm{F}不比\tm{G}好。由此可知要么\tm{W}是最佳函数，要么不存
+在最佳函数。因此在可用函数上进行第二遍以验证\tm{W}比所有其他函数都更好。}「例：
+\begin{lstlisting}
+  void Fcn(const int*, short);
+  void Fcn(int*, int);
+
+  int i;
+  short s = 0;
+
+  void f() {
+    Fcn(&i, s);   // is ambiguous because &i -> int* is better than
+                  // &i -> const int* but s -> short is also better than
+                  // s -> int
+
+    Fcn(&i, 1L);  // calls Fcn(int*, int), because &i -> int* is better than
+                  // &i -> const int* and 1L -> short and 1L -> int are
+                  // indistinguishable
+
+    Fcn(&i, 'c'); // calls Fcn(int*, int), because &i -> int* is better than
+                  // &i -> const int* and c -> int is better than c -> short
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果最佳可用函数解析到可以找到多个声明的函数且如果至少两个这种声明 -- 或在
+\nt{using-declaration}的情况下它们所引用的声明 -- 指定使函数可用的缺省实参，则程
+序为病态。「例：
+\begin{lstlisting}
+  namespace A {
+    extern "C" void f(int = 5);
+  }
+  namespace B {
+    extern "C" void f(int = 5);
+  }
+
+  using A::f;
+  using B::f;
+  void use() {
+    f(3);       // OK, default argument was not used for viability
+    f();        // error: found default argument twice
+  }
+\end{lstlisting}」
+
 \sssect{隐式转换序列}{over.best.ics}
+\paragraph{}
+\nt{隐式转换序列}指用于转换函数调用实参到被调用函数对应形参类型的转换序列。转换
+序列按第\ref{conv}章定义为隐式转换，意味着其受由单表达式进行对象或引用的初始化的
+规则所控制（\ref{dcl.init}，\ref{dcl.init.ref}）。
+
+\paragraph{}
+隐式转换序列只关注实参类型，cv限定和值范畴以及这些如何转换以匹配形参的对应属性。
+忽略其他属性，如生命期，存储类，对齐，实参可访问性，实参是否为位域以及函数是否被i
+删除（\ref{dcl.fct.def.delete}）。因此尽管一个隐式转换序列可以为一个给定的
+实参-形参对而定义，在最终分析中从实参到形参的转换可能仍是病态的。
+
+\paragraph{}
+一个良好的隐式转换序列为以下形式之一：
+\begin{enumerate}
+  \item{一个\nt{标准转换序列}（\ref{over.ics.scs}），}
+  \item{一个\nt{用户定义转换序列}（\ref{over.ics.user}），或}
+  \item{一个\nt{省略号转换序列}（\ref{over.ics.ellipsis}）。}
+\end{enumerate}
+
+\paragraph{}
+然而，如果目标为
+\begin{enumerate}
+  \item{构造函数的第一个参数或者}
+  \item{用户定义转换函数的隐含对象参数}
+\end{enumerate}
+且构造函数或用户定义转换函数依据以下是一个候选函数
+\begin{enumerate}
+  \setcounter{enumi}{2}
+  \item{\ref{over.match.ctor}，当实参是类拷贝初始化第二步的临时变量，}
+  \item{\ref{over.match.copy}，\ref{over.match.conv}或\ref{over.match.ref}（所有
+    情形），或者}
+  \item{\ref{over.match.list}的第二阶段，当初始化列表具有恰好一个元素，其本身是
+    一个初始化列表，且目标为类\tm{X}的构造函数第一个参数的目标，且转换为到\tm{X}
+    或\nt{cv} \tm{X}的引用，}
+\end{enumerate}
+则忽略用户定义转换序列。「注：这些规则防止重载解析过程中有超过一个用户定义转换被
+应用，因此避免了无限递归。」「例：
+\begin{lstlisting}
+  struct Y { Y(int); };
+  struct A { operator int(); };
+  Y y1 = A();       // error: A::operator int() is not a candidate
+
+  struct X { };
+  struct B { operator X(); };
+  B b;
+  X x({b});         // error: B::operator X() is not a candidate
+\end{lstlisting}」
+
+\paragraph{}
+对于参数类型为引用的情形见\ref{over.ics.ref}。
+
+\paragraph{}
+当参数类型不是引用时，隐式转换序列是对使用实参表达式对参数拷贝初始化的建模。隐式
+转换序列是所需的以转换实参表达式到参数类型的纯右值。「注：当参数具有类类型时，这
+是一个为第\ref{over}章的目的而定义的概念上的转换。」顶层cv限定中的任何差别归入初
+始化本身且不构成转换。「例：类型\tm{A}的参数可以从类型\tm{const A}的实参初始化。
+这种情形下的隐式转换序列是一个恒等序列；其包含不``转换''\tm{const A}到\tm{A}。」
+当形参具有类类型且实参表达式具有相同类型，隐式转换序列为恒等转换。当参数具有类类
+型且实参表达式具有派生类类型，则隐式转换序列是派生到基类转换，转换派生类到基类。
+「注：实际不存在这样的标准转换；该派生到基类转换仅在隐式转换序列的描述中存在。」
+派生到基类转换具有转换阶（\ref{over.ics.scs}）。
+
+\paragraph{}
+在所有上下文中，当转换到隐含对象参数或当转换到赋值操作的左操作数时只允许标准转换
+序列。
+
+\paragraph{}
+如果不需要转换实参到形参类型，则隐式转换序列为包含恒等转换的标准转换序列
+（\ref{over.ics.scs}）。
+
+\paragraph{}
+如果找不到转换实参到形参类型的转换序列，则不能形成隐式转换序列。
+
+\paragraph{}
+如果存在转换实参到形参类型的多个不同转换序列，则关联于形参的隐式转换序列定义为指
+代\nt{歧义转换序列}的唯一转换序列。为了\ref{over.ics.rank}中所述隐式转换分组的目
+的，歧义转换序列被当作是用户定义转换序列，与其他任何用户定义转换序列不可区分。
+「注：该规则防止一个函数因其某一个参数的歧义转换序列而成为不可用。「例：
+\begin{lstlisting}
+  class B;
+  class A { A (B&); };
+  class B { operator A (); };
+  class C { C (B&); };
+  void f(A) { }
+  void f(C) { }
+  B b;
+  f(b);               // ill-formed: ambiguous because there is a conversion
+                      // b -> c (via constructor) and an (ambiguous) conversion
+                      // b -> A (via constructor or conversion function)
+  void f(B) { }
+  f(b);               // OK, unambiguous
+\end{lstlisting}」」
+如果使用该歧义转换序列的函数被选作最佳可用函数，则调用为病态，因为调用中其中一个
+实参的转换具有歧义。
+
+\paragraph{}
+以上所提到的隐式转换序列的三种形式在以下章节中定义。
+
 \ssssect{标准转换序列}{over.ics.scs}
+\paragraph{}
+表\ref{tab:conv}总结了第\ref{conv}章中定义的转换，并将其分成了四个不交范畴：左值
+变换、限定调整、提升和转换。「注：这些范畴相对值范畴，cv限定和数据表示是正交的：
+左值变换不会改变cv限定或类型的数据表示；限定调整不会改变值范畴或类型的数据表示；
+且提升和转换不会改变值范畴或类型的cv限定。」
+
+\paragraph{}
+「注：如第\ref{conv}章中所述，一个标准转换序列要么本身是恒等转换（即无转换）要么
+包含另四个范畴中的一到三个。如果序列中有两个或更多转换，则转换按标准顺序进行：
+\tb{左值变换}，\tb{提升}或\tb{转换}，\tb{限定调整}。」
+
+\paragraph{}
+表\ref{tab:conv}中的每一个转换具有关联的转换阶（确切匹配，提升或转换）。这些转换
+阶用于分级标准转换序列（\ref{over.ics.rank}）。转换序列的阶通过考虑序列中每一个
+转换的阶和任何引用绑定（\ref{over.ics.ref}）的阶来确定。如果这些中任一个有转换阶
+则序列具有转换阶；否则，如果这些中任一个具有提升阶则序列具有提升阶；否则，序列具
+有确切匹配阶。
+
+\begin{table}[h!]
+  \centering
+  \caption{转换}
+  \begin{tabular}{|l|c|c|c|}
+    \hline
+    \tb{转换} & \tb{范畴} & \tb{转换阶} & \tb{章节}                           \\
+    \hline\hline
+    无需转换 & 恒等 & \multirow{6}{*}{确切匹配} &                             \\
+    \cline{1-2}\cline{4-4}
+    左值到右值转换 & \multirow{3}{*}{左值变换} & & \ref{conv.lval}            \\
+    \cline{1-1}\cline{4-4}
+    数组到指针转换 & & & \ref{conv.array}                                     \\
+    \cline{1-1}\cline{4-4}
+    函数到指针转换 & & & \ref{conv.func}                                      \\
+    \cline{1-2}\cline{4-4}
+    限定转换 & \multirow{2}{*}{限定调整} & & \ref{conv.qual}                  \\
+    \cline{1-1}\cline{4-4}
+    函数指针转换 & & & \ref{conv.fctptr}                                      \\
+    \hline
+    整型提升 & \multirow{2}{*}{提升} & \multirow{2}{*}{提升} &
+      \ref{conv.prom} \\
+    \cline{1-1}\cline{4-4}
+    符点提升 & & & \ref{conv.fpprom}                                          \\
+    \hline
+    整型转换 & \multirow{6}{*}{转换} & \multirow{6}{*}{转换} &
+      \ref{conv.integral}                                                     \\
+    \cline{1-1}\cline{4-4}
+    符点转换 & & & \ref{conv.double}                                          \\
+    \cline{1-1}\cline{4-4}
+    符点整型转换 & & & \ref{conv.fpint}                                       \\
+    \cline{1-1}\cline{4-4}
+    指针转换 & & & \ref{conv.ptr}                                             \\
+    \cline{1-1}\cline{4-4}
+    指针到成员转换 & & & \ref{conv.mem}                                       \\
+    \cline{1-1}\cline{4-4}
+    布尔转换 & & & \ref{conv.bool}                                            \\
+    \hline
+  \end{tabular}
+  \label{tab:conv}
+\end{table}
+
 \ssssect{自定义转换序列}{over.ics.user}
-\ssssect{省略转换序列}{over.ics.ellipsis}
+\paragraph{}
+用户定义转换序列包含一个初始标准转换序列跟上一个用户定义转换，跟上第二标准转换序
+列。如果用户定义转换通过构造函数指定（\ref{class.conv.ctor}），则初始转换序列将
+源类型转换成构造函数参数所需类型。如果用户定义转换由转换函数指定
+（\ref{class.conv.fct}），由初始转换序列将源类型转换成转换函数的隐含对象参数。
+
+\paragraph{}
+第二标准转换序列将用户定义转换的结果转换成序列的目标类型。因隐式转换序列是一个初
+始化，用户定义转换初始化的特殊规则在为用户定义转换选择最佳用户定义转换时适用
+（见\ref{over.match.best}和\ref{over.best.ics}）。
+
+\paragraph{}
+如果用户定义转换由转换函数模板特例化指定，则第二转换序列应该有确切匹配阶。
+
+\paragraph{}
+从类类型表达式到同一类类型转换给予确切匹配阶，类类型表达式到该类型的基类的转换给
+予转换阶，尽管这些情况下调用的是构造函数（即用户定义转换函数）。
+
+\ssssect{省略号转换序列}{over.ics.ellipsis}
+\paragraph{}
+省略号转换序列出现在函数调用实参匹配函数调用的省略号参数规范时
+（见\ref{expr.call}）。
+
 \ssssect{引用绑定}{over.ics.ref}
+\paragraph{}
+当引用类型参数直接绑定（\ref{dcl.init.ref}）到实参表达式时，隐式转换序列为恒等转
+换，除非实参表达式具有形参类型的派生类类型，此时隐式转换序列为派生类到基类转换
+（\ref{over.best.ics}）。「例：
+\begin{lstlisting}
+  struct A {};
+  struct B : public A {} b;
+  int f(A&);
+  int f(B&);
+  int i = f(b);       // calls f(B&), an exact match, rather than f(A&), a
+                      // conversion
+\end{lstlisting}
+如果参数直接绑定到应用转换函数到实参表达式的结果，则隐式转换序列为用户定义转换序
+列（\ref{over.ics.user}），此处第二标准序列要么是恒等转换或者如果转换函数返回形
+参类型派生类的实体，为派生类到基类转换。
+
+\paragraph{}
+当返回类型形参未直接绑定到实参表达式时，转换序列为依据\ref{over.best.ics}转换实
+参表达式到引用类型所需要的转换。概念上，该转换序列对应于使用实参表达式来拷贝初始
+化引用类型的临时对象。顶层cv限定的任何区别归属于初始化本身而不构成转换。
+
+\paragraph{}
+除了对于隐含对象参数，此情形见\ref{over.match.funcs}，如果需要绑定非volatile
+\tm{const}类型的左值引用到右值或绑定右值引用到除函数左值外的左值，则不能形成一个
+标准转换序列。「注：这意味着比如如果具有非\tm{const}左值引用参数（除了隐含对象参
+数）且对应实参需要创建临时对象以初始化左值引用的话（见\ref{dcl.init.ref}）则候选
+函数不能成为可用函数。」
+
+\paragraph{}
+但是其他不基于引用和实参类型的绑定引用到特定实参的限制不影响标准转换序列的形成。
+「例：具有``\tm{int}的左值引用''参数的函数可以成为可用候选，即使对应实参是一个
+\tm{int}位域。隐式转换序列的形成将\tm{int}位域当作是\tm{int}左值并使用该参数查询
+确切匹配。如果函数被重载解析选中，调用仍然是病态的，因为禁止了绑定非\tm{const}左
+值引用到位域（\ref{dcl.init.ref}）。」
+
 \ssssect{列表初始化序列}{over.ics.list}
+\paragraph{}
+当实参是一个初始化列表时（\ref{dcl.init.list}），它不是一个表达式且适用特殊规则
+以转换其到形参类型。
+
+\paragraph{}
+如果形参类型为聚合类\tm{X}且初始化列表具有单个\nt{cv} \tm{U}类型的元素，其中
+\tm{U}为\tm{X}或\tm{X}的派生类，则隐式转换序列为转换元素到形参类型所需要的转换序
+列。
+
+\paragraph{}
+否则，如果形参类型是字符数组\footnote{因不存在数组类型形参，这只会在出现为引用形
+参的引用类型。}且初始化列表具有字符串字面值（\ref{dcl.init.string}）的合适类型的
+单个元素，则隐式转换序列为恒等转换。
+
+\paragraph{}
+否则，如果形参类型为\tm{std::initializer\_list<X>}且初始化列表的所有元素可以隐式
+转换到\tm{X}，则隐式转换序列为转换列表的一个元素到\tm{X}所需要的最坏转换，或者如
+果初始化列表无元素，为恒等转换。该转换可以是用户定义转换，即使在调用初始化列表构
+造函数的上下文中。「例：
+\begin{lstlisting}
+  void f(std::initializer_list<int>);
+  f( {} };                // OK: f(initializer_list<int>) identity conversion
+  f( {1,2,3} );           // OK: f(initializer_list<int>) identity conversion
+  f( {'a','b'} );         // OK: f(initializer_list<int>) identity conversion
+  f( {1.0} );             // error: narrowing
+
+  struct A {
+    A(std::initializer_list<double>);           // #1
+    A(std::initializer_list<complex<double>>);  // #2
+    A(std::initializer_list<std::string>);      // #3
+  };
+  A a{ 1.0,2.0 };         // OK, uses #1
+
+  void g(A);
+  g({ "foo", "bar" });    // OK, uses #3
+
+  typedef int IA[3];
+  void h(const IA&);
+  h({ 1, 2, 3 });         // OK: identity conversion
+\end{lstlisting}」
+
+\paragraph{}
+否则，如果形参类型为``\tm{N X}的引用''，如果从初始化列表对应元素（或如果没有此元
+素从\tm{\{\}}）存在到数组每一个元素的隐式转换序列，则隐式转换序列为这种隐式转换
+序列的最坏的一个。
+
+\paragraph{}
+否则，如果形参为非聚合类\tm{X}且按\ref{over.match.list}重载解析选择\tm{X}的单个
+构造函数\tm{C}使用实参初始化列表进行类型\tm{X}的对象的初始化：
+\begin{enumerate}
+  \item{如果\tm{C}不是初始化列表构造函数且初始化列表具有单个\nt{cv} \tm{X}类型的
+    元素，其中\tm{U}为\tm{X}或\tm{X}的派生类，则如果\tm{U}为\tm{X}，隐式转换序列
+    具有确切匹配阶，如果\tm{U}派生自\tm{X}，隐式转换序列具有转换阶。}
+  \item{否则，隐式转换序列为用户定义转换序列，其第二标准转换序列为恒等转换。}
+\end{enumerate}
+如果多个构造函数可用但都不比其他的好，则隐式转换序列为歧义转换序列。除
+\ref{over.best.ics}所说明之外，允许用户定义转换以转换初始化列表到构造函数形参类
+型。「例：
+\begin{lstlisting}
+  struct A {
+    A(std::initializer_list<int>);
+  };
+  void f(A);
+  f( {'a', 'b'} );        // OK: f(A(std::initializer_list<int>)) user-defined
+                          // conversion
+
+  struct B {
+    B(int, double);
+  };
+  void g(B);
+  g( {'a', 'b'} );        // OK: g(B(int, double)) user-defined conversion
+  g( {1.0, 1.0} );        // error: narrowing
+
+  void f(B);
+  f( {'a', 'b'} );        // error: ambiguous f(A) or f(B)
+
+  struct C {
+    C(std::string);
+  };
+  void h(C);
+  h({"foo"});             // OK: h(C(std::string("foo")))
+
+  struct D {
+    D(A, C);
+  };
+  void i(D);
+  i({ {1,2}, {"bar"} });  // OK: i(D(A(std::initializer_list<int>{1,2}),
+                          //         C(std::string("bar"))))
+\end{lstlisting}」
+
+\paragraph{}
+否则，如果形参具有聚合类型，可以依据聚合初始化规则（\ref{dcl.init.aggr}）从初始
+化列表进行初始化，则隐式转换序列为用户定义转换，其第二转换序列为恒等转换。「例：
+\begin{lstlisting}
+  struct A {
+    int m1;
+    double m2;
+  };
+
+  void f(A);
+  f( {'a', 'b'} );        // OK: f(A(int,double)) user-defined conversion
+  f( {1.0} );             // error: narrowing
+\end{lstlisting}」
+
+\paragraph{}
+否则，如果形参为引用，见\ref{over.ics.ref}。「注：本节中规则适用引用的底层临时对
+象的初始化。」「例：
+\begin{lstlisting}
+  struct A {
+    int m1;
+    double m2;
+  };
+
+  void f(const A&);
+  f( {'a', 'b'} );        // OK: f(A(int,double)) user-defined conversion
+  f( {1.0} );             // error: narrowing
+
+  void g(const double &);
+  g({1});                 // same conversion as int to double
+\end{lstlisting}」
+
+\paragraph{}
+否则，如果形参类型不是一个类：
+\begin{enumerate}
+  \item{如果初始化列表具有一个元素，其本身不是一个初始化列表，则隐式转换序列为转
+    换元素到形参类型所需的转换；「例：
+\begin{lstlisting}
+  void f(int);
+  f( {'a'} );   // OK: same conversion as char to int
+  f( {1.0} );   // error: narrowing
+\end{lstlisting}」}
+  \item{如果初始化无元素，则隐式转换序列为恒等转换。「例：
+\begin{lstlisting}
+  void f(int);
+  f( { } );     // OK: identity conversion
+\end{lstlisting}」}
+\end{enumerate}
+
+\paragraph{}
+除以上所列的所有情形外，没有可用转换。
+
 \sssect{隐式转换序列分级}{over.ics.rank}
+\paragraph{}
+本节基于\nt{更好转换序列}和\nt{更好转换}关系定义隐式转换序列的偏序。如果隐式转换
+序列S1则这些规则定义为比S2更好的转换序列，则S2为比S1\nt{更坏的转换序列}。如果转
+换序列S1既不比S2好也不比S2坏，则S1和S2为\nt{不可区分转换序列}。
+
+\paragraph{}
+在比较隐式转换序列的基本形式时（如\ref{over.best.ics}所定义）
+\begin{enumerate}
+  \item{标准转换序列（\ref{over.ics.scs}）是比用户定义转换序列或省略号转换序列更
+    好的转换序列，且}
+  \item{用户定义转换序列（\ref{over.ics.user}）是比省略号转换序列更好的转换序列
+    （\ref{over.ics.ellipsis}）。}
+\end{enumerate}
+
+\paragraph{}
+同一形式的两个隐式转换序列为不可区分转换序列，除非以下规则之一适用：
+\begin{enumerate}
+  \item{列表初始化序列\tm{L1}比列表初始化序列更好，如果
+    \begin{enumerate}
+      \item{对某些\tm{X}，\tm{L1}可以转换到\tm{std::initializer\_list<X>}，而
+        \tm{L2}不能，或者如是不是的话，}
+      \item{\tm{L1}转换到类型``\tm{N1 T}的数组''，\tm{L2}转换到类型``\tm{N2 T}的
+        数组''，\tm{N1}小于\tm{N2}，即使本段中其他规则之一适用。「例：
+\begin{lstlisting}
+  void f1(int);                                 // #1
+  void f1(std::initializer_list<long>);         // #2
+  void g1() { f1({42}); }                       // chooses #2
+
+  void f2(std::pair<const char*, const char*>); // #3
+  void f2(std::initializer_list<std::string>);  // #4
+  void g2() { f2({"foo","bar"}); }              // chooses #4
+\end{lstlisting}」}
+    \end{enumerate}}
+  \item{标准转换序列\tm{S1}是比标准转换序列\tm{S2}更好的转换序列，如果
+    \begin{enumerate}
+      \item{\tm{S1}是\tm{S2}的正则子序列（比较\ref{over.ics.scs}中定义的标准形中
+        的转换序列，不包括左值变换；恒等转换序列被认为是任何非恒等转换序列的子序
+        列），或者如果不是的话，}
+      \item{\tm{S1}的转换阶比\tm{S2}的更好，或\tm{S1}和\tm{S2}有相同阶且根据以下
+        段落规则是不可区分的，或者如果不是的话，}
+      \item{\tm{S1}和\tm{S2}为引用绑定（\ref{dcl.init.ref}）且都不是引用的未使用
+        \nt{ref-qualifier}声明的非静态成员函数的隐含对象参数，且\tm{S1}绑定到一
+        个右值的右值引用，\tm{S2}绑定到一个左值引用「例：
+\begin{lstlisting}
+  int i;
+  int f1();
+  int&& f2();
+  int g(const int&);
+  int g(const int&&);
+  int j = g(i);               // calls g(const int&)
+  int k = g(f1());            // calls g(const int&&)
+  int l = g(f2());            // calls g(const int&&)
+
+  struct A {
+    A& operator<<(int);
+    void p() &;
+    void p() &&;
+  };
+  A& operator<<(A&&, char);
+  A() << 1;                   // calls A::operator<<(int)
+  A() << 'c';                 // calls operator<<(A&&, char)
+  A a;
+  a << 1;                     // calls A::operator<<(int)
+  a << 'c';                   // calls A::operator<<(int)
+  A().p();                    // calls A::p()&&
+  a.p();                      // calls A::p()&
+\end{lstlisting}」
+        或者如果不是的话，}
+      \item{\tm{S1}和\tm{S2}为引用绑定（\ref{dcl.init.ref}）且\tm{S1}绑定左值引
+        用到函数左值且\tm{S2}绑定右值引用到函数左值「例：
+\begin{lstlisting}
+  int f(void(&)());           // #1
+  int f(void(&&)());          // #2
+  void g();
+  int i1 = f(g);              // calls #1
+\end{lstlisting}」
+        或者如果不是的话，}
+      \item{\tm{S1}和\tm{S2}仅限定转换不同且分别生成类似类型\tm{T1}和\tm{T2}
+        （\ref{conv.qual}），类型\tm{T1}的cv限定签名是类型\tm{T2}的cv限定签名的
+        子集「例：
+\begin{lstlisting}
+  int f(const volatile int *);
+  int f(const int *);
+  int i;
+  int j = f(&i);              // calls f(const int*)
+\end{lstlisting}」
+        或者如果不是的话，}
+      \item{\tm{S1}和\tm{S2}是引用绑定（\ref{dcl.init.ref}），且引用所引的类型除
+        顶层cv限定符外为相同类型，且由\tm{S2}所初始化的引用所引的类型比\tm{S1}初
+        始化的引用所引的类型具有更多cv限定。「例：
+\begin{lstlisting}
+  int f(const int &);
+  int f(int &);
+  int g(const int &);
+  int g(int);
+
+  int i;
+  int j = f(i);               // calls f(int &)
+  int k = g(i);               // ambiguous
+
+  struct X {
+    void f() const;
+    void f();
+  };
+  void g(const X& a, X b) {
+    a.f();                    // calls X::f() const
+    b.f();                    // calls X::f()
+  }
+\end{lstlisting}」}
+    \end{enumerate}}
+  \item{用户定义换序列\tm{U1}比另一个用户定义转换序列更好，如果它们包含相同用户
+    定义转换函数或构造函数或它们初始化聚合初始化中的相同类且任一种情况下\tm{U1}
+    的第二标准转换序列比\tm{U2}的第二标准转换序列更好。「例：
+\begin{lstlisting}
+  struct A {
+    operator short();
+  } a;
+  int f(int);
+  int f(float);
+  int i = f(a);               // calls f(int), because short -> int is
+                              // better than short -> float.
+\end{lstlisting}」}
+\end{enumerate}
+
+\paragraph{}
+标准转换序列按其阶进行排序：确切匹配比提升更好，提升比转换更好。两个相同阶的转换
+序列不可区分，除非以下规则之一适用：
+\begin{enumerate}
+  \item{不转换指针、成员指针或\tm{std::nullptr\_t}到\tm{bool}的转换比转换的更
+    好。}
+  \item{提升底层类型固定的枚举到其底层类型的转换比提升到其提升后的底层类型的转换
+    更好，如果两者不同的话。}
+  \item{如果类\tm{B}直接或间接派生自类\tm{A}，\tm{B*}到\tm{A*}的转换比\tm{B*}到
+    \tm{void*}的转换更好，且\tm{A*}到\tm{void*}的转换比\tm{B*}到\tm{void*}的转换
+    更好。}
+  \item{如果类\tm{B}直接或间接派生自类\tm{A}且类\tm{C}直接或间接派生自类\tm{B}，
+    \begin{enumerate}
+      \item{\tm{C*}到\tm{B*}的转换比\tm{C*}到\tm{A*}的转换更好，「例：
+\begin{lstlisting}
+  struct A {};
+  struct B : public A {};
+  struct C : public B {};
+  C* pc;
+  int f(A*);
+  int f(B*);
+  int i = f(pc);              // calls f(B*)
+\end{lstlisting}」}
+      \item{类型\tm{C}表达式绑定到类型\tm{B}的引用比类型\tm{C}表达式绑定到类型
+        \tm{A}的引用更好，}
+      \item{\tm{A::*}到\tm{B::*}的转换比\tm{A::*}到\tm{B::*}的转换更好，}
+      \item{\tm{C}到\tm{B}的转换比\tm{C}到\tm{A}的转换更好，}
+      \item{\tm{B*}到\tm{A*}的转换比\tm{C*}到\tm{A*}的转换更好，}
+      \item{类型\tm{B}表达式绑定到类型\tm{A}的引用比类型\tm{C}表达式绑定到类型
+        \tm{A}表达式的引用更好，}
+      \item{\tm{B::*}到\tm{C::*}的转换比\tm{A::*}到\tm{C::*}的转换更好，且}
+      \item{\tm{B}到\tm{A}的转换比\tm{C}到\tm{A}的转换更好。}
+    \end{enumerate}
+    「注：比较过的转换序列仅在比较用户定义转换初始化的第二标准转换序列的上下文中
+    具有不同源类型（\ref{over.match.best}）；在所有其他上下文中，源类型都相同而
+    目标类型不同。」}
+\end{enumerate}
 
 \sect{重载函数地址}{over.over}
+\paragraph{}
+对一个特定的函数，不带参数使用重载函数名在某些上下文中解析为重载集合中的函数名，
+函数指针或成员函数指针。函数模板名在这种上下文中被认为确定一个重载函数集合。如果
+\tm{F}（可能应用函数指针转换（\ref{conv.fctptr}）后）等价于\tm{FT}，类型\tm{F}的
+函数选作上下文中目标类型所需的函数类型\tm{FT}。「注：即在匹配一个指针到成员函数
+的类型时忽略函数作为其成员的类。」目标可以是
+\begin{enumerate}
+  \item{被初始化的对象或引用（\ref{dcl.init}，\ref{dcl.init.ref}，
+    \ref{dcl.init.list}），}
+  \item{赋值的左端（\ref{expr.ass}），}
+  \item{函数的参数（\ref{expr.call}），}
+  \item{用户定义运算符的参数（\ref{over.oper}），}
+  \item{函数、运算符函数或转换的返回值（\ref{stmt.return}），}
+  \item{显式类型转换（\ref{expr.type.conv}，\ref{expr.static.cast}，
+    \ref{expr.cast}），或}
+  \item{非类型\nt{template-parameter}（\ref{temp.arg.nontype}）。}
+\end{enumerate}
+重载函数名前可加\tm{\&}运算符。除所列上下文之外不应用无参数使用重载函数名。
+「注：忽略包含在重载函数名之外的任何冗余括号（\ref{expr.prim}）。」
+
+\paragraph{}
+如果名字是函数模板，模板参数推导已完成（\ref{temp.deduct.funcaddr}），且如果参数
+推导成功，所产生的模板参数列表用于生成单个函数模板特例化，并添加到所考虑的重载函
+数集合中。「注：如\ref{temp.arg.explicit}中所述，如果推导失败且函数模板名跟上一
+个显式模板参数列表，则随后检测\nt{template-id}确定其是否标识单个函数模板特例化。
+如果确定，则\nt{template-id}被认为是该函数模板特例化的一个左值。该确定过程中不使
+用目标类型。」
+
+\paragraph{}
+非成员函数和静态成员函数匹配函数指针类型或函数类型引用的目标。非静态成员函数匹配
+成员函数指针类型的目标。如果选中非静态成员函数，则重载函数名的引用按
+\ref{expr.unary.op}需要具有成员指针的形式。
+
+\paragraph{}
+如果选中超过一个函数，如果集合也包括不是函数模板特例化的函数则集合中任何函数模板
+特例化将被消除，且如果集合包含第二个函数模板特例化，其函数模板根据
+\ref{temp.func.order}中的偏序规则为比\tm{F1}函数模板更为特殊，则任何给定函数模板
+特例化\tm{F1}将被消除。在此消除之后，如果存在的话应该剩下恰好一个被选函数。
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  int f(double);
+  int f(int);
+  int (*pfd)(double) = &f;        // selects f(double)
+  int (*pfi)(int) = &f;           // selects f(int)
+  int (*pfe)(...) = &f;           // error: type mismatch
+  int (&rfi)(int) = f;            // selects f(int)
+  int (&rfd)(double) = f;         // selects f(double)
+  void g() {
+    (int (*)(int))&f;             // cast expression as selector
+  }
+\end{lstlisting}
+\tm{pfe}的初始化是病态的，因为没有声明类型为\tm{int(...)}的\tm{f()}，而不是因为
+任何歧义性。另一个例子为，
+\begin{lstlisting}
+  struct X {
+    int f(int);
+    static int f(long);
+  };
+
+  int (X::*p1)(int)  = &X::f;     // OK
+  int    (*p2)(int)  = &X::f;     // error: mismatch
+  int    (*p3)(long) = &X::f;     // OK
+  int (X::*p4)(long) = &X::f;     // error: mismatch
+  int (X::*p5)(int)  = &(X::f);   // error: wrong syntax for pointer to member
+  int    (*p6)(long) = &(X::f);   // OK
+\end{lstlisting}」
+
+\paragraph{}
+「注：如果\tm{f()}和\tm{g()}都是重载函数，必须考虑其可能的叉积以解析\tm{f(\&g)}
+或者其等价表达式\tm{f(g)}。」
+
+\paragraph{}
+「注：即使\tm{B}为\tm{D}的公有基类，我们有
+\begin{lstlisting}
+  D* f();
+  B* (*p1)() = &f;                // error
+
+  void g(D*);
+  void (*p2)(B*) = &g;            // error
+\end{lstlisting}」
 
 \sect{重载运算符}{over.oper}
+\paragraph{}
+具有以下\nt{operator-function-id}作为其名字的函数声明，声明一个\nt{运算符函数}。
+具有以下\nt{operator-function-id}作为其名字的函数模板声明，声明一个\nt{运算符函
+数模板}。运算符函数模板的特例化是一个运算符函数。运算符函数被称作\nt{实现}其
+\nt{operator-function-id}所确定的运算符。
+
+\synsym{operator-function-id}
+  \synprd{\tm{operator} \nt{operator}}
+\synsym[one of]{operator}
+\begin{table}[h!]
+  \vspace*{-2em}\hspace*{-3.6em}
+  \makebox[\textwidth]{
+    \newcommand{\cir}{\textasciicircum}
+    \newcommand{\til}{\textasciitilde}
+    \newcommand{\ttl}{\textless}
+    \newcommand{\ttg}{\textgreater}
+    \begin{tabular}{lllllllll}
+      \tm{new} & \tm{delete} & \tm{new[]} & \tm{delete[]} & & & & &           \\
+      \tm{+} & \tm{-} & \tm{*} & \tm{/} & \tm{\%} & \tm{\cir} & \tm{\&} &
+        \tm{|} & \tm{\til}                                                    \\
+      \tm{!} & \tm{=} & \tm{<} & \tm{>} & \tm{+=} & \tm{-=} & \tm{*=} &
+        \tm{/=} & \tm{\%=}                                                    \\
+      \tm{\cir{}=} & \tm{\&=} & \tm{|=} & \tm{\ttl{}\ttl{}} & \tm{\ttg{}\ttg} &
+        \tm{\ttg{}\ttg{}=} & \tm{\ttl{}\ttl{}=} & \tm{==} & \tm{!=}           \\
+        \tm{<=} & \tm{>=} & \tm{\&\&} & \tm{||} & \tm{++} & \tm{-{}-} & \tm{,} &
+        \tm{->*} & \tm{->}                                                    \\
+      \tm{()} & \tm{[]} & & & & & & &                                         \\
+    \end{tabular}
+  }
+\end{table}
+\vspace*{-1.0em}                                                              \\
+「注：最后两个为函数调用（\ref{expr.call}）和下标（\ref{expr.sub}）运算符。运算
+符\tm{new[]}，\tm{delete[]}，\tm{()}和\tm{[]}由多于一个标记形成。」
+
+\paragraph{}
+一元和二元形式的                                                              \\
+\mbox{\qquad{\tm{+\qquad{-} \qquad{*} \qquad{\&}}}}                           \\
+都可以被重载。
+
+\paragraph{}
+以下运算符不可重载：                                                          \\
+\mbox{\qquad{\tm{.\qquad{.*}\qquad{::}\qquad{?:}}}}                           \\
+预处理符号\tm{\#}和\tm{\#\#}也不可以（第\ref{cpp}章）。
+
+\paragraph{}
+运算符函数通常不会直接调用；而是调用以求值其所实现的运算符（\ref{over.unary} --
+\ref{over.inc}）。但是它们可以被显式调用，在函数调用语法中使用
+\nt{operator-function-id}作为函数名（\ref{expr.call}）。「例：
+\begin{lstlisting}
+  complex z = a.operator+(b);   // complex z = a+b;
+  void* p = operator new(sizeof(int)*n);
+\end{lstlisting}」
+
+\paragraph{}
+分配与释放函数，\tm{operator new}，\tm{operator new[]}，\tm{operator delete}和
+\tm{operator delete[]}在\ref{basic.stc.dynamic}中完整描述。本节剩余部分中的属性
+和限制除\ref{basic.stc.dynamic}中显式说明外不适用。
+
+\paragraph{}
+一个运算符函数应该要么是一个非静态成员函数或者是一个非成员函数，具有至少一个类类
+型、类的引用、枚举或者枚举的引用类型的参数。不可更改优先级，分组或运算符操作数的
+个数。预定义运算符\tm{=}，（一元）\tm{\&}和\tm{,}（逗号）的语义可以为特定类或枚
+举类型而改变，通过定义实现这些运算符的运算符函数。运算符函数与其他基类函数一样可
+以继承。
+
+\paragraph{}
+某些适用基本类型的预定义运算符中的实体（比如\tm{++a} $\equiv$ \tm{a+=1}）对运算
+符函数不一定成立。某些预定义运算符，比如\tm{+=}，当应用于基本类型时要求操作数为
+左值；运算符函数则不需要。
+
+\paragraph{}
+运算符函数不能具有缺省参数（\ref{dcl.fct.default}），以上显式说明的除外。运算符
+函数不能具有比对应运算符所要求更多或更少的参数，如本节剩余部分所述。
+
+\paragraph{}
+第\ref{over.ass}到\ref{over.inc}节中未显式提及的运算符作为普通一元和二元运算符，
+遵守\ref{over.unary}或\ref{over.binary}中的规则。
+
 \ssect{一元运算符}{over.unary}
+\paragraph{}
+前缀一元运算符应该由无参数非静态成员函数（\ref{class.mfct}）或具有一个参数的非成
+员函数实现。因此任何前缀运算符\tm{@}，\tm{@x}可以解释为\tm{x.operator@()}或者
+\tm{operator@(x)}。如果运算符函数的两种形式都有声明，则\ref{over.match.oper}中的
+规则确定使用哪种解释，如果有的话。见\ref{over.inc}关于后缀一元运算符\tm{++}和
+\tm{--}的解释。
+
+\paragraph{}
+同一运算符的一元和二元形式具有相同的名字。「注：其结果就是一元运算符可以隐藏包含
+作用域中的二元运算符，反之亦然。」
+
 \ssect{二元运算符}{over.binary}
+\paragraph{}
+二元运算符应该由具有一个参数的非静态成员函数（\ref{class.mfct}）或者具有两个参数
+的非成员函数实现。因此对任何二元运算符\tm{@}，\tm{x@y}可以解释为
+\tm{x.operator@(y)}或者\tm{operator@(x,y)}。如果运算符函数的两种形式都有声明，
+\ref{over.match.oper}中的规则确定使用哪种解释，如果有的话。
+
 \ssect{赋值}{over.ass}
+\paragraph{}
+赋值运算符应该由恰有一个参数的非静态成员函数实现。因如果用户未声明的话拷贝赋值运
+算符\tm{operator=}为一个类隐式声明，基类赋值运算符总是被派生类的拷贝赋值运算符所
+隐藏。
+
+\paragraph{}
+赋值运算符，即使是拷贝和移动赋值运算符，可以是虚函数。「注：对基类为\tm{B}的派生
+类\tm{D}，\tm{B}中已声明虚拷贝/移动赋值，则\tm{D}中的拷贝/移动赋值运算符不重写
+\tm{B}的虚拷贝/移动赋值运算符。「例：
+\begin{lstlisting}
+  struct B {
+    virtual int operator= (int);
+    virtual B&  operator= (const B&);
+  };
+  struct D : B {
+    virtual int operator= (int);
+    virtual D&  operator= (const B&);
+  };
+
+  D dobj1;
+  D dobj2;
+  B* bptr = &dobj1;
+  void f() {
+    bptr->operator=(99);    // calls D::operator=(int)
+    *bptr = 99;             // ditto
+    bptr->operator=(dobj2); // calls D::operator=(const B&)
+    *bptr = dobj2;          // ditto
+    dobj1 = dobj2;          // calls implicitly-declared D::operator=(const D&)
+  }
+\end{lstlisting}
+
 \ssect{函数调用}{over.call}
+\paragraph{}
+\tm{operator()}应该由具有任意个数参数的非成员函数实现。可以有缺省参数。其实现函
+数调用语法                                                                    \\
+\mbox{\qquad{\nt{postfix-expression} \tm{(} \nt{expression-list\tsub{opt}}
+  \tm{)}}}                                                                    \\
+其中\nt{postfix-expression}求值为类对象且可能为空的\nt{expression-list}匹配类成
+员函数\tm{operator()}的参数列表。因此对类型\tm{T}的类对象\tm{x}，如果
+\tm{T::operator()(T1,T2,T3)}存在且通过重载解析机制（\ref{over.match.best}）运算
+符被选作最佳匹配函数，则调用\tm{x(arg1,...)}解释为\tm{x.operator()(arg1,...)}。
+
 \ssect{下标}{over.sub}
+\paragraph{}
+\tm{operator[]}应该由恰有一个参数的非静态成员函数实现。其实现下标语法         \\
+\mbox{\qquad{\nt{postfix-expression} \tm{[} \nt{expr-or-braced-init-list}
+  \tm{]}}}                                                                   \\
+因此对类型\tm{T}的类对象\tm{x}，如果\tm{T::operator[](T1)}存在且如果通过重载解析
+机制（\ref{over.match.best}），运算符被选作最佳匹配函数，则下标表达式\tm{x[y]}解
+释为\tm{x.operator[](y)}。 「例：
+\begin{lstlisting}
+  struct X {
+    Z operator[](std::initializer_list<int>);
+  };
+  X x;
+  x[{1,2,3}] = 7;             // OK: meaning x.operator[]({1,2,3})
+  int a[10];
+  a[{1,2,3}] = 7;             // error: built-in subscript operator
+\end{lstlisting}」
+
 \ssect{类成员访问}{over.ref}
+\paragraph{}
+\tm{operator->}应该由无参数非静态成员函数实现。实现的是使用\tm{->}的类成员访问语
+法。                                                                          \\
+\mbox{\qquad{\nt{postfix-expression} \tm{-> template}\nt{\tsub{opt}}
+\nt{id-expression}}}                                                          \\
+\mbox{\qquad{\nt{postfix-expression} \tm{->} \nt{pseudo-destructor-name}}}    \\
+对类型\tm{T}的类对象\tm{x}，如果\tm{T::operator->()}存在且如果通过重载解析机制
+（\ref{over.match}）运算符被选为最佳匹配函数，则表达式\tm{x->m}解释为
+\tm{(x.operator->())->m}。
+
 \ssect{自增自减}{over.inc}
+\paragraph{}
+用户定义函数\tm{operator++}实现前缀和后缀\tm{++}运算符。如果该函数为无参数非静态
+成员函数，或者是具有一个参数的非成员函数，则其为该类型的对象定义前缀自增运算符
+\tm{++}。如果函数为具有一个参数（应该为\tm{int}类型）的非静态成员函数或具有两个
+参数（第二个参数应该为类型\tm{int}）的非成员函数，则其为该类型的对象定义后缀自增
+运算符\tm{++}。当后缀自增作为使用\tm{++}运算符的结果调用时，\tm{int}参数值为零。
+\footnote{如表达式\tm{a.operator++(2)}一样显式调用\tm{operator++}没有特殊属性：
+\tm{operator++}的参数为\tm{2}。}「例：
+\begin{lstlisting}
+  struct X {
+    X& operator++();            // prefix ++a
+    X  operator++(int);         // postfix a++
+  };
+
+  struct Y { };
+  Y& operator++(Y&);            // prefix ++b
+  Y  operator++(Y&, int);       // postfix b++
+
+  void f(X a, Y b) {
+    ++a;                        // a.operator++();
+    a++;                        // a.operator++(0);
+    ++b;                        // operator++(b);
+    b++;                        // operator++(b, 0);
+
+    a.operator++();             // explicit call: like ++a;
+    a.operator++(0);            // explicit call: like a++;
+    operator++(b);              // explicit call: like ++b;
+    operator++(b, 0);           // explicit call: like b++;
+  }
+\end{lstlisting}」
+
+\paragraph{}
+前缀和后缀自减运算符\tm{-{}-}的处理类似。
+
 \ssect{自定义字面值}{over.literal}
+\synsym{literal-operator-id}
+  \synprd{\tm{operator} \nt{string-literal identifier}}
+  \synprd[]{\tm{operator} \nt{user-defined-string-literal}}
+
+\paragraph{}
+\nt{literal-operator-id}中\nt{string-literal}或\nt{user-defined-string-literal}
+应该无\nt{encoding-prefix}且不应该包含除隐式终止符\tm{'\bs{}0'}之外的字符。
+\nt{user-defined-string-literal}的\nt{ud-suffix}或\nt{literal-operator-id}中的
+\nt{identifier}称为\nt{字面后缀标识符}。某些字面后缀标识符为未来标准化而保留；
+见20.5.4.3.5。\nt{literal-operator-id}使用这种字面后缀标识符的声明是病态，无需诊
+断。
+
+\paragraph{}
+\nt{declarator-id}为\nt{literal-operator-id}的声明应该是一个命名空间作用域函数或
+函数模板的声明（可以是友元函数（\ref{class.friends}）），一个函数模板的显式实例
+化或特例化，或是一个\nt{using-declaration}（\ref{namespace.udecl}）。使用
+\nt{literal-operator-id}声明的函数是一个\nt{字面运算符}。使用
+\nt{literal-operator-id}声明的函数模板为一个\nt{字面运算符模板}。
+
+\paragraph{}
+字面运算符声明应该具有一个\nt{parameter-declaration-clause}，等价于以下之一： \\
+\mbox{\qquad{\tm{const char*}}}                                               \\
+\mbox{\qquad{\tm{unsigned long long int}}}                                    \\
+\mbox{\qquad{\tm{long double}}}                                               \\
+\mbox{\qquad{\tm{char}}}                                                      \\
+\mbox{\qquad{\tm{wchar\_t}}}                                                  \\
+\mbox{\qquad{\tm{char16\_t}}}                                                 \\
+\mbox{\qquad{\tm{char32\_t}}}                                                 \\
+\mbox{\qquad{\tm{const char*, std::size\_t}}}                                 \\
+\mbox{\qquad{\tm{const wchar\_t*, std::size\_t}}}                             \\
+\mbox{\qquad{\tm{const char16\_t*, std::size\_t}}}                            \\
+\mbox{\qquad{\tm{const char32\_t*, std::size\_t}}}                            \\
+如果参数具有缺省参数（\ref{dcl.fct.default}），则程序为病态。
+
+\paragraph{}
+一个\nt{原始字面运算符}为具有单个类型为\tm{const char*}的参数的字面运算符。
+
+\paragraph{}
+字面运算符模板的声明应该具有空的\nt{parameter-declaration-clause}且其
+\nt{template-parameter-list}应该具有单个\nt{template-parameter}，为元素类型为
+\tm{char}的非类型模板参数包（\ref{temp.variadic}）。
+
+\paragraph{}
+字面运算符和字面运算符模板不应具有C语言链接。
+
+\paragraph{}
+「注：字面运算符和字面运算符模板通常通过用户字义字面值（\ref{lex.ext}）来隐式调
+用。但除了以上所述约束外，它们是普通的命名空间作用域函数和函数模板。特别的，它们
+像普通函数和函数模板一样查询，且遵循重载解析规则。它们也可声明为\tm{inline}或
+\tm{constexpr}，可能有内部名外部链接，可以显式调用，可取其地址等等。」
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  void operator "" _km(long double);                  // OK
+  string operator "" _i18n(const char*, std::size_t); // OK
+  template <char...> double operator "" _\u03C0();    // OK: UCN for lowercase pi
+  float operator ""_e(const char*);                   // OK
+  float operator ""E(const char*);                    // error: reserved literal suffix (20.5.4.3.5, 5.13.8)
+  double operator""_Bq(long double);                  // OK: does not use the reserved identifier _Bq (5.10)
+  double operator"" _Bq(long double);                 // uses the reserved identifier _Bq (5.10)
+  float operator " " B(const char*);                  // error: non-empty string-literal
+  string operator "" 5X(const char*, std::size_t);    // error: invalid literal suffix identifier
+  double operator "" _miles(double);                  // error: invalid parameter-declaration-clause
+  template <char...> int operator "" _j(const char*); // error: invalid parameter-declaration-clause
+  extern "C" void operator "" _m(long double);        // error: C language linkage
+\end{lstlisting}」
 
 \sect{内置运算符}{over.built}
+\paragraph{}
+第\ref{expr}章中定义的表示内置运算符的候选运算符函数由本节指定。这些候选函数按
+\ref{over.match.oper}中所述参与运算符重载解析，且不作其他用途。「注：因内置运算
+符只接受非类类型操作数，且运算符重载解析只在操作数表达式原已具有类或枚举类型才出
+现，运算符重载解析只有当操作数具有含用户定义到适合操作数的非类类型转换的类类型时
+，或当操作数具有可以转换到适合运算符类型的枚举类型时才会解析到一个内置运算符。同
+样请注意本节中给定的某些候选运算符函数比内置运算符本身更宽容。如
+\ref{over.match.oper}中所述，在内置运算符被重载解析选中后，表达式受限于第
+\ref{expr}章中给定的内置运算符的要求，因此也适用此处给定的额外语义约束。如果存在
+与内置候选运算符函数同名同参数的用户所写候选函数，则内置运算符函数被隐藏而不包含
+在候选函数集合中。」
+
+\paragraph{}
+在本节中，术语\nt{提升后的整型}指的是那些整型提升（\ref{conv.prom}）所保留的类型
+（包括比如\tm{int}和\tm{long}但不包括如\tm{char}）。类似的，术语\nt{提升后的算术
+类型}指的是符点类型加上提升后的整型。「注：在需要提升后的整型或提升后的算术类型
+的所有情况下可以接受通过整型提升后的枚举类型操作数。」
+
+\paragraph{}
+在本节剩余部分，\nt{vq}表示\tm{volatile}或无cv限定。
+
+\paragraph{}
+对每一个(\nt{T}, \nt{vq})配对，其中\nt{T}为除\tm{bool}外的算术类型，存在候选运算
+符函数形如                                                                    \\
+\mbox{\qquad{\nt{vq T}\tm{\& operator++(}\nt{vq T}\tm{\&);}}}                 \\
+\mbox{\qquad{\nt{T} \tm{operator++(}\nt{vq T}\tm{\&, int);}}}
+
+\paragraph{}
+对每一个(\nt{T}, \nt{vq})配对，其中\nt{T}为除\tm{bool}外的算术类型，存在候选运算
+符函数形如                                                                    \\
+\mbox{\qquad{\nt{vq T}\tm{\& operator-{}-(}\nt{vq T}\tm{\&);}}}               \\
+\mbox{\qquad{\nt{T} \tm{operator-{}-(}\nt{vq T}\tm{\&, int);}}}
+
+\paragraph{}
+对每一个(\nt{T}, \nt{vq})配对，其中\nt{T}为cv限定或cv未限定对象类型，存在候选运
+算符函数形如                                                                  \\
+\mbox{\qquad{\nt{T}\tm{*}\nt{vq}\tm{\&
+  operator++(}\nt{T}\tm{*}\nt{vq}\tm{\&);}}}                                  \\
+\mbox{\qquad{\nt{T}\tm{*}\nt{vq}\tm{\&
+  operator-{}-(}\nt{T}\tm{*}\nt{vq}\tm{\&);}}}                                \\
+\mbox{\qquad{\nt{T}\tm{* operator++(}\nt{T}\tm{*}\nt{vq}\tm{\&, int);}}}      \\
+\mbox{\qquad{\nt{T}\tm{* operator-{}-(}\nt{T}\tm{*}\nt{vq}\tm{\&, int);}}}
+
+\paragraph{}
+对每一个cv限定或cv未限定对象类型\tm{T}，存在候选运算符函数形如                \\
+\mbox{\qquad{\nt{T}\tm{\& operator*(}\nt{T}\tm{*);}}}
+
+\paragraph{}
+对每一个不具有cv限定符或\nt{ref-qualifier}的函数类型\tm{T}，存在候选运算符函数
+形如                                                                          \\
+\mbox{\qquad{\nt{T}\tm{\& operator*(}\nt{T}\tm{*);}}}
+
+\paragraph{}
+对每一个类型\tm{T}存在候选运算符函数形如                                      \\
+\mbox{\qquad{\nt{T}\tm{* operator+(}\nt{T}\tm{*);}}}
+
+\paragraph{}
+对每一个提升后算术类型\tm{T}，存在候选运算符函数形如                          \\
+\mbox{\qquad{\nt{T}\tm{ operator+(}\nt{T}\tm{);}}}                            \\
+\mbox{\qquad{\nt{T}\tm{ operator-(}\nt{T}\tm{);}}}
+
+\paragraph{}
+对第一个提升后的整型\tm{T}，存在候选运算符函数形如                            \\
+\mbox{\qquad{\nt{T}\tm{ operator\textasciitilde(}\nt{T}\tm{);}}}
+
+\paragraph{}
+对每一个五元组(\nt{\tm{C1}}, \nt{\tm{C2}}, \nt{\tm{T}}, \nt{cv1}, \nt{cv2})，其
+中\nt{\tm{C2}}为类类型，\nt{\tm{C1}}为与\nt{\tm{C2}}相同的类型或\nt{\tm{C2}}的派
+生类，且\nt{\tm{T}}为对象类型或函数类型，则存在候选运算符函数形如             \\
+\mbox{\qquad{\nt{cv12 T}\tm{\& operator->*(}\nt{cv1 C1}\tm{*,}
+  \nt{cv2 T C2}\tm{::*);}}}                                                   \\
+其中\nt{cv12}为\nt{cv1}和\nt{cv2}的并集。返回类型只用于展示；见
+\ref{expr.mptr.oper}关于运算符结果类型的确定。
+
+\paragraph{}
+对每一对提升后算术类型\nt{\tm{L}}和\nt{\tm{R}}，存在候选运算符函数形如        \\
+\mbox{\qquad{\tm{\nt{LR} \ \ operator*(\nt{L}, \nt{R});}}}                    \\
+\mbox{\qquad{\tm{\nt{LR} \ \ operator/(\nt{L}, \nt{R});}}}                    \\
+\mbox{\qquad{\tm{\nt{LR} \ \ operator+(\nt{L}, \nt{R});}}}                    \\
+\mbox{\qquad{\tm{\nt{LR} \ \ operator-(\nt{L}, \nt{R});}}}                    \\
+\mbox{\qquad{\tm{bool operator<(\nt{L}, \nt{R});}}}                           \\
+\mbox{\qquad{\tm{bool operator>(\nt{L}, \nt{R});}}}                           \\
+\mbox{\qquad{\tm{bool operator<=(\nt{L}, \nt{R});}}}                          \\
+\mbox{\qquad{\tm{bool operator>=(\nt{L}, \nt{R});}}}                          \\
+\mbox{\qquad{\tm{bool operator==(\nt{L}, \nt{R});}}}                          \\
+\mbox{\qquad{\tm{bool operator!=(\nt{L}, \nt{R});}}}                          \\
+其中\nt{\tm{LR}}为类型\nt{\tm{L}}和\nt{\tm{R}}之间常规算术转换的结果。
+
+\paragraph{}
+对每一个cv限定或cv未限定对象类型\tm{\nt{T}}存在候选运算符函数形如             \\
+\mbox{\qquad{\tm{\nt{T}* operator+(\nt{T}*, std::ptrdiff\_t);}}}              \\
+\mbox{\qquad{\tm{\nt{T}\& operator[](\nt{T}*, std::ptrdiff\_t);}}}            \\
+\mbox{\qquad{\tm{\nt{T}* operator-(\nt{T}*, std::ptrdiff\_t);}}}              \\
+\mbox{\qquad{\tm{\nt{T}* operator+(std::ptrdiff\_t, \nt{T}*);}}}              \\
+\mbox{\qquad{\tm{\nt{T}\& operator[](std::ptrdiff\_t, \nt{T}*);}}}
+
+\paragraph{}
+对每一个\tm{\nt{T}}，其中\tm{\nt{T}}为对象类型指针，存在候选运算符函数形如    \\
+\mbox{\qquad{\tm{std::ptrdiff\_t operator-(\nt{T}, \nt{T});}}}
+
+\paragraph{}
+对每一个\tm{\nt{T}}，其中\tm{\nt{T}}为枚举类型或指针类型，存在候选运算符函数形如
+
+\mbox{\qquad{\tm{bool operator<(\nt{T}, \nt{T});}}}                           \\
+\mbox{\qquad{\tm{bool operator>(\nt{T}, \nt{T});}}}                           \\
+\mbox{\qquad{\tm{bool operator<=(\nt{T}, \nt{T});}}}                          \\
+\mbox{\qquad{\tm{bool operator>=(\nt{T}, \nt{T});}}}                          \\
+\mbox{\qquad{\tm{bool operator==(\nt{T}, \nt{T});}}}                          \\
+\mbox{\qquad{\tm{bool operator!=(\nt{T}, \nt{T});}}}
+
+\paragraph{}
+对每一个成员类型\tm{\nt{T}}的指针或类型\tm{std::nullptr\_t}存在候选运算符函数形
+如
+
+\mbox{\qquad{\tm{bool operator==(\nt{T}, \nt{T});}}}                          \\
+\mbox{\qquad{\tm{bool operator!=(\nt{T}, \nt{T});}}}
+
+\paragraph{}
+对每一个提升后整型\tm{\nt{L}}和\tm{\nt{R}}配对，存在候选运算符函数形如        \\
+\mbox{\qquad{\tm{\nt{LR} operator\%(\nt{L}, \nt{R});}}}                       \\
+\mbox{\qquad{\tm{\nt{LR} operator\&(\nt{L}, \nt{R});}}}                       \\
+\mbox{\qquad{\tm{\nt{LR} operator\textasciicircum(\nt{L}, \nt{R});}}}         \\
+\mbox{\qquad{\tm{\nt{LR} operator|(\nt{L}, \nt{R});}}}                        \\
+\mbox{\qquad{\tm{\nt{L} \ operator<{}<(\nt{L}, \nt{R});}}}                    \\
+\mbox{\qquad{\tm{\nt{L} \ operator>{}>(\nt{L}, \nt{R});}}}                    \\
+其中\tm{\nt{LR}}为类型\tm{\nt{L}}和\tm{\nt{R}}间的常规算术转换的结果。
+
+\paragraph{}
+对每一个三元组(\tm{\nt{L}}, \nt{vq}, \tm{\nt{R}})，其中\tm{\nt{L}}为算术类型，且
+\tm{\nt{R}}是提升后的算术类型，存在候选运算符函数形如                         \\
+\mbox{\qquad{\tm{\nt{vq L}\& operator=(\nt{vq L}\&, \nt{R});}}}               \\
+\mbox{\qquad{\tm{\nt{vq L}\& operator*=(\nt{vq L}\&, \nt{R});}}}              \\
+\mbox{\qquad{\tm{\nt{vq L}\& operator/=(\nt{vq L}\&, \nt{R});}}}              \\
+\mbox{\qquad{\tm{\nt{vq L}\& operator+=(\nt{vq L}\&, \nt{R});}}}              \\
+\mbox{\qquad{\tm{\nt{vq L}\& operator-=(\nt{vq L}\&, \nt{R});}}}
+
+\paragraph{}
+对每一对(\tm{\nt{T}}, \nt{vq})，其中\tm{\nt{T}}为任何类型，存在候选运算符函数形
+如
+
+\mbox{\qquad{\tm{\nt{T}*\nt{vq}\& operator=(\nt{T}*\nt{vq}\&, \nt{T}*);}}}
+
+\paragraph{}
+对每一对(\tm{\nt{T}}, \nt{vq})，其中\tm{\nt{T}}为枚举或成员指针类型，存在候选运
+算符函数形如
+
+\mbox{\qquad{\tm{\nt{vq T}\& operator=(\nt{vq T}\&, \nt{T});}}}
+
+\paragraph{}
+对每一对(\tm{\nt{T}}, \nt{vq})，其中\tm{\nt{T}}为cv限定或cv未限定对象类型，存在
+候选运算符函数形如                                                            \\
+\mbox{\qquad{\tm{\nt{T}*\nt{vq}\& operator+=(\nt{T}*\nt{vq}\&,
+  std::ptrdiff\_t);}}}                                                        \\
+\mbox{\qquad{\tm{\nt{T}*\nt{vq}\& operator-=(\nt{T}*\nt{vq}\&,
+  std::ptrdiff\_t);}}}
+
+\paragraph{}
+对每一个三元组(\tm{\nt{L}}, \nt{cv}, \tm{\nt{R}})，其中\tm{\nt{L}}为整型，
+\tm{\nt{R}}为提升后的整型，存在候选运算符函数形如                             \\
+\mbox{\qquad{\tm{\nt{vq L}\& operator\%=(\nt{vq L}\&, \nt{R});}}}             \\
+\mbox{\qquad{\tm{\nt{vq L}\& operator<{}<=(\nt{vq L}\&, \nt{R});}}}           \\
+\mbox{\qquad{\tm{\nt{vq L}\& operator>{}>=(\nt{vq L}\&, \nt{R});}}}           \\
+\mbox{\qquad{\tm{\nt{vq L}\& operator\&=(\nt{vq L}\&, \nt{R});}}}             \\
+\mbox{\qquad{\tm{\nt{vq L}\& operator\textasciicircum=(\nt{vq L}\&,
+  \nt{R});}}}                                                                 \\
+\mbox{\qquad{\tm{\nt{vq L}\& operator|=(\nt{vq L}\&, \nt{R});}}}
+
+\paragraph{}
+存在候选运算符函数形如                                                        \\
+\mbox{\qquad{\tm{bool operator!(bool);}}}                                     \\
+\mbox{\qquad{\tm{bool operator\&\&(bool, bool);}}}                            \\
+\mbox{\qquad{\tm{bool operator||(bool, bool);}}}
+
+\paragraph{}
+对每一对提升后算术类型\tm{\nt{L}}和\tm{\nt{R}}，存在候选运算符函数形如        \\
+\mbox{\qquad{\tm{\nt{LR} operator?:(bool, \nt{L}, \nt{R});}}}               \\
+其中\tm{\nt{LR}}为类型\tm{\nt{L}}和\tm{\nt{R}}间的常规算术转换的结果。「注：如所
+有这些关于候选函数的描述，该声明仅用于为重载解析而描述内置运算符。运算符
+``\tm{?:}''不能重载。」
+
+\paragraph{}
+对每一个类型\tm{\nt{T}}，其中\tm{\nt{T}}为指针，成员指针或有作用域枚举类型，存在
+候选运算符函数形如                                                            \\
+\mbox{\qquad{\tm{\nt{T} operator?:(bool, \nt{T}, \nt{T});}}}

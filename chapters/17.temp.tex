@@ -1,67 +1,4615 @@
 %% 17. temp
 
 \chptr{模板}{temp}
+\paragraph{}
+\nt{模板}定义类、函数或变量簇，或类型簇的别名。
+
+%\synsym{template-declaration}
+%  \synprd{\tm{template <} \nt{template-parameter-list} \tm{>} \nt{declaration}}
+%\synsym{template-parameter-list}
+%  \synprd{\nt{template-parameter}}
+%  \synprd[]{\nt{template-parameter-list} \tm{,} \nt{template-parameter}}
+
+「注：跟在\nt{template-declaration}的\nt{template-parameter-list}之后的标记
+\tm{>}可能是通过替换两个连续\tm{>}标记（\ref{temp.names}）而产生的。」
+
+\nt{template-declaration}中的声明应该
+\begin{enumerate}
+  \item{声明或定义一个函数、类或变量，或者}
+  \item{定义一个类或嵌套于类模板中的类成员函数、成员类、成员枚举或静态数据成员，
+    或者}
+  \item{定义一个类或类模板的成员模板，或者}
+  \item{是一个\nt{deduction-guide}，或者}
+  \item{是一个\nt{alias-declaration}。}
+\end{enumerate}
+\nt{template-declaration}是一个声明。一个\nt{template-declaration}如果其声明定义
+了函数、类、变量或静态数据成员则也是一个定义。由变量的模板声明所引入的声明为
+\nt{变量模板}。类作用域中的变量模板为\nt{静态数据成员模板}。「例：
+\begin{lstlisting}
+  template<class T>
+    constexpr T pi = T(3.1415926535897932385L);
+  template<class T>
+  T circular_area(T r) {
+    return pi<T> * r * r;
+  }
+  struct matrix_constants {
+    template<class T>
+      using pauli = hermitian_matrix<T, 2>;
+    template<class T>
+      constexpr pauli<T> sigma1 = { { 0, 1 }, { 1, 0 } };
+    template<class T>
+      constexpr pauli<T> sigma2 = { { 0, -1i }, { 1i, 0 } };
+    template<class T>
+      constexpr pauli<T> sigma3 = { { 1, 0 }, { 0, -1 } };
+  };
+\end{lstlisting}」
+
+\paragraph{}
+\nt{template-declaration}只可以出现在命名空间作用域或类作用域声明中。在函数模板
+声明中，\nt{declarator-id}的最后一部分不应该是一个\nt{template-id}。「注：最后一
+部分可以是一个\nt{identifier}，一个\nt{operator-function-id}，一个
+\nt{conversion-function-id}或者是一个\nt{literal-operator-id}。在类模板声明中，
+如果类名为一个\nt{simple-template-id}则声明所声明的是一个类模板部分特例化
+（\ref{temp.class.spec}）。」
+
+\paragraph{}
+在\nt{template-declaration}中，显式特例化或者显式实例化声明中的
+\nt{init-declarator-list}应该包含至少一个声明子。当这样的声明用于声明类模板时，
+不允许有声明子。
+
+\paragraph{}
+模板名具有链接（\ref{basic.link}）。具有内部链接的模板特例化（显式或隐式）不同于
+其他翻译单元中的所有特例化。模板，显式模板特例化（\ref{temp.expl.spec}）以及类模
+板部分特例化不应该具有C链接。除\tm{"C"}或\tm{"C++"}之外的链接规范用于任何这种结
+构为条件支持，具有实现定义的语义。模板定义应该遵循单一定义原则
+（\ref{basic.def.odr}）。「注：为模板实例化（\ref{temp.decls}）的目的，函数模板
+和类模板成员函数的缺省参数当作定义且必须遵循单一定义原则。」
+
+\paragraph{}
+除\ref{temp.class.spec}所述之外，类模板不能与其他模板、类、函数、变量、枚举、枚
+举子、命名空间或同一作用域（\ref{basic.scope}）中的类型具有相同的名字。除了函数
+模板可以被同名非模板函数（\ref{dcl.fct}）或其他同名函数模板（\ref{temp.over}）重
+载外，命名空间作用域或类作用域中声明的模板名在该作用域中应该唯一。
+
+\paragraph{}
+一个\nt{模板化实体}（\nt{templated entity}）指
+\begin{enumerate}
+  \item{模板，}
+  \item{模板化实体中定义（\ref{basic.def}）或创建（\ref{class.temporary}）的实
+    体，}
+  \item{模板化实体的成员，}
+  \item{作为模板化实体的枚举中的枚举子，或}
+  \item{出现在模板化实体声明中的\nt{lambda-expression}
+    （\ref{expr.prim.lambda.closure}）的闭包类型。}
+\end{enumerate}
+「注：模板化实体中的局部类，局部变量或友元函数是一个模板化实体。」
+
+\paragraph{}
+函数模板，类模板成员函数，变量模板或类模板的静态数据成员应该定义于其被隐式实例化
+（\ref{temp.inst}）的每一个翻译单元中，除非对应实例化在某些翻译单元中被显式实例
+化（\ref{temp.explicit}）；无需诊断。
 
 \sect{模板形参}{temp.param}
+\paragraph{}
+\nt{template-parameter}的语法为：
 
-\sect{模板特例化名字}{temp.names}
+\synsym{template-parameter}
+  \synprd{\nt{type-parameter}}
+  \synprd{\nt{parameter-declaration}}
+\synsym{type-parameter}
+  \synprd{\nt{type-parameter-key} \tm{...}\nt{\tsub{opt} identifier\tsub{opt}}}
+  \synprd{\nt{type-parameter-key identifier\tsub{opt}} \tm{=} \nt{type-id}}
+  \synprd{\tm{template <} \nt{template-parameter-list} \tm{>}
+    \nt{type-parameter-key} \tm{...}\nt{\tsub{opt} identifier\tsub{opt}}}
+  \synprd{\tm{template <} \nt{template-parameter-list} \tm{>}
+    \nt{type-parameter-key identifier\tsub{opt}} \tm{=} \nt{id-expression}}
+\synsym{type-parameter-key}
+  \synprd{\tm{class}}
+  \synprd[]{\tm{typename}}
+
+「注：跟在\nt{type-parameter}的\nt{template-parameter-list}之后的标记\tm{>}可能
+是通过替换两个连续\tm{>}标记（\ref{temp.names}）而产生的。
+
+\paragraph{}
+\nt{type-parameter-key}中\tm{class}和\tm{typename}间没有语义差别。\tm{typename}
+后跟上\nt{unqualified-id}确定一个模板类型参数。\tm{typename}后跟上一个
+\nt{qualified-id}表示一个非类型\footnote{因模板的\nt{template-parameter}和模板的
+\nt{template-argument}为描述的目的而当作是类型，术语\nt{非类型形参}和
+\nt{非类型实参}用于引用非类型、非模板形参和实参。}\nt{parameter-declaration}中的
+类型。「例：
+\begin{lstlisting}
+  class T { /* ... */ };
+  int i;
+
+  template<class T, T i> void f(T t) {
+    T t1 = i;           // template-parameters T and i
+    ::T t2 = ::i;       // global namespace members T and i
+  }
+\end{lstlisting}
+此外模板\tm{f}具有\nt{type-parameter}称为\tm{T}，而不是类\tm{T}的无名非类型
+\nt{template-parameter}。」\nt{template-parameter}声明中不应该使用存储类。类型不
+应该定义于\nt{template-parameter}声明中。
+
+\paragraph{}
+标识符没有跟在省略号后的\nt{type-parameter}定义其\nt{identifier}为模板声明作用域
+中的一个\nt{typedef-name}（如果未使用\tm{template}来声明）或\nt{template-name}。
+「注：模板参数可以是一个类模板或别名模板。比如，
+\begin{lstlisting}
+  template<class T> class myarray { /* ... */ };
+
+  template<class K, class V, template<class T> class C = myarray>
+  class Map {
+    C<K> key;
+    C<V> value;
+  };
+\end{lstlisting}」
+
+\paragraph{}
+非类型\nt{template-parameter}应该具有以下（可选cv限定的）类型之一：
+\begin{enumerate}
+  \item{整型或枚举类型，}
+  \item{对象指向或函数指针，}
+  \item{对象的左值引用或函数的左值引用，}
+  \item{成员指针，}
+  \item{\tm{std::nullptr\_t}，或}
+  \item{含占位类型（\ref{dcl.spec.auto}）的类型。}
+\end{enumerate}
+
+\paragraph{}
+「注：其他类型要么按以下显式禁止，要么被控制\tm{template-argument}
+（\ref{temp.arg}）形式的规则所隐式禁止。」\nt{template-parameter}顶层的
+\nt{cv-qualifier}在确定其类型时被忽略。
+
+\paragraph{}
+非类型非引用\nt{template-parameter}为一个纯右值。不应该对其赋值或用任何其他方式
+来改变其值。一个非类型非引用\nt{template-parameter}不能取其地址。当一个非类型非
+引用\nt{template-parameter}用作一个引用的初始化时，总是使用一个临时对象。「例：
+\begin{lstlisting}
+  template<const X& x, int i> void f() {
+    i++;                    // error: change of template-parameter value
+
+    &x;                     // OK
+    &i;                     // error: address of non-reference template-parameter
+
+    int& ri = i;            // error: non-const reference bound to temporary
+    const int& cri = i;     // OK: const reference bound to temporary
+  }
+\end{lstlisting}」
+
+\paragraph{}
+非类型\nt{template-parameter}不应该声明为符点类型，类类型或void类型。「例：
+\begin{lstlisting}
+  template<double d> class X;     // error
+  template<double* pd> class Y;   // OK
+  template<double& rd> class Z;   // OK
+\end{lstlisting}」
+
+\paragraph{}
+``\tm{T}的数组''类型或函数类型\tm{T}的非类型\nt{template-parameter}调整为``指向
+\tm{T}的指针''类型。「例：
+\begin{lstlisting}
+  template<int* a>   struct R { /* ... */ };
+  template<int b[5]> struct S { /* ... */ };
+  int p;
+  R<&p> w;                        // OK
+  S<&p> x;                        // OK due to parameter adjustment
+  int v[5];
+  R<v> y;                         // OK due to implicit argument conversion
+  S<v> z;                         // OK due to both adjustment and conversion
+\end{lstlisting}」
+
+\paragraph{}
+一个\nt{缺省}\nt{template-argument}指\nt{template-parameter}中\tm{=}之后指定的
+\nt{template-argument}（\ref{temp.arg}）。缺省的\nt{template-argument}可以为任何
+种类非模板参数包（\ref{temp.variadic}）的\nt{template-parameter}（类型、非类型、
+模板）指定。缺省的\nt{template-argument}可以在模板声明中指定。缺省的
+\nt{template-argument}不应该在出现于成员类之外的类模板成员定义的
+\nt{template-parameter-list}中指定。缺省的\nt{template-argument}不应该在友元类模
+板声明中指定。如果友元函数模板声明指定了缺省的\nt{template-argument}，则该声明应
+该是一个定义且是翻译单元中函数模板的唯一声明。
+
+\paragraph{}
+可用的缺省\nt{template-argument}集合通过与函数缺省参数（\ref{dcl.fct.default}）
+相同方式从模板所有先前声明中的缺省参数合并而来。「例：
+\begin{lstlisting}
+  template<class T1, class T2 = int> class A;
+  template<class T1 = int, class T2> class A;
+\end{lstlisting}
+等价于
+\begin{lstlisting}
+  template<class T1 = int, class T2 = int> class A;
+\end{lstlisting}」
+
+\paragraph{}
+如果一个类模板、变量模板或别名模板的\nt{template-parameter}具有缺省的
+\nt{template-argument}，则每一个后续的\nt{template-parameter}应该要么也有缺省的
+\nt{template-argument}或要么是一个模板参数包。如果一个主模板类、主变量模板或别名
+模板的\nt{template-parameter}是一个模板参数包，则其应该是最后一个
+\nt{template-parameter}。函数模板的模板参数包之后不应该再跟其他模板参数，除非该
+模板参数可以从函数模板的\nt{parameter-type-list}（\ref{dcl.fct}）中推导出来或具
+有缺省参数（\ref{temp.deduct}）。不具有缺省参数的推导指南模板
+（\ref{temp.deduct.guide}）的模板参数应该从推导指南模板的
+\nt{parameter-type-list}可推导出来。「例：
+\begin{lstlisting}
+  template<class T1 = int, class T2> class B;     // error
+
+  // U can be neither deduced from the parameter-type-list nor specified
+  template<class... T, class... U> void f() { }   // error
+  template<class... T, class U> void g() { }      // error
+\end{lstlisting}」
+
+\paragraph{}
+\nt{template-parameter}不应该由同作用域中两个不同声明给定缺省参数。「例：
+\begin{lstlisting}
+  template<class T = int> class X;
+  template<class T = int> class X { /* ... */ };  // error
+\end{lstlisting}」
+
+\paragraph{}
+在为非类型\nt{template-parameter}分析缺省的\nt{template-argument}时，第一个非嵌
+套\tm{>}作为\nt{template-parameter-list}的结束而不是大于运算符。「例：
+\begin{lstlisting}
+  template<int i = 3 > 4 >        // syntax error
+  class X { /* ... */ };
+
+  template<int i = (3 > 4) >      // OK
+  class Y { /* ... */ };
+\end{lstlisting}」
+
+\paragraph{}
+模板\nt{template-parameter}的\nt{template-parameter}允许具有缺省的
+\nt{template-argument}。当指定了这样的缺省参数时，其在模板
+\nt{template-parameter}作用域中应用于模板\nt{template-parameter}。「例：
+\begin{lstlisting}
+  template <class T = float> struct B {};
+  template <template <class TT = float> class T> struct A {
+    inline void f();
+    inline void g();
+  };
+  template <template <class TT> class T> void A<T>::f() {
+    T<> t;            // error - TT has no default template argument
+  }
+  template <template <class TT = char> class T> void A<T>::g() {
+    T<> t;            // OK - T<char>
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果一个\nt{template-parameter}是一个有省略号在其可选\nt{identifier}之前的
+\nt{type-parameter}或者是一个声明参数包（\ref{dcl.fct}）的
+\nt{parameter-declaration}，则该\nt{template-parameter}是一个模板参数包
+（\ref{temp.variadic}）。类型包含一个或多个未展开参数包的
+\nt{parameter-declaration}模板参数包是一个包展开。类似的，具有含一个或多个未展开
+参数包的\nt{template-parameter-list}的\nt{type-parameter}模板参数包为包展开。包
+展开的模板参数包不应该展开声明于同一\nt{template-parameter-list}中的参数包。
+「例：
+\begin{lstlisting}
+  template <class... Types> class Tuple;                  // Types is a template type parameter pack
+                                                          // but not a pack expansion
+  template <class T, int...Dims> struct multi_array;      // Dims is a non-tpye template parameter pack
+                                                          // but not a pack expansion
+  template <class... T> struct value_holder {
+    template <T... Values> struct apply { };              // Values is a non-type template parameter pack
+                                                          // and a pack expansion
+  };
+  template <class... T, T... Values> struct static_array; // error: Values expands template type parameter
+                                                          // pack T within the same template parameter list
+\end{lstlisting}」
+
+\sect{模板特例化的名字}{temp.names}
+\paragraph{}
+模板特例化（\ref{temp.spec}）可以通过\nt{template-id}来引用：
+
+\synsym{simple-template-id}
+  \synprd{\nt{template-name} \tm{<} \nt{template-argument-list\tsub{opt}}
+    \tm{>}}
+\synsym{template-id}
+  \synprd{\nt{simple-template-id}}
+  \synprd{\nt{operator-function-id} \tm{<} \nt{template-argument-list\tsub{opt}}
+    \tm{>}}
+  \synprd{\nt{literal-operator-id} \tm{<} \nt{template-argument-list\tsub{opt}}
+    \tm{>}}
+\synsym{template-name}
+  \synprd{\nt{template-argument} \tm{...}\nt{\tsub{opt}}}
+  \synprd{\nt{template-argument-list} \tm{,} \nt{template-argument}
+    \tm{...}\tsub{opt}}
+\synsym{template-argument}
+  \synprd{\nt{constant-exression}}
+  \synprd{\nt{type-id}}
+  \synprd[]{\nt{id-expression}}
+
+「注：名字查询规则（\ref{basic.lookup}）用于将名字的使用和模板声明关联起来；即标
+识名字为\nt{template-name}。」
+
+\paragraph{}
+若要使用模板参数来显式限定一个\nt{template-name}，名字必须已知引用的是一个模板。
+
+\paragraph{}
+在名字查询（\ref{basic.lookup}）找到名字为\nt{template-name}或者一个
+\nt{operator-function-id}或\nt{literal-operator-id}引用一组重载函数，其中任一成
+员为函数模板，如果其后跟着\tm{<}，则\tm{<}总是当作\nt{template-argument-list}的
+分界符而不是小于运算符。在分析\nt{template-argument-list}时，第一个非嵌套\tm{>}
+\footnote{一个包含\tm{dynamic\_cast}、\tm{static\_cast}、\tm{reinterpret\_cast}
+或者\tm{const\_cast}的\nt{type-id}的\tm{>}，或者包含后续\nt{template-id}的
+\nt{template-argument}的\tm{>}，为此描述的目的被当作是嵌套的。}被当作是终止分界
+符而不是一个大于运算符。类似的，第一个非嵌套的\tm{>{}>}被当作两个连续但不同的
+\tm{>}标记，其中第一个作为\nt{template-argument-list}的终止且结束
+\nt{template-id}。「注：由此替换规则产生的第二个\tm{>}标记可能终止一个包含的
+\nt{template-id}结构，或者可能是不同结果的一部分（比如一个强制转换）。」「例：
+\begin{lstlisting}
+  template<int i> class X { /* ... */ };
+
+  X< 1>2 > x1;                            // syntax error
+  X<(1>2)> x2;                            // OK
+
+  template<class T> class Y { /* ... */ };
+  Y<X<1>> x3;                             // OK, same as Y<X<1> > x3;
+  Y<X<6>>1>> x4;                          // syntax error
+  Y<X<(6>>1)>> x5;                        // OK
+\end{lstlisting}」
+
+\paragraph{}
+如果出现在\nt{template-argument-list}或\nt{decltype-specifier}之外则称模板关键字
+\tm{template}称其为处于\nt{qualified-id}的顶层。在一个\nt{declarator-id}的
+\nt{qualified-id}中或在一个由\nt{class-head-name}（第\ref{class}章）或
+\nt{enum-head-name}（\ref{dcl.enum}）形成\nt{qualified-id}中，关键字
+\tm{template}不应该出现在顶层。在一个用作\nt{typename-specifier}
+（\ref{temp.res}），\nt{elaborated-type-specifier}（\ref{dcl.type.elab}），
+\nt{using-declaration}（\ref{namespace.udecl}）或\nt{class-or-decltype}
+（第\ref{class.derived}）中的名字的\nt{qualified-id}中，忽略出现在顶层的可选关键
+字\tm{template}。在这些上下文中，一个\tm{<}标记总是假定为引入一个
+\nt{template-argument-list}。在所有其他上下文中，当确定一个未知特例化
+（\ref{temp.dep.type}）的成员的模板特例化时，成员模板名应该加上关键字
+\tm{template}前缀。「例：
+\begin{lstlisting}
+  struct X {
+    template<std::size_t> X* alloc();
+    template<std::size_t> static X* adjust();
+  };
+  template<class T> void f(T* p) {
+    T* p1 = p->alloc<200>();              // ill-formed: < means less than
+    T* p2 = p->template alloc<200>();     // OK: < starts template argument list
+    T::adjust<100>();                     // ill-formed: < means less than
+    T::template adjust<100>();            // OK: < starts template argument list
+  }
+\end{lstlisting}」
+
+\paragraph{}
+加前缀关键字\tm{template}的名字应该是一个\nt{template-id}或者名字应该引用类模板
+或别名模板。「注：关键字\tm{template}不可用于类模板的非模板成员。」「注：如
+\tm{typename}前缀的情形，在不是严格必须的情况下允许\tm{template}前缀；即当
+\nt{nested-name-specifier}或\tm{->}或\tm{.}的左表达式不依赖于
+\nt{template-parameter}时，或者其使用不出现在模板作用域中。」「例：
+\begin{lstlisting}
+  template <class T> struct A {
+    void f(int);
+    template <class U> void f(U);
+  };
+
+  template <class T> void f(T t) {
+    A<T> a;
+    a.template f<>(t);              // OK: calls template
+    a.template f(t);                // error: not a template-id
+  }
+
+  template <class T> struct B {
+    template <class T2> struct C { };
+  };
+
+  // OK: T::template C names a class template:
+  template <class T, template <class X> class TT = T::template C> struct D { };
+  D<B<int> > db;
+\end{lstlisting}」
+
+\paragraph{}
+确定一个类模板特例化的\nt{simple-template-id}是一个\nt{class-name}
+（第\ref{class}章）。
+
+\paragraph{}
+确定一个别名模板特例化的\nt{template-id}是一个\nt{type-name}。
 
 \sect{模板实参}{temp.arg}
+\paragraph{}
+\nt{template-argument}具有三种形式，对应于\nt{template-parameter}的三种形式：
+类型，非类型和模板。指定于\nt{template-id}中的每一个\nt{template-argument}的类型
+和形式在其\nt{template-parameter-list}中应该匹配模板所声明的对应参数指定的类型和
+形式。当模板所声明的参数是一个模板参数包（\ref{temp.variadic}）时，其应该对应于
+零或多个\nt{template-argument}。「例：
+\begin{lstlisting}
+  template<class T> class Array {
+    T* v;
+    int sz;
+  public:
+    explicit Array(int);
+    T& operator[](int);
+    T& elem(int i) { return v[i]; }
+  };
+
+  Array<int> v1(20);
+  typedef std::complex<double> dcomplex;  // std::complex is a standard library template
+  Array<dcomplex> v2(30);
+  Array<dcomplex> v3(40);
+
+  void bar() {
+    v1[3] = 7;
+    v2[3] = v3.elem(4) = dcomplex(7,8);
+  }
+\end{lstlisting}」
+
+\paragraph{}
+在一个\nt{template-argument}中，\nt{type-id}和表达式间的歧义性解析为\nt{type-id}
+而无论对应\nt{template-parameter}的形式。\footnote{缺省\nt{template-argument}中
+不存在这样的歧义性，因为\nt{template-parameter}的形式确定了
+\nt{template-argument}所允许的形式。}「例：
+\begin{lstlisting}
+  template<class T> void f();
+  template<int   I> void f();
+
+  void g() {
+    f<int()>();       // int() is a type-id: call the first f()
+  }
+\end{lstlisting}」
+
+\paragraph{}
+\nt{template-argument}的名字在其用作\nt{template-argument}的点应该可访问。「注：
+如果\nt{template-argument}的名字在其用作\nt{template-argument}的点可访问，则在对
+应\nt{template-parameter}名使用点所产生的实例化中不再有进一步访问限制。」「例：
+\begin{lstlisting}
+  template<class T> class X {
+    static T t;
+  };
+
+  class Y {
+  private:
+    struct S { /* ... */ };
+    X<S> x;           // OK: S is accessible
+                      // X<Y::S> has a static member of type Y::S
+                      // OK: even through Y::S is private
+  };
+
+  X<Y::S> y;          // error: S not accessible
+\end{lstlisting}」对于一个为类类型或类模板的\nt{template-argument}，模板定义不具
+有\nt{template-argument}的成员的特殊访问权限。「例：
+\begin{lstlisting}
+  template <template <class TT> class T> class A {
+    typename T<int>::S s;
+  };
+
+  template <class U> class B {
+  private:
+    struct S  /* ... */ };
+  };
+
+  A<B> b;             // ill-formed: A has no access to B::S
+\end{lstlisting}」
+
+\paragraph{}
+在使用模板参数包或缺省\nt{template-argument}时，\nt{template-argument}列表可能为
+空。此时空的\tm{<>}括号仍应用作\nt{template-argument-list}。「例：
+\begin{lstlisting}
+  template<class T = char> class String;
+  String<>* p;                    // OK: String<char>
+  String* q;                      // syntax error
+  template<class ... Elements> class Tuple;
+  Tuple<>* t;                     // OK: Elements is empty
+  Tuple* u;                       // syntax error
+\end{lstlisting}」
+
+\paragraph{}
+模板特例化类型对象的显式析构函数调用（\ref{class.dtor}）可以显式指定一个
+\nt{template-argument}。「例：
+\begin{lstlisting}
+  template<class T> struct A {
+    ~A();
+  };
+  void f(A<int>* p, A<int>* q) {
+    p->A<int>::~A();              // OK: destructor call
+    q->A<int>::~A<int>();         // OK: destructor call
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果在模板特例化的实例化中\nt{template-argument}的使用引起病态结构则程序为病态。
+
+\paragraph{}
+当\nt{template-id}中的模板是一个重载函数模板时，重载集合中\nt{template-argument}
+不匹配于\nt{template-parameter}的非模板函数和函数模板都被忽略。如果没有函数模板
+匹配\nt{template-parameter}则程序为病态。
+
+\paragraph{}
+当\nt{simple-template-id}不确定一个函数，则在需要缺省参数的值是隐式实例化一个缺
+省\nt{template-argument}。「例：
+\begin{lstlisting}
+  template<typename T, typename U = int> struct S { };
+  S<bool>* p;         // the type of p is S<bool, int>*
+\end{lstlisting}
+\tm{U}的缺省参数被实例化以形成类型\tm{S<bool, int>*}。」
+
+\paragraph{}
+\nt{template-argument}后跟上省略号是一个包展开（\ref{temp.variadic}）。
+
 \ssect{模板类型参数}{temp.arg.type}
+\paragraph{}
+用于类型\nt{template-parameter}的\nt{template-argument}应该是一个\nt{type-id}。
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  template <class T> class X { };
+  template <class T> void f(T t) { }
+  struct { } unnamed_obj;
+
+  void f() {
+    struct A { };
+    enum { e1 };
+    typedef struct { } B;
+    B b;
+    X<A> x1;          // OK
+    X<A*> x2;         // OK
+    X<B> x3;          // OK
+    f(e1);            // OK
+    f(unnamed_obj);   // OK
+    f(b);             // OK
+  }
+\end{lstlisting}」「注：模板类型参数可以是不完整类型（\ref{basic.types}）。」
+
 \ssect{非类型模板参数}{temp.arg.nontype}
-\ssect{模板模板参数}{temp.arg.template}
+\paragraph{}
+如果\nt{template-parameter}的类型包含一个占位类型（\ref{dcl.spec.auto}，
+\ref{temp.param}），则推导的参数类型由\nt{template-argument}的类型通过占位类型推
+导（\ref{dcl.type.auto.deduct}）来确定。如果所推导的参数类型不允许用于
+\nt{template-parameter}声明（\ref{temp.param}）则程序为病态。
+
+\paragraph{}
+非类型\nt{template-parameter}的\nt{template-argument}应该是一个具有
+\nt{template-parameter}类型的转换后的常量表达式（\ref{expr.const}）。对于引用或
+指针的非类型\nt{template-parameter}，常量表达式的值不应该引用（如果是指针类型，
+不应该是以下的地址）：
+\begin{enumerate}
+  \item{子对象（\ref{intro.object}），}
+  \item{临时对象（\ref{class.temporary}），}
+  \item{字符串字面值（\ref{lex.string}），}
+  \item{\tm{typeid}表达式的结果（\ref{expr.typeid}），或}
+  \item{预定义\tm{\_\_func\_\_}变量（\ref{dcl.fct.def.general}）。}
+\end{enumerate}
+「注：如果\nt{template-argument}表示重载函数集合（或其指针或成员指针），则匹配函
+数从此集合中选择（\ref{over.over}）。」
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  template<const int* pci> struct X { /* ... */ };
+  int ai[10];
+  X<ai> xi;                   // array to pointer and qualification conversions
+
+  struct Y { /* ... */ };
+  template<const Y& b> struct Z { /* ... */ };
+  Y y;
+  Z<y> z;                     // no conversion, but note extra cv-qualification
+
+  template<int (&pa)[5]> struct W { /* ... */ };
+  int b[5];
+  W<b> w;                     // no conversion
+
+  void f(char);
+  void f(int);
+
+  template<void (*pf)(int)> struct A { /* ... */ };
+
+  A<&f> a;                    // selects f(int)
+
+  template<auto n> struct B { /* ... */ };
+  B<5> b1;                    // OK: template parameter type is int
+  B<'a'> b2;                  // OK: template parameter type is char
+  B<2.5> b3;                  // error: template parameter type cannot be double
+\end{lstlisting}」
+
+\paragraph{}
+「注：字符串字面值（\ref{lex.string}）不是一个可接受的\nt{template-argument}。
+「例：
+\begin{lstlisting}
+  template<class T, const char* p> class X {
+    /* ... */
+  };
+
+  X<int, "Studebaker"> x1;    // error: string literal as template-argument
+
+  const char p[] = "Vivisectionist";
+  X<int,p> x2;                // OK
+\end{lstlisting}」」
+
+\paragraph{}
+「注：数组元素或非静态数据成员的地址不可作为\nt{template-argument}。「例：
+\begin{lstlisting}
+  template<int* p> class X { };
+
+  int a[10];
+  struct S { int m; static int s; } s;
+
+  X<&a[2]> x3;                // error: address of array element
+  X<&s.m>  x4;                // error: address of non-static member
+  X<&s.s>  x5;                // OK: address of static member
+  X<&S::s> x6;                // OK: address of static member
+\end{lstlisting}」」
+
+\paragraph{}
+「注：当对应的\nt{template-parameter}为引用类型时临时对象不可作为
+\nt{template-argument}。「例：
+\begin{lstlisting}
+  template<const int& CRI> struct B { /* ... */ };
+
+  B<1> b2;                    // error: temporary would be required for template argument
+
+  int c = 1;
+  B<c> b1;                    // OK
+\end{lstlisting}」」
+
+\ssect{``模板''模板参数}{temp.arg.template}
+\paragraph{}
+``模板''\nt{template-parameter}的\nt{template-argument}应该是表示为
+\nt{id-expression}的类模板或别名模板的名字。当\nt{template-argument}确定一个类模
+板时，在匹配``模板''模板参数于对应形参时，只考虑主类模板；不考虑部分特例化，即使
+其参数列表匹配``模板''模板参数列表。
+
+\paragraph{}
+在基于模板\nt{template-parameter}的特例化被实例化时，考虑任何关联于主类模板或主
+变量模板的部分特例化（\ref{temp.class.spec}）。如果在实例化点一个特例化不可见，
+而如果其可见将被选中，则程序为病态，无需诊断。「例：
+\begin{lstlisting}
+  template<class T> class A {     // primary template
+    int x;
+  };
+  template<class T> class A<T*> { // partial specialization
+    long x;
+  };
+  template<template<class U> class V> class C {
+    V<int>  y;
+    V<int*> z;
+  };
+  C<A> c;   // V<int> within C<A> uses the primary template, so c.y.x has type int
+            // V<int*> within C<A> uses the partial specialization, so c.z.x has type long
+\end{lstlisting}」
+
+\paragraph{}
+当\nt{template-parameter} \tm{P}至少和\nt{template-argument} \tm{A}一样特例化则
+该\nt{template-argument}匹配\tm{P}。如果\tm{P}包含参数包，且\tm{A}的每一个模板参
+数匹配\tm{P}的\nt{template-parameter-list}中对应的模板参数，则\tm{A}也匹配
+\tm{P}。两个模板参数是匹配的，如果其为相同种类（类型、非类型、模板），对非类型
+\nt{template-parameter}如果其类型等价（\ref{temp.over.link}），对模板
+\tm{template-parameter}，其每一个对应的\nt{template-parameter}递规的也匹配。当
+\tm{P}的\nt{template-parameter-list}包含一个模板参数包（\ref{temp.variadic}），
+则模板参数包将匹配同类型\tm{A}的\nt{template-parameter-list}中的零或多个模板参数
+或模板参数包并形成\tm{P}中的模板参数包（忽略参数是否为模板参数包）。
+
+「例：
+\begin{lstlisting}
+  template<class T> class A { /* ... */ };
+  template<class T, class U = T> class B { /* ... */ };
+  template<class ... Types> class C { /* ... */ };
+  template<auto n> class D { /* ... */ };
+  template<template<class> class P> class X { /* ... */ };
+  template<template<class ...> class Q> class Y { /* ... */ };
+  template<template<int> class R> class Z { /* ... */ };
+
+  X<A> xa;            // OK
+  X<B> xb;            // OK
+  X<C> xc;            // OK
+  Y<A> ya;            // OK
+  Y<B> yb;            // OK
+  Y<C> yc;            // OK
+  Z<D> zd;            // OK
+\end{lstlisting}」
+
+「例：
+\begin{lstlisting}
+  template <class T> struct eval;
+
+  template <template <class, class...> class TT, class T1, class... Rest>
+  struct eval<TT<T1, Rest ...>> { };
+
+  template <class T1> struct A;
+  template <class T1, class T2> struct B;
+  template <int N> struct C;
+  template <class T1, int N> struct D;
+  template <class T1, class T2, int N = 17> struct E;
+
+  eval<A<int>> eA;        // OK: matches partial specialization of eval
+  eval<B<int, float>> eB; // OK: matches partial specialization of eval
+  eval<C<17>> eC;         // error: C does not match TT in partial specialization
+  eval<D<int, 17>> eD;    // error: D does not match TT in partial specialization
+  eval<E<int, float>> eE; // error: E does not match TT in partial specialization
+\end{lstlisting}」
+
+\paragraph{}
+模板\nt{template-parameter} \tm{P}至少和模板\nt{template-argument} \tm{A}一样特
+例化，如果根据函数模板部分特例化规则（\ref{temp.func.order}），给定以下两个函数
+模板的重写，对应于\tm{P}的函数模板至少和对应于\tm{A}的函数模板一样特例化。给定
+具有\tm{A}的模板参数列表的虚构类模板\tm{X}（包括缺省参数）：
+\begin{enumerate}
+  \item{对应的和\tm{P}或\tm{A}一样，两个函数模板均有相同模板参数。}
+  \item{每一个函数模板参数都有单个模板参数，其类型为具有来自对应函数模板的模板参
+    数相对应的模板实参，这些对于函数模板的模板参数列表中每一个模板形参\tm{PP}，
+    形成一个对应的模板实参\tm{AA}。如果\tm{PP}声明一个参数包，则\tm{AA}是一个包
+    展开\tm{PP...}（\ref{temp.variadic}）；否则\tm{AA}为\tm{id-expression}
+    \tm{AA}。}
+\end{enumerate}
+如果重写产生无效类型，则\tm{P}不是至少和\tm{A}一样特例化。
 
 \sect{类型等价}{temp.type}
+\paragraph{}
+两个\nt{template-id}引用相同类、函数或变量，如果
+\begin{enumerate}
+  \item{其\nt{template-name}，\nt{operator-function-id}或
+    \nt{literal-operator-id}引用相同模板，并且}
+  \item{其对应类型\nt{template-argument}具有相同类型，并且}
+  \item{其对应非类型整型或枚举类型模板参数具有相同值，并且}
+  \item{其对应非类型指针类型的\nt{template-argument}引用相同对象或函数或者均为空
+    指针值，并且}
+  \item{其对应非类型成员指针类型的\nt{template-argument}引用相同类成员或者均为空
+    成员指针值，并且}
+  \item{其对应非类型引用类型的\nt{template-argument}引用相同对象或函数，并且}
+  \item{其对应模板\nt{template-argument}引用相同模板。}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  template<class E, int size> class buffer { /* ... */ };
+  buffer<char,2*512> x;
+  buffer<char,1024> y;
+\end{lstlisting}
+声明\tm{x}和\tm{y}为具有相同类型，且
+\begin{lstlisting}
+  template<class T, void(*err_fct)()> class list { /* ... */ };
+  list<int,&error_handler1> x1;
+  list<int,&error_handler2> x2;
+  list<int,&error_handler2> x3;
+  list<char,&error_handler2> x4;
+\end{lstlisting}
+声明\tm{x2}和\tm{x3}为具有相同类型。其类型与\tm{x1}和\tm{x4}的不同。
+\begin{lstlisting}
+  template<class T> struct X { };
+  template<class> struct Y { };
+  template<class T> using Z = Y<T>;
+  X<Y<int> > y;
+  X<Z<int> > z;
+\end{lstlisting}
+声明\tm{y}和\tm{z}为具有相同类型。」
+
+\paragraph{}
+如果表达式\tm{e}为类型依赖的（\ref{temp.dep.expr}），\tm{decltype(}\nt{e}\tm{)}
+表示一个唯一的依赖类型。两个这样的\nt{decltype-specifier}仅当其\nt{expression}为
+等价的才引用相同类型（\ref{temp.over.link}）。「注：但这样的类型可以有别名，比如
+一个\nt{typedef-name}。」
 
 \sect{模板声明}{temp.decls}
+\paragraph{}
+一个\nt{template-id}，即\nt{template-name}后跟上\nt{template-argument-list}不应
+该出现在主模板声明中。「例：
+\begin{lstlisting}
+  template<class T1, class T2, int I> class A<T1, T2, I> { };   // error
+  template<class T1, int I> void sort<T1, I>(T1 data[I]);       // error
+\end{lstlisting}」「注：但该语法在类模板特例化中是允许的
+（\ref{temp.class.spec}）。」
+
+\paragraph{}
+为了名字查询和实例化的目的，函数模板和类模板的成员函数的缺省实参和
+\nt{noexcept-specifier}被当成是定义；每一个缺省实参或\nt{noexcept-specifier}是一
+个独立的定义，与函数模板定义或任何其他缺省实参或\nt{noexcept-specifier}不相关。
+为了实例化的目的，一个constexpr if语句（\ref{stmt.if}）的子语句被当作是定义。
+
+\paragraph{}
+因一个\nt{alias-declaration}不能声明一个\nt{template-id}，不能部分或显式特例化一
+个别名模板。
+
 \ssect{类模板}{temp.class}
+\paragraph{}
+\nt{类模板}为无限制的一组相关类型定义布局和操作。
+
+\paragraph{}
+「例：单个类模板\tm{List}可能提供无限制的一组类定义：对每一个类型\tm{T}都有一个
+类\tm{List<T>}，第一个都描述一个元素类型为\tm{T}的链接表。类似的描述一个连续动态
+数组的类模板\tm{Array}可以定义为：
+\begin{lstlisting}
+  template<class T> class Array {
+    T* v;
+    int sz;
+  public:
+    explicit Array(int);
+    T& operator[](int);
+    T& elem(int i) { return v[i]; }
+  };
+\end{lstlisting}
+前缀\tm{template<class T>}指定声明了一个模板且\nt{type-name} \tm{T}可以在声明中
+使用。换句话说即\tm{Array}为参数化类型，以\tm{T}作为其参数。」
+
+\paragraph{}
+当成员函数，成员类，成员枚举，静态数据成员或类模板的成员模板定义在类模板定义之外
+时，成员定义被定义为模板定义，其中的\nt{template-parameter}即类模板的那些
+\nt{template-parameter}。成员定义中使用的模板参数的名字可能不同于类模板定义中使
+用的模板参数名字。跟在成员定义的类模板名之后的模板参数列表应该与成员的模板参数中
+所用的顺序相同来确定参数。模板参数列表中每一个模板参数包应该使用省略号来展开。
+「例：
+\begin{lstlisting}
+  template<class T1, class T2> struct A {
+    void f1();
+    void f2();
+  };
+
+  template<class T2, class T1> void A<T2,T1>::f1() { }  // OK
+  template<class T2, class T1> void A<T1,T2>::f2() { }  // error
+
+  template<class ... Types> struct B {
+    void f3();
+    void f4();
+  };
+
+  template<class ... Types> void B<Types ...>::f3() { } // OK
+  template<class ... Types> void B<Types>::f4() { }     // error
+\end{lstlisting}」
+
+\paragraph{}
+在一个类模板的重声明，部分特例化，显式特例化或显式实例化中，\nt{class-key}应该与
+原类模板声明的种类一致（\ref{dcl.type.elab}）。
+
 \sssect{类模板成员函数}{temp.mem.func}
+\paragraph{}
+类模板成员函数可以在其声明的类模板定义之外定义。「例：
+\begin{lstlisting}
+  template<class T> class Array {
+    T* v;
+    int sz;
+  public:
+    explicit Array(int);
+    T& operator[](int);
+    T& elem(int i) { return v[i]; }
+  };
+\end{lstlisting}
+声明三个函数模板。下标函数可以定义为：
+\begin{lstlisting}
+  template<class T> T& Array<T>::operator[](int i) {
+    if (i<0 || sz<=i) error("Array: range error");
+    return v[i];
+  }
+\end{lstlisting}」
+
+\paragraph{}
+类模板成员函数的\nt{template-argument}由成员函数所调用对象的类型的
+\nt{template-argument}确定。「例：\tm{Array<T>::operator[]()}的
+\nt{template-argument}由下标操作应用的\tm{Array}确定。
+\begin{lstlisting}
+  Array<int> v1(20);
+  Array<dcomplex> v2(30);
+
+  v1[3] = 7;                    // Array<int>::operator[]()
+  v2[3] = dcomplex(7,8);        // Array<dcomplex>::operator[]()
+\end{lstlisting}」
+
 \sssect{类模板成员类}{temp.mem.class}
+\paragraph{}
+类模板的成员类可以定义在其声明所在的类模板定义之外。「注：成员类必须在其首次需要
+实例化的使用之前定义（\ref{temp.inst}）。比如，
+\begin{lstlisting}
+  template<class T> struct A {
+    class B;
+  };
+  A<int>::B* b1;                // OK: requires A to be defined but not A::B
+  template<class T> class A<T>::B { };
+  A<int>::B b2;                 // OK: requires A::B to be defined
+\end{lstlisting}」
+
 \sssect{类模板静态数据成员}{temp.static}
+\paragraph{}
+可以在包含静态成员的类模板定义的命名空间作用域中提供一个静态数据成员或静态数据成
+员模板的定义。「例：
+\begin{lstlisting}
+  template<class T> class X {
+    static T s;
+  };
+  template<class T> T X<T>::s = 0;
+
+  struct limits {
+    template<class T>
+      static const T min;           // declaration
+  };
+
+  template<class T>
+    const T limits::min = { };      // definition
+\end{lstlisting}」
+
+\paragraph{}
+声明为未知大小数组的静态数据成员显式特例化可以具有与其定义不同的上界（如果有）。
+「例：
+\begin{lstlisting}
+  template <class T> struct A {
+    static int i[];
+  };
+  template <class T> int A<T>::i[4];    // 4 elements
+  template <> int A<int>::i[] = { 1 };  // OK: 1 element
+\end{lstlisting}」
+
 \sssect{类模板枚举成员}{temp.mem.enum}
+\paragraph{}
+类模板枚举成员可以定义在类模板定义之外。「例：
+\begin{lstlisting}
+  template<class T> struct A {
+    enum E : T;
+  };
+  A<int> a;
+  template<class T> enum A<T>::E : T { e1, e2 };
+  A<int>::E e = A<int>::e1;
+\end{lstlisting}」
 
 \ssect{成员模板}{temp.mem}
+\paragraph{}
+模板可以声明于类或类模板中；这样的模板称为成员模板。成员模板可以定义在类定义或类
+模板定义之中或之外。定义于类模板定义之外的成员模板应该使用类模板的
+\nt{template-parameter}后跟上成员模板的\nt{template-parameter}来指定。「例：
+\begin{lstlisting}
+  template<class T> struct string {
+    template<class T2> int compare(const T2&);
+    template<class T2> string(const string<T2>& s) { /* ... */ }
+  };
+
+  template<class T> template<class T2> int string<T>::compare(const T2& s) {
+  }
+\end{lstlisting}」
+
+\paragraph{}
+非闭包类型的局部类不应该有成员模板。访问控制规则（第\ref{class.access}章）适用于
+成员模板名。析构函数不应该是成员模板。具有给定名字和类型的非模板成员函数
+（\ref{dcl.fct}）和同名的成员函数模板，其可用于生成同类型特例化，均可以声明于类
+中。当二者都存在时，该名字和类型的使用引用非模板成员，除非提供了显式模板参数列
+表。「例：
+\begin{lstlisting}
+  template <class T> struct A {
+    void f(int);
+    template <class T2> void f(T2);
+  };
+
+  template <> void A<int>::f(int) { }               // non-template member function
+  template <> template <> void A<int>::f<>(int) { } // member function template specialization
+
+  int main() {
+    A<char> ac;
+    ac.f(1);      // non-template
+    ac.f('c');    // template
+    ac.f<>(1);    // template
+  }
+\end{lstlisting}」
+
+\paragraph{}
+成员函数模板不应该为虚拟的。「例：
+\begin{lstlisting}
+  template <class T> struct AA {
+    template <class C> virtual void g(C); // error
+    virtual void f();
+  }
+\end{lstlisting}」
+
+\paragraph{}
+成员函数模板的特例化不重写基类虚函数。「例：
+\begin{lstlisting}
+  class B {
+    virtual void f(int);
+  };
+
+  class D : public B {
+    template <class T> void f(T);   // does not override B::f(int)
+    void f(int i) { f<>(i); }       // overriding function that calls the template instantiation
+  };
+\end{lstlisting}」
+
+\paragraph{}
+转换函数模板的特例化与转换到相同类型的非模板转换函数以相同的方式引用。「例：
+\begin{lstlisting}
+  struct A {
+    template <class T> operator T*();
+  };
+  template <class T> A::operator T*(){ return 0; }
+  template <> A::operator char*() { return 0; }   // specialization
+  template A::operator void*();                   // explicit instantiation
+
+  int main() {
+    A a;
+    int* ip;
+    ip = a.operator int*();   // explicit call to template operator A::operator int*()
+  }
+\end{lstlisting}」「注：因显式模板参数列表跟在函数模板名之后，且因转换成员函数模
+板和构造函数成员函数模板可不使用函数名来调用，不能为这些函数模板提供显式模板参数
+列表。」
+
+\paragraph{}
+转换函数模板的特例化不会被名字查询找到。取而代之的是考虑使用上下文中可见的任何转
+换函数模板。对每一个这样的运算符，如果参数推导成功（\ref{temp.deduct.conv}），则
+产生的特例化如被名字查询所找到的一样使用。
+
+\paragraph{}
+派生类中的\nt{using-declaration}不能引用基类中的转换函数模板特例化。
+
+\paragraph{}
+重载解析（\ref{over.ics.rank}）和偏序（\ref{temp.func.order}）用于在多个转换函数
+模板特例化和/或非模板转换函数之间选择最佳转换函数。
+
 \ssect{变参模板}{temp.variadic}
+\paragraph{}
+\nt{模板参数包}指可以接受零个或多个模板实参的模板参数。「例：
+\begin{lstlisting}
+  template<class ... Types> struct Tuple { };
+
+  Tuple<> t0;             // Types contains no arguments
+  Tuple<int> t1;          // Types contains one argument: int
+  Tuple<int, float> t2;   // Types contains two arguments: int and float
+  Tuple<0> error;         // error: 0 is not a type
+\end{lstlisting}」
+
+\paragraph{}
+\nt{函数参数包}指可以接受零个或多个函数实参的函数参数。「例：
+\begin{lstlisting}
+  template<class ... Types> void f(Types ... args);
+
+  f();                    // OK: args contains no arguments
+  f(1);                   // OK: args contains one argument: int
+  f(2, 1.0);              // OK: args contains two arguments: int and double
+\end{lstlisting}」
+
+\paragraph{}
+\nt{参数包}指模板参数包或函数参数包。
+
+\paragraph{}
+\nt{包展开}由\nt{模式}和省略号组成，其实例化产生列表中零个或多个模式的实例化（以
+下所述）。模式的形式依赖于展开所在的上下文。包展开可以出现在以下上下文中：
+\begin{enumerate}
+  \item{在函数参数包中（\ref{dcl.fct}）；模式为不带省略号的
+    \nt{parameter-declaration}。}
+  \item{在\nt{using-declaration}中（\ref{namespace.udecl}）；模式为
+    \nt{using-declarator}。}
+  \item{在一个是包展开的模板参数包中（\ref{temp.param}）：
+    \begin{enumerate}
+      \item{如果模板参数包是一个\nt{parameter-declaration}；模式为不带省略号的
+        \nt{parameter-declaration}；}
+      \item{如果模板参数包是一个有\nt{template-parameter-list}的
+        \nt{type-parameter}；模式为对应的不带省略号的\nt{type-parameter}。}
+    \end{enumerate}}
+  \item{在一个\nt{initializer-list}中（\ref{dcl.init}）；模式为
+    \nt{base-specifier}。}
+  \item{在一个\nt{base-specifier-list}中（第\ref{class.derived}章）；模式为
+    \nt{base-specifier}。}
+  \item{在一个\nt{mem-initializer}的\nt{mem-initializer-list}中
+    （\ref{class.base.init}），其\nt{mem-initializer-id}表示一个基类；模式为
+    \nt{mem-initializer}。}
+  \item{在一个\nt{template-argument-list}中（\ref{temp.arg}）；模式为
+    \nt{template-argument}。}
+  \item{在一个\nt{argument-list}中（\ref{dcl.attr.grammar}）；模式为
+    \nt{attribute}。}
+  \item{在一个\nt{alignment-specifier}中（\ref{dcl.align}）；模式为不带省略号的
+    \nt{alignment-specifier}。}
+  \item{在一个\nt{capture-list}中（\ref{expr.prim.lambda}）；模式为
+    \nt{capture}。}
+  \item{在一个\tm{sizeof...}表达式中（\ref{expr.sizeof}）；模式为
+    \nt{identifier}。}
+  \item{在一个\nt{fold-expression}中（\ref{expr.prim.fold}）；模式为包含未展开包
+    的\nt{cast-expression}。}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  template<class ... Types> void f(Types ... rest);
+  template<class ... Types> void g(Types ... rest) {
+    f(&rest ...);       // "&rest ..." is a pack expansion; "&rest" is its pattern
+  }
+\end{lstlisting}」
+
+\paragraph{}
+为确定参数包是否满足关于除参数包之外的实体规则的目的，参数包被当作是可从其出现在
+的模式实例化产生的实体。
+
+\paragraph{}
+名字出现在包展开模式中的参数包由该包展开来展开。包展开名字的出现仅由最内层包含包
+展开所展开。包展开的模式应该确定未被嵌套包展开所展开的一个或多个包展开；这样的参
+数包称为模式中的\nt{未展开参数包}。由包展开所展开的所有参数包应该具有相同数目的
+参数。未展开的参数包名字的出现是病态的。「例：
+\begin{lstlisting}
+  template<typename...> struct Tuple {};
+  template<typename T1, typename T2> struct Pair {};
+
+  template<class ... Args1> struct zip {
+    template<class ... Args2> struct with {
+      typedef Tuple<Pair<Args1, Args2> ... > type;
+    };
+  };
+
+  typedef zip<short, int>::with<unsigned short, unsigned>::type T1;
+      // T1 is Tuple<Pair<short, unsigned short>, Pair<int, unsigned>>
+  typedef zip<short>::with<unsigned short, unsigned>::type T2;
+      // error: different number of arguments specified for Args1 and Args2
+
+  template<class ... Args>
+    void g(Args ... args) {                   // OK: Args is expanded by the function parameter pack args
+      f(const_cast<const Args*>(&args)...);   // OK: "Args" and "args" are expanded
+      f(5 ...);                               // error: pattern does not contain any parameter packs
+      f(args);                                // error: parameter pack "args" is not expanded
+      f(h(args ...) + args ...);              // OK: first "args" expanded within h,
+                                              // second "args" expanded within f
+\end{lstlisting}」
+
+\paragraph{}
+即不是\tm{sizeof...}表达式也不是\nt{fold-expansion}的包展开实例化产生一个列表
+\tm{E1, E2, ..., E}\nt{\tsub{N}}，其中\nt{N}为包展开参数的元素个数。每一个
+\tm{E}\nt{\tsub{i}}通过实例化模式并使其第\nt{i}个元素用替换每一个包展开来生成。
+这样的元素，在实例化上下文中，按如下解释：
+\begin{enumerate}
+  \item{如果包是模板参数包，则元素为指定从模板实参而来的类型或值对应种类（类型或
+    非类型）的模板参数（\ref{temp.param}）；否则，}
+  \item{如果包是函数参数包，则元素为指代产生自包声明所在模式实例化的函数参数的
+    \nt{id-expression}。}
+\end{enumerate}
+所有\tm{E}\nt{\tsub{i}}成员包含列表的元素。「注：列表的种类随上下文而变化：
+\nt{expression-list}，\nt{base-specifier-list}，\nt{template-argument-list}等
+等。」当\nt{N}为零时，展开的实例化产生空列表。这样的实例化不改变包含结构的语法解
+释，即使在省略整个列表的情况下是病态的或在语法中产生歧义。「例：
+\begin{lstlisting}
+  template<class... T> struct X : T... { };
+  template<class... T> void f(T... values) {
+    X<T...> x(values...);
+  }
+
+  template void f<>();  // OK: X<> has no base classes
+                        // x is a variable of type X<> that is value-initialized
+\end{lstlisting}」
+
+\paragraph{}
+\tm{sizeof...}表达式（\ref{expr.sizeof}）的实例化产生其展开参数包元素数目的整型
+常量。
+
+\paragraph{}
+\nt{fold-expression}的实例化产生：
+\begin{enumerate}
+  \item{对一元左折叠，\tm{((E1} \nt{op} \tm{E2)} \nt{op} \tm{...)} \nt{op}
+    \tm{E}\nt{\tsub{N}}，}
+  \item{对一元右折叠，\tm{E1} \nt{op} \tm{(...} \nt{op}
+    \tm{(E}\nt{\tsub{N-1} op} \tm{E}\nt{\tsub{N}}，}
+  \item{对二元左折叠，\tm{(((E} \nt{op} \tm{E1)} \nt{op} \tm{E2)} \nt{op}
+    \tm{...)} \nt{op} \tm{E}\nt{\tsub{N}}，和}
+  \item{对二元右折叠，\tm{E1} \nt{op} \tm{(...} \nt{op} \tm{E}\nt{\tsub{N-1} op}
+    \tm{(E}\nt{\tsub{N} op} \tm{E)))}。}
+\end{enumerate}
+在每一种情形中，\nt{op}为\nt{fold-operator}，\nt{N}为包展开参数数目，且每一个
+\tm{E}\nt{\tsub{i}}由模式的实例化并使用其第\nt{i}个元素来替换每一个包展开参数来
+生成。对二元折叠表达式，\tm{E}由实例化不包含未展开包的\nt{cast-expression}来生
+成。「例：
+\begin{lstlisting}
+  template<typename ...Args>
+    bool all(Args ...args) { return (... && args); }
+
+  bool b = all(true, true, true, false);
+\end{lstlisting}
+在\tm{all}的实例化中，返回表达式展开为\tm{((true \&\& true) \&\& true) \&\&
+false}，结果为\tm{false}。」如果对一个一元折叠表达式，\nt{N}为零，则表达式的值如
+表\ref{tab:fold-empty}所示；如果运算符不在表\ref{tab:fold-empty}中则实例化为病
+态。
+
+\begin{table}[h!]
+  \centering
+  \caption{折叠空序列的值}
+  \begin{tabular}{|ll|}
+    \hline
+    \tb{运算符} & \tb{当参数包为空时的值}                                     \\
+    \hline\hline
+    \tm{\&\&}   & \tm{true}                                                   \\
+    \tm{||}     & \tm{false}                                                  \\
+    \tm{,}      & \tm{void()}                                                 \\
+    \hline
+  \end{tabular}
+  \label{tab:fold-empty}
+\end{table}
+
 \ssect{友元}{temp.friend}
+\paragraph{}
+类或类模板的友元可以是一个函数模板或类模板，函数模板或类模板的特例化，或者是一个
+非模板函数或类。对于不是模板声明的友元函数声明：
+\begin{enumerate}
+  \item{如果友元的名字是一个限定或未限定\nt{template-id}，则友元声明引用的是函数
+    模板的特例化，否则，}
+  \item{如果友元的名字是一个\nt{qualified-id}且在指定类或命名空间中找到了匹配的
+    非模板函数，则友元声明引用的是该函数，否则，}
+  \item{如果友元的名字是一个\nt{qualified-id}且在指定类或命名空间中找到了匹配的
+    函数模板，则友元声明引用的是该函数模板的推导特例化
+    （\ref{temp.deduct.decl}），否则，}
+  \item{名字应该是一个声明（或重声明）一个非模板函数的\nt{unqualified-id}。}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  template<class T> class task;
+  template<class T> task<T>* preempt(task<T>*);
+
+  template<class T> class task {
+    friend void next_time();
+    friend void process(task<T>*);
+    friend task<T>* preempt<T>(task<T>*);
+    template<class C> friend int func(C);
+
+    friend class task<int>;
+    template<class P> friend class frd;
+  };
+\end{lstlisting}
+此处每一个\tm{task}类模板的特例化具有函数\tm{next\_time}作为一个友元；因
+\tm{process}没有显式\nt{template-argument}，每一个\tm{task}类模板的特例化具有一
+个适当类型的函数\tm{process}作为一个友元，且该友元不是一个函数模板特例化；因友元
+\tm{preempt}具有显式\nt{template-argument} \tm{T}，每一个\tm{task}类模板的特例化
+具有函数模板\tm{preempt}的特例化作为一个友元；且每一个\tm{task}类模板的特例化具
+有函数模板\tm{func}的所有特例化作为其友元。类似的，\tm{task}类模板的每一个特例化
+具有类模板特例化\tm{task<int>}作为一个友元，且具有类模板\tm{frd}的所有特例化作为
+一个友元。」
+
+\paragraph{}
+友元模板可以声明于类或类模板中。友元函数模板可以定义于类或类模板中，但友元类模板
+不能定义于类或类模板中。在这些情形中，友元函数或友元函数模板的所有特例化是赋予朋
+友关系的类或类模板的友元。「例：
+\begin{lstlisting}
+  class A {
+    template<class T> friend class B;                 // OK
+    template<class T> friend void f(T){ /* ... */ }   // OK
+  };
+\end{lstlisting}」
+
+\paragraph{}
+无论其为隐式实例化（\ref{temp.inst}），部分实例化（\ref{temp.class.spec}）还是显
+式实例化（\ref{temp.expl.spec}），模板友元声明均指定该模板的所有特例化为包含模板
+友元声明的类的友元。「例：
+\begin{lstlisting}
+  class X {
+    template<class T> friend struct A;
+    class  { };
+  };
+
+  template<class T> struct A { X::Y ab; };      // OK
+  template<class T> struct A<T*> { X::Y ab; };  // OK
+\end{lstlisting}」
+
+\paragraph{}
+一个类模板的成员可以声明为一个非模板类的友元。在这些情形下，主类模板及其类模板部
+分特例化的每一个特例化的对应成员是赋予朋友关系的类的友元。对于显式特例化和部分特
+例化的特例化，对应成员为与（否则可能生成的）类模板实例化的成员具有同名，同类型
+（种类，函数，类模板或函数模板），同模板参数和签名的成员。「例：
+\begin{lstlisting}
+  template<class T> struct A {
+    struct B { };
+    void f();
+    struct D {
+      void g();
+    };
+  };
+  template<> struct A<int> {
+    struct B { };
+    int f();
+    struct D {
+      void g();
+    };
+  };
+
+  class C {
+    template<class T> friend struct A<T>::B;    // grants friendship to A<int>::B even through
+                                                // it is not a specialization of A<T>::B
+    template<class T> friend void A<T>::f();    // does not grant friendship to A<int>::f()
+                                                // because its return type does not match
+    template<class T> friend void A<T>::D::g(); // does not grant friendship to A<int>::D::g()
+                                                // because A<int>::D is not a specialization of A<T>::D
+  };
+\end{lstlisting}」
+
+\paragraph{}
+「注：友元声明可能首先声明包含命名空间作用域的成员（\ref{temp.inject}）。」
+
+\paragraph{}
+友元模板不应该声明于局部类中。
+
+\paragraph{}
+友元声明不应该声明部分特例化。「例：
+\begin{lstlisting}
+  template<class T> class A { };
+  class X {
+    template<class T> friend class A<T*>;       // error
+  };
+\end{lstlisting}」
+
+\paragraph{}
+当友元声明引用函数模板的特例化时，函数参数声明不应该包含缺省参数，也不应该在这样
+的声明中使用内联说明符。
+
 \ssect{类模板部分特例化}{temp.class.spec}
+\paragraph{}
+\nt{主类模板}声明指其类模板名为标识符的声明。类模板名为\nt{simple-template-id}的
+模板声明是\nt{simple-template-id}所确定的类模板的\nt{部分特例化}。类模板部分特例
+化提供了当特例化参数匹配部分特例化中给定的参数（\ref{temp.class.spec.match}）时
+替代主定义的一个可选模板定义。主模板应该在该模板和任何特例化之前声明。部分特例化
+应该在类模板特例化首次使用之前声明，该使用将利用部分特例化作为使用所在的每一个翻
+译单元中隐式或显式实例化的结果；无需诊断。
+
+\paragraph{}
+每一个类模板部分特例化都是不同模板，应该为模板部分特例化的成员提供定义
+（\ref{temp.class.spec.mfunc}）。
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  template<class T1, class T2, int I> class A             { };
+  template<class T, int I>            class A<T, T*, I>   { };
+  template<class T1, class T2, int I> class A<T1*, T2, I> { };
+  template<class T>                   class A<int, T*, 5> { };
+  template<class T1, class T2, int I> class A<T1, T2*, I> { };
+\end{lstlisting}
+第一个声明所声明的是主（未特例化）类模板。第二个和后续的声明所声明的是主模板的部
+分特例化。」
+
+\paragraph{}
+模板参数在直接跟在关键字\tm{template}之后的尖括号包含列表中指定。对于部分特例
+化，模板参数列表显式写出，直接跟在类模板名之后。对主模板，该列表由模板参数列表隐
+式描述。特别的，模板参数的顺序为其出现在模板参数列表中的顺序。「例：上例中主模板
+的模板参数列表为\tm{<T1, T2, I>}。」「注：模板参数列表不应该在主类模板声明中指
+定。比如，
+\begin{lstlisting}
+  template<class T1, class T2, int I>
+  class A<T1, T2, I> { };                     // error
+\end{lstlisting}」
+
+\paragraph{}
+一个类模板部分特例化可以声明于任何其对应主模板可以定义的作用域中
+（\ref{namespace.memdef}，\ref{class.mem}，\ref{temp.mem}）。「例：
+\begin{lstlisting}
+  template<class T> struct A {
+    struct C {
+      template<class T2> struct B { };
+      template<class T2> struct B<T2**> { };  // partial specialization #1
+    };
+  };
+
+  // partial specialization of A<T>::C::B<T2>
+  template<class T> template<class T2>
+    struct A<T>::C::B<T2*> { };               // #2
+
+  A<short>::C::B<int*> absip;                 // uses partial specialization #2
+\end{lstlisting}」
+
+\paragraph{}
+部分特例声明本身不会被名字查询找到。而是在使用主模板名时也会考虑主模板之前声明的
+部分特例化。一个结果就是引用类模板的\nt{using-declaration}不会限制通过
+\nt{using-declaration}可以找到的部分特例化集合。「例：
+\begin{lstlisting}
+  namespace N {
+    template<class T1, class T2> class A { }; // primary template
+  }
+
+  using N::A;                                 // refers to the primary template
+
+  namespace N {
+    template<class T> class A<T, T*> { };     // partial specialization
+  }
+
+  A<int,int*> a;      // uses the partial specialization, which is found through the using-declaration
+                      // which refers to the primary template
+\end{lstlisting}」
+
+\paragraph{}
+非类型模板实参如果是非类型形参的名字则不会特例化。所有其他非类型实参被特例化。
+
+\paragraph{}
+在类模板部分特例化的实参列表中，以下限制成立：
+\begin{enumerate}
+  \item{对应于特例化的非类型实参的模板形参类型不应该依赖于特例化参数。「例：
+\begin{lstlisting}
+  template <class T, T t> struct C {};
+  template <class T> struct C<T, 1>;              // error
+
+  template< int X, int (*array_ptr)[X] > class A {};
+  int array[5];
+  template< int X > class A<X,&array> { };        // error
+\end{lstlisting}」}
+  \item{特例化应该比主模板更具特殊性（\ref{temp.class.order}）。}
+  \item{特例化的模板参数列表不应该包含缺省模板参数值。\footnote{没有可以使用它们
+    的方法。}}
+  \item{实参不应该包含未展开参数包。如果实参是一个包展开（\ref{temp.variadic}），
+    则其应该是模板参数列表的最后一个。}
+\end{enumerate}
+
 \sssect{类模板部分特例化匹配}{temp.class.spec.match}
+\paragraph{}
+当类模板用于需要类实例化上下文中时必须确定实例化是否由主模板或部分实例化之一所生
+成。通过匹配类模板实例化的模板参数和部分实例化的模板参数列表来完成。
+\begin{enumerate}
+  \item{如果恰好找到一个匹配特例化，则实例化生成自该特例化。}
+  \item{如果找到多于一个匹配的特例化，则使用偏序规则（\ref{temp.class.order}）来
+    确定特例化之一是否比另一个更具有特殊性。如果没有特例化比所有其他匹配特例化更
+    具特殊性，则类模板的使用具有歧义，程序为病态。}
+  \item{如果没有找到匹配，则实例化生成自该主模板。}
+\end{enumerate}
+
+\paragraph{}
+如果部分实例化可以推导自实际的模板参数列表（\ref{temp.deduct}）则模板参数部分特
+例化匹配给定实际模板实参列表。「例：
+\begin{lstlisting}
+  template<class T1, class T2, int I> class A             { };  // #1
+  template<class T, int I>            class A<T, T*, I>   { };  // #2
+  template<class T1, class T2, int I> class A<T1*, T2, I> { };  // #3
+  template<class T>                   class A<int, T*, 5> { };  // #4
+  template<class T1, class T2, int I> class A<T1, T2*, I> { };  // #5
+
+  A<int, int, 1>   a1;            // uses #1
+  A<int, int*, 1>  a2;            // uses #2, T is int, I is 1
+  A<int, char*, 5> a3;            // uses #4, T is char
+  A<int, char*, 1> a4;            // uses #5, T1 is int, T2 is char, I is 1
+  A<int*, int*, 2> a5;            // ambiguous: matches #3 and #5
+\end{lstlisting}」
+
+\paragraph{}
+如果部分特例化的模板参数由其\nt{template-parameter-list}和\nt{template-id}的结构
+而不能推导，则程序为病态。「例：
+\begin{lstlisting}
+  template <int I, int J> struct A {};
+  template <int I> struct A<I+5, I*2> {};     // error
+
+  template <int I> struct A<I, I> {};         // OK
+
+  template <int I, int J, int K> struct B {};
+  template <int I> struct B<I, I*2, 2> {};    // OK
+\end{lstlisting}」
+
+\paragraph{}
+在引用类模板特例化的类型名中，（如\tm{A<int, int, 1>}）参数列表应该匹配主模板的
+模板参数列表。特例化的模板参数推导自主模板的参数。
+
 \sssect{类模板特例化偏序}{temp.class.order}
+\paragraph{}
+对于两个类模板部分特例化，第一个比第二个\nt{更具特殊性}，如果给定以下两个函数模
+板的重写，根据以下函数模板（\ref{temp.func.order}）的规则，第一个函数模板比第二
+个函数模板更具特殊性：
+\begin{enumerate}
+  \item{两个函数模板的每一个都具有与对应部分特例化相同的模板参数。}
+  \item{每一个函数模板都具有单个类型为类模板特例化的函数参数，其中模板参数是部分
+    特例化的\nt{simple-template-id}的\nt{template-argument-list}中每个模板参数的
+    函数模板中对应的模板参数}
+\end{enumerate}
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  template<int I, int J, class T> class X { };
+  template<int I, int J>          class X<I, J, int> { };   // #1
+  template<int I>                 class X<I, J, int> { };   // #2
+
+  template<int IO, int JO> void f(X<IO, JO, int>);          // A
+  template<int IO>         void f(X<IO, IO, int>);          // B
+
+  template <auto v>    class Y { };
+  template <auto* p>   class Y<p> { };    // #3
+  template <auto** pp> class Y<pp> { };   // #4
+
+  template <auto* p0>   void g(Y<p0>);    // C
+  template <auto** pp0> void g(Y<pp0>);   // D
+\end{lstlisting}
+根据函数模板的排序规则，函数模板\tm{B}比函数模板\tm{A}更特殊，且函数模板\tm{D}比
+函数模板\tm{C}更特殊。因此部分特例化\tm{\#2}比部分特例化\tm{\#1}更为特殊，而部分
+特例化\tm{\#4}比部分特例化\tm{\#3}更为特殊。」
+
 \sssect{类模板特例化成员}{temp.class.spec.mfunc}
+\paragraph{}
+类模板部分特例化成员的模板参数列表应该匹配类模板部分特例化的模板参数列表。类模板
+部分特例化成员的模板实参列表应该匹配类模板部分特例化的模板实参列表。类模板特例化
+一个不同的模板。类模板部分特例化的成员与主模板成员无关。按需要定义的方式来使用的
+类模板部分特例化成员需要需要定义；主模板成员的定义不会用作类模板部分特例化成员的
+定义。类模板部分特例化成员的显式特例化与主模板显式特例化按相同的方式声明。「例：
+\begin{lstlisting}
+  // primary class template
+  template<class T, int I> struct A {
+    void f();
+  };
+
+  // member of primary class template
+  template<class T, int I> void A<T,I>::f() { }
+
+  // class template partial specialization
+  template<class T> struct A<T,2> {
+    void f();
+    void g();
+    void h();
+  };
+
+  // member of class template partial specialization
+  template<class T> void A<T,2>::g() { }
+
+  // explicit specialization
+  template<> void A<char,2>::h() { }
+
+  int main() {
+    A<char,0> a0;
+    A<char,2> a2;
+    a0.f();       // OK: uses definition of primary template's member
+    a2.g();       // OK: uses definition of partial specialization's member
+    a2.h();       // OK: uses definition of explicit specialization's member
+    a2.f();       // ill-formed, no definition of f for A<T,2>; the primary template is not used here
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果类模板的成员模板被部分特例化，成员模板部分特例化是包含类模板的成员模板；如果
+包含类模板被实例化（\ref{temp.inst}，\ref{temp.explicit}），每一个成员模板部分特
+例化的声明也被实例化作为创建类模板特例化成员的一部分。如果主成员模板为包含模板的
+一个给定（隐式）特例化而显式特例化，则成员模板的部分特例化将为包含类模板的该特例
+化而忽略。如果成员模板的部分特例化为包含类模板的一个给定（隐式）特例化而显式特例
+化，则主成员模板及其部分特例化仍为包含类模板的该特例化所考虑。「例：
+\begin{lstlisting}
+  template<class T> struct A {
+    template<class T2> struct B {};                       // #1
+    template<class T2> struct B<T2*> {};                  // #2
+  };
+
+  template<>  template<class T2> struct A<short>::B {};   // #3
+
+  A<char>::B<int*>  abcip;    // uses #2
+  A<short>::B<int*> absip;    // uses #3
+  A<char>::B<int>   abci;     // uses #1
+\end{lstlisting}」
 
 \ssect{函数模板}{temp.fct}
-\sssect{函数模板重载}{temp.over.link}
-\sssect{函数模板偏序}{temp.func.order}
+\paragraph{}
+函数模板定义一个相关函数的无限集合。「例：一组排序函数可以声明为这样：
+\begin{lstlisting}
+  template<class T> class Array { };
+  template<class T> void sort(Array<T>&);
+\end{lstlisting}」
 
-\ssect{模板别名}{temp.alias}
+\paragraph{}
+函数模板可以与其他函数模板及非模板函数（\ref{dcl.fct}）一起重载。一个非模板函数
+与函数模板不相关（比如不会认为其是特例化），即使其与潜在生成的函数模板特例化具有
+相同的名字和类型。\footnote{即非模板函数的声明不仅仅是指导同名函数模板特例化的重
+载解析。如果这样的非模板函数在程序中为odr-used（\ref{basic.def.odr}）则其必须被
+定义；它不会使用函数模板定义来隐式实例化。}
+
+\sssect{函数模板重载}{temp.over.link}
+\paragraph{}
+重载函数模板使得两个不同函数模板特例化具有相同类型是可能的。「例：
+\begin{lstlisting}
+  // translation unit 1:                              // translation unit 2:
+  template<class T>                                   template<class T>
+    void f(T*);                                         void f(T*);
+  void g(int* p) {                                    void g(int* p) {
+    // calls f<int>(int*)                               // calls f<int>(int*)
+    f(p);                                               f(p);
+  }                                                   }
+\end{lstlisting}」
+
+\paragraph{}
+这样的特例化为不同的函数且不违背单一定义原则（\ref{basic.def.odr}）。
+
+\paragraph{}
+函数模板的签名在第\ref{intro.defs}章中定义。模板参数的名字只对建立模板参数和签名
+剩余部分间的关系有意义。「注：两个不同的函数模板可能具有相同的函数返回类型和函数
+参数列表，即使重载解析本身不能区分它们。
+\begin{lstlisting}
+  template<class T> void f();
+  template<int I> void f();       // OK: overloads the first template
+                                  // distinguishable with an explicit template argument list
+\end{lstlisting}」
+
+\paragraph{}
+当引用模板参数的表达式用于函数模板声明中的函数参数列表或返回类型时，引用模板参数
+的表达式为函数模板签名的一部分。这对允许一个翻译单元中的函数模板声明链接于另一翻
+译单元中函数模板的另一个声明是必须的，并且相反的，确保了有意不同的函数模板不与另
+一个相链接。「例：
+\begin{lstlisting}
+  template <int I, int J> A<I+J> f(A<I>, A<J>);   // #1
+  template <int K, int L> A<K+L> f(A<K>, A<L>);   // same as #1
+  template <int I, int J> A<I-J> f(A<I>, A<J>);   // different from #1
+\end{lstlisting}」「注：使用模板参数的大部分表达式使用非类型模板参数，但一个表达
+式引用类型参数是可能的。比如，模板类型参数可用于\tm{sizeof}运算符中。」
+
+\paragraph{}
+涉及模板参数的两个表达式被认为是\nt{等价的}，如果包含表达式的两个函数定义满足单
+一定义原则（\ref{basic.def.odr}），除了用于确定模板参数的标记可能不同，只要一个
+表达式中确定模板参数的标记在另一个表达式中被替换为确定相同模板参数的另一个标记。
+为确定两个依赖名（\ref{temp.dep}）是否等价，只需要考虑名字本身，而不是模板上下文
+中名字查询的结果。如果同一函数模板的多个声明仅此名字查询的结果有所不同，则使用第
+一个声明的结果。「例：
+\begin{lstlisting}
+  template <int I, int J> void f(A<I+J>);   // #1
+  template <int K, int L> void f(A<K+L>);   // same as #1
+
+  template <class T> decltype(g(T())) h();
+  int g(int);
+  template <class T> decltype(g(T())) h()   // redeclaration of h() uses the earlier lookup
+    { return g(T()); }                      // ...although the lookup here does find g(int)
+  int i = h<int>();                         // template argument substitution fails; g(int)
+                                            // was not in scope at the first declaration of h()
+\end{lstlisting}」两个涉及模板参数的不等价表达式为\nt{功能等价的}，如果对于任何
+给定的模板参数集合，表达式的求值产生相同的值。
+
+\paragraph{}
+两个函数模板为\nt{等价的}，如果它们声明于同一作用域，具有相同名字，具有一致的模
+板参数列表，且其返回类型的参数列表使用上述规则来比较涉及模板参数的表达式是等价
+的。两个函数模板为\nt{功能等价的}，如果它们除了返回类型和参数列表中涉及模板参数
+的一个或多个表达式使用上述规则来比较涉及模板参数的表达式是功能等价的以外二者是等
+价的。如果程序包含功能等价但不是等价的函数模板声明，则程序为病态，无需诊断。
+
+\paragraph{}
+「注：该规则确保等价声明将彼此链接而不需要实现费尽周折来保证功能等价声明被当作是
+不同的声明。比如，最后两个声明为功能等价的并使程序为病态：
+\begin{lstlisting}
+  // guaranteed to be the same
+  template <int I> void f(A<I>, A<I+10>);
+  template <int I> void f(A<I>, A<I+10>);
+
+  // guaranteed to be different
+  template <int I> void f(A<I>, A<I+10>);
+  template <int I> void f(A<I>, A<I+11>);
+
+  // ill-formed, no diagnostic required
+  template <int I> void f(A<I>, A<I+10>);
+  template <int I> void f(A<I>, A<I+1+2+3+4>);
+\end{lstlisting}」
+
+\sssect{函数模板上的偏序}{temp.func.order}
+\paragraph{}
+如果函数模板被重载，则因为模板参数推导（\ref{temp.deduct}）可能将函数模板特例化
+与多于一个函数模板声明关联起来，导致函数模板特例化的使用可能具有歧义。重载函数模
+板声明上的\nt{偏序}用在以下上下文中以选择函数模板特例化引用的是哪一个函数模板：
+\begin{enumerate}
+  \item{函数模板特例化调用（\ref{over.match.best}）的重载解析过程中；}
+  \item{函数模板特例化取地址时；}
+  \item{选择一个函数模板特例化的放置运算符\tm{delete}以匹配放置运算符\tm{new}
+    时；}
+  \item{当一个友元函数声明（\ref{temp.friend}，一个显式实例化
+    （\ref{temp.explicit}）或一个显式特例化（\ref{temp.expl.spec}）引用函数模板
+    特例化时；}
+\end{enumerate}
+
+\paragraph{}
+偏序通过依次转换（见下段）和使用函数类型来进行参数推导选择两个函数模板中哪一个比
+另一个更为特殊。推导过程确定其中一个是否比另一个更为特殊。如果如此，则更为特殊的
+模板被偏序过程选中。
+
+\paragraph{}
+为产生变换后模板，对每一个类型，非类型或``模板''模板参数（包括其模板参数包
+（\ref{temp.variadic}））分别合成一个唯一类型，值或类模板并对模板的函数类型中该
+参数的每一个出现处替换之。「注：为非类型模板参数合成值的类型中替换占位符的类型也
+是一个唯一的合成类型。」如果仅有一个函数模板\nt{M}为某个类\tm{A}的非静态成员，则
+认为\nt{M}具有新的首个参数插入到其函数参数列表中。给定\nt{cv}作为\nt{M}的cv限定
+符（如果有），如果\nt{M}的可选\nt{ref-qualifier}为\tm{\&\&}或如果\nt{M}没有
+\nt{ref-qualifier}且另一模板的首个参数为右值引用类型，新参数具有``\nt{cv A}的右
+值引用''类型。否则新参数具有``\nt{cv A}的左值引用''类型。「注：这允许非静态成员
+相对非成员函数是有序的，且对两个等价非成员函数其结果也是等价的。」「例：
+\begin{lstlisting}
+  struct A { };
+  template<class T> struct B {
+    template<class R> int operator*(R&);              // #1
+  };
+
+  template<class T, class R> int operator*(T&, R&);   // #2
+
+  // The declaration of B::operator* is transformed into the equivalent of
+  // template<class R> int operator*(B<A>&, R&);      // #1a
+
+  int main() {
+    A a;
+    B<A> b;
+    b * a;                                            // calls #1a
+  }
+\end{lstlisting}」
+
+\paragraph{}
+使用变换后函数模板的函数类型，按\ref{temp.deduct.partial}所述对另一个模板进行类
+型推导。
+
+「例：
+\begin{lstlisting}
+  template<class T> struct A { A(); };
+  template<class T> void f(T);
+  template<class T> void f(T*);
+  template<class T> void f(const T*);
+
+  template<class T> void g(T);
+  template<class T> void g(T&);
+
+  template<class T> void h(const T&);
+  template<class T> void h(A<T>&);
+
+  void m() {
+    const int* p;
+    f(p);             // f(const T*) is more specialized than f(T) or f(T*)
+    float x;
+    g(x);             // ambiguous: g(T) or g(T&)
+    A<int> z;
+    h(z);             // overload resolution selects h(A<T>&)
+    const A<int> z2;
+    h(z2);            // h(const T&) is called because h(A<T>&) is not callable
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：因调用上下文中的偏序只考虑有显式调用参数的形参，某些形参将被忽略（如函数参
+数包，具有缺省实参的形参以及省略号参数）。「例：
+\begin{lstlisting}
+  template<class T> void f(T);                            // #1
+  template<class T> void f(T*, int = 1);                  // #1
+  template<class T> void g(T);                            // #1
+  template<class T> void g(T*, ...);                      // #1
+
+  int main() {
+    int* ip;
+    f(ip);                                                // calls #2
+    g(ip);                                                // calls #4
+  }
+\end{lstlisting}」「例：
+\begin{lstlisting}
+  template<class T, class U> struct A { };
+
+  template<class T, class U> void f(U, A<U, T>* p = 0);   // #1
+  template<         class U> void f(U, A<U, U>* p = 0);   // #2
+  template<class T         > void g(T, T = T());          // #3
+  template<class T, class... U> void g(T, U ...);         // #4
+
+  void h() {
+    f<int>(42, (A<int, int>*)0);                          // calls #2
+    f<int>(42);                                           // error: ambiguous
+    g(42);                                                // error: ambiguous
+  }
+\end{lstlisting}」「例：
+\begin{lstlisting}
+  template<class T, class... U> void f(T, U...);          // #1
+  template<class T            > void f(T);                // #2
+  template<class T, class... U> void g(T*, U...);         // #3
+  template<class T            > void g(T);                // #4
+
+  void h(int i) {
+    f(&i);                                                // error: ambiguous
+    g(&i);                                                // OK: calls #3
+  }
+\end{lstlisting}」」
+
+\ssect{别名模板}{temp.alias}
+\paragraph{}
+\nt{declaration}是一个\nt{alias-declaration}（第\ref{dcl.dcl}章）的
+\nt{template-declaration}，声明\nt{identifier}为一个\nt{别名模板}。别名模板是一
+个类型簇的名字。别名模板的名字是一个\nt{template-name}。
+
+\paragraph{}
+当\nt{template-id}引用一个别名模板的特例化时等价于通过使用其
+\nt{template-argument}替换别名模板的\nt{type-id}中的\nt{template-parameter}而获
+得的关联类型。「注：别名模板名不会推导而来。」「例：
+\begin{lstlisting}
+  template<class T> struct Alloc { /* ... */ };
+  template<class T> using Vec = vector<T, Alloc<T>>;
+  Vec<int> v;         // same as vector<int, Alloc<int>> v;
+
+  template<class T>
+    void process(Vec<T>& v)
+    { /* ... */ }
+
+  template<class T>
+    void process(vector<T, Alloc<T>>& w)
+    { /* ... */ }     // error: redefinition
+
+  template<template<class> class TT>
+    void f(TT<int>);
+
+  f(v);               // error: Vec not deduced
+
+  template<template<class,class> class TT>
+    void g(TT<int, Alloc<int>>);
+  g(v);               // OK: TT = vector
+\end{lstlisting}」
+
+\paragraph{}
+然而如果\nt{template-id}是有依赖的，后续模板参数替换仍应用于\nt{template-id}。
+「例：
+\begin{lstlisting}
+  template<typename...> using void_t = void;
+  template<typename T> void_t<typename T::foo> f();
+  f<int>();           // error, int does not have a nested type foo
+\end{lstlisting}」
+
+\paragraph{}
+别名模板声明中的\nt{type-id}不应该引用被声明的别名模板。别名模板特例化产生的类型
+不应该直接或间接使用该特例化。「例：
+\begin{lstlisting}
+  template <class T> struct A;
+  template <class T> using B = typename A<T>::U;
+  template <class T> struct A {
+    typedef B<T> U;
+  };
+
+  B<short> b;         // error: instantiation of B<short> uses own type via A<short>::U
+\end{lstlisting}」
 
 \sect{名字解析}{temp.res}
+\paragraph{}
+三种类型的名字可以用于模板定义中：
+\begin{enumerate}
+  \item{模板名本身，以及定义于模板本身内部的名字。}
+  \item{依赖于\nt{template-parameter}（\ref{temp.dep}）的名字。}
+  \item{从模板定义内可见的作用域中的名字。}
+\end{enumerate}
+
+\paragraph{}
+模板声明或定义中使用的名字和依赖于\nt{template-parameter}的名字假定不是确定一个
+类型，除非可应用的名字查询找到一个类型名或使用关键字\tm{typename}限定的名字。
+「例：
+\begin{lstlisting}
+  // no B declared here
+
+  class X;
+
+  template<class T> class Y {
+    class Z;                      // forward declaration of member class
+
+    void f() {
+      X* a1;                      // declare pointer to X
+      T* a2;                      // declare pointer to T
+      Y* a3;                      // declare pointer to Y<T>
+      Z* a4;                      // declare pointer to Z
+      typedef typename T::A TA;
+      TA* a5;                     // declare pointer to T's A
+      typename T::A* a6;          // declare pointer to T's A
+      T::A* a7;                   // T::A is not a type name:
+                                  // multiplication of T::A by a7; ill-formed, no visible declaration of a7
+      B* a8;                      // B is not a type name:
+                                  // multiplication of B by a8; ill-formed, no visible declaration of B and a8
+    }
+  };
+\end{lstlisting}」
+
+\paragraph{}
+当一个\nt{qualified-id}想要引用一个不是当前实例化（\ref{temp.dep.type}）成员的类
+型且其\nt{nested-name-specifier}引用一个依赖类型时，其应加上关键字\tm{typename}
+前缀，形成一个\nt{typename-specifier}。如果\nt{typename-specifier}中的
+\nt{qualified-id}不代表类型或类模板，则程序为病态。
+
+\synsym{typename-specifier}
+  \synprd{\tm{typename} \nt{nested-name-specifier identifier}}
+  \synprd[]{\tm{typename} \nt{nested-name-specifier} \tm{template}\nt{\tsub{opt}
+    simple-template-id}}
+
+\paragraph{}
+如果模板特例化为一组\nt{template-argument}而实例化使得带前缀\tm{typename}的
+\nt{qualified-id}不代表一个类型或类模板，则特例化为病态。常规名字查询
+（\ref{basic.lookup.qual}）用于查找\nt{qualified-id}，即使存在\tm{typename}。
+「例：
+\begin{lstlisting}
+  struct A {
+    struct X { };
+    int X;
+  };
+  struct B {
+    struct X { };
+  };
+  template<class T> void f(T t) {
+    typename T::X x;
+  }
+  void foo() {
+    A a;
+    B b;
+    f(b);               // OK: T::X refers to B::X
+    f(a);               // error: T::X refers to the data member A::X not the struct A::X
+  }
+\end{lstlisting}」
+
+\paragraph{}
+用在\nt{class-or-decltype}（第\ref{class.derived}章）或
+\nt{elaborated-type-specifier}中的限定名未使用\tm{typename}关键字的情况下隐式假
+定确定一个类型。在直接包含依赖于模板参数的\nt{nested-name-specifier}的
+\nt{nested-nested-specifier}中，\nt{identifier}或\nt{simple-template-id}未使用
+\tm{typename}关键字的情况下隐式假定确定一个类型。「注：\tm{typename}关键字在这些
+语法结构中不允许。」
+
+\paragraph{}
+如果对于给定模板参数集合，模板特例化被实例化，引用一个表示类型或类模板的
+\nt{qualified-id}，且该\nt{qualified-id}引用一个未知特例化的成员，则
+\nt{qualified-id}应该要么加上\tm{typename}前缀，要么应该用于按上述隐式确定一个类
+型的上下文中。「例：
+\begin{lstlisting}
+  template <class T> void f(int i) {
+    T::x * i;         // T::x must not be a type
+  }
+
+  struct Foo {
+    typedef int x;
+  };
+
+  struct Bar {
+    static int const x = 5;
+  };
+
+  int main() {
+    f<Bar>(1);        // OK
+    f<Foo>(1);        // error: Foo::x is a type
+  }
+\end{lstlisting}」
+
+\paragraph{}
+在类模板定义中或在跟在\nt{declarator-id}之后的类模板成员定义中，当引用之前声明为
+类型或类模板的类模板成员时，关键字\tm{typename}不是必须的。「注：这样的名字可以
+在当前实例化（\ref{temp.dep.type}）中使用未限定名查询
+（\ref{basic.lookup.unqual}），类成员查询（\ref{class.qual}）或当对象表达式的类
+型为当前实例化（\ref{temp.dep.expr}）时使用类成员访问表达式查询
+（\ref{basic.lookup.classref}）来找到。」「例：
+\begin{lstlisting}
+  template<class T> struct A {
+    typedef int B;
+    B b;              // OK, no typename required
+  };
+\end{lstlisting}」
+
+\paragraph{}
+知道哪个名字是类型名允许对每一个模板的语法进行检查。如果：
+\begin{enumerate}
+  \item{不能为模板或未实例化模板中的\nt{constexpr if}语句（\ref{stmt.if}）的子语
+    句生成特例化，或者}
+  \item{变参模板的每一个有效特例化都需要一个空的模板参数包，或者}
+  \item{直接跟在定义之后的模板假想实例化因不依赖于模板参数的结构而为病态，或者}
+  \item{假想实例化中的这种结构的解释不同于模板的任何实际实例化中对应结构的解释。
+    「注：这可能在包含以下情形中出现：
+    \begin{enumerate}
+      \item{用于非依赖名的类型在模板定义点为不完整类型但在进行实例化的点为完整类
+        型，或者}
+      \item{模板定义中名字的查询找到一个\nt{using-declaration}，但因为
+        \nt{using-declaration}是一个包展开而对应的包为空，在实例化中对应作用域里
+        的查询未找到任何声明，或者}
+      \item{实例化使用一个在模板定义点尚未定义的缺省参数或缺省模板参数，或者}
+      \item{模板实例化中的常表达式求值（\ref{expr.const}）使用了
+        \begin{enumerate}
+          \item{整型或无作用域枚举类型的\tm{const}对象的值或者}
+          \item{\tm{constexpr}对象的值或者}
+          \item{引用的值或者}
+          \item{\tm{constexpr}函数的定义，}
+        \end{enumerate}
+        而该实体在模板定义点尚未定义，或者}
+      \item{由非依赖\nt{simple-template-id}所指定的类模板特例化或变量模板特例化
+        被模板所使用，并且它要么实例化于在模板定义点尚未定义的部分特例化，要么它
+        确定一个模板定义点尚未声明的显式特例化，}
+    \end{enumerate}}
+\end{enumerate}
+则程序为病态，无需诊断。否则，对有效特例化可以生成的模板不应该报告诊断信息。
+「注：如果模板被实例化，根据本文档中其他规则将报告错误。具体的报告点为实现质量问
+题。」「例：
+\begin{lstlisting}
+  int j;
+  template<class T> class X {
+    void f(T t, int i, char* p) {
+      t = i;          // diagnosed if X::f is instantiated, and the assignment to t is an error
+      p = i;          // may be diagnosed even if X::f is not instantiated
+      p = j;          // may be diagnosed even if X::f is not instantiated
+    }
+    void g(T t) {
+      +;              // may be diagnosed even if X::g is not instantiated
+    }
+  };
+
+  template<class... T> struct A {
+    void operator++(int, T... t);                 // error: too many parameters
+  };
+  template<class... T> union X : T... { };        // error: union with base class
+  template<class... T> struct A : T..., T... { }; // error: duplicate base class
+\end{lstlisting}」
+
+\paragraph{}
+在查找模板声明中所用名字的声明时，对非依赖名使用常规查询规则
+（\ref{basic.lookup.unqual}，\ref{basic.lookup.argdep}）。依赖于模板参数的名字查
+询推迟到知道实际的模板实参之后（\ref{temp.dep}）。「例：
+\begin{lstlisting}
+  #include <iostream>
+  using namespace std;
+
+  template<class T> class Set {
+    T* p;
+    int cnt;
+  public:
+    Set();
+    Set<T>(const Set<T>&);
+    void printall() {
+      for (int i = 0; i<cnt; i++)
+        cout << p[i] << '\n';
+    }
+  };
+\end{lstlisting}
+在该例子中，\tm{i}为声明于\tm{printall}中的局部变量\tm{i}，\tm{cnt}为声明于
+\tm{Set}中的成员\tm{cnt}，而\tm{cout}为声明于\tm{iostream}中的标准输出流。但并不
+是每一个声明都可以这样找到；某些名字的解析必须推迟到知道实际的模板实参以后。比如
+即使名字\tm{operator<<}在\tm{printall()}的定义中已知，且其声明可以在
+\tm{<iostream>}中找到，打印\tm{p[i]}所需要的\tm{operator<<}的实际声明也要直到知
+道\tm{T}的类型是什么才能知道（\ref{temp.dep}）。」
+
+\paragraph{}
+如果一个名字不依赖于\nt{template-parameter}（如\ref{temp.dep}所定义），该名字的
+声明（或声明的集合）在模板定义里应该处于名字出现所在的作用域中；名字在该点绑定到
+所找到的声明（或声明集合）且该绑定不受实例化点可见的声明影响。「例：
+\begin{lstlisting}
+  void f(char);
+
+  template<class T> void g(T t) {
+    f(1);             // f(char)
+    f(T(1));          // dependent
+    f(t);             // dependent
+    dd++;             // not dependent; error: declaration for dd not found
+  }
+
+  enum E { e };
+  void f(E);
+
+  double dd;
+  void h() {
+    g(e);             // will cause one call of f(char) followed by two calls of f(E)
+    g('a');           // will cause three calls of f(char);
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：为了进行名字查询，函数模板和类模板成员函数的缺省参数和
+\nt{noexcept-specifier}当作是定义（\ref{temp.decls}）。
+
 \ssect{局部声明名}{temp.local}
+\paragraph{}
+和正常的类（非模板）一样类模板也有注入类名（第\ref{class}章）。注入类名可用作
+\nt{template-name}或\nt{type-name}。当用于\nt{template-argument-list}时，作为
+\nt{template-parameter}的\nt{template-argument}，或作为友元类模板声明的
+\nt{elaborated-type-specifier}中的最终标识符，它指的是类模板本身。否则，，其等价
+于\nt{template-name}后跟上包含于\tm{<>}中的类模板\nt{template-parameter}。
+
+\paragraph{}
+在类模板特例化或部分特例化的作用域中，当注入类名用作\nt{type-name}时，其等价于
+\nt{template-name}跟上包含在\tm{<>}中类模板特例化或部分特例化的
+\nt{template-argument}。「例：
+\begin{lstlisting}
+  template<template<class> class T> class A { };
+  template<class T> class Y;
+  template<> class Y<int> {
+    Y* p;                               // meaning Y<int>
+    Y<char>* q;                         // meaning Y<char>
+    A<Y>* a;                            // meaning A<::Y>
+    class B {
+      template<class> friend class Y;   // meaning ::Y
+    };
+  };
+\end{lstlisting}」
+
+\paragraph{}
+当处于作用域中时，类模板或类模板特例化的注入类名可以用作\nt{template-name}或
+\nt{type-name}。「例：
+\begin{lstlisting}
+  template <class T> struct Base {
+    Base* p;
+  };
+
+  template <class T> struct Derived: public Base<T> {
+    typename Derived::Base* p;    // meaning Derived::Base<T>
+  };
+
+  template<class T, template<class> class U = T::template Base> struct Third {};
+  Third<Base<int> > t;            // OK: default argument uses injected-class-name as a template
+\end{lstlisting}」
+
+\paragraph{}
+注入类名的查询（\ref{class.member.lookup}）在某些情况下可能产生歧义（比如，如果
+可在多个基类中找到）。如果所有找到的注入类名引用同一个类模板的特例化，且如果名字
+用作\nt{template-name}，则引用所指的是类模板本身而不是其特例化，则无歧义。「例：
+\begin{lstlisting}
+  template <class T> struct Base { };
+  template <class T> struct Derived: Base<int>, Base<char> {
+    typename Derived::Base b;             // error: ambiguous
+    typename Derived::Base<double> d;     // OK
+  };
+\end{lstlisting}」
+
+\paragraph{}
+在使用正常的模板名（即来自包含作用域而不是注入类名）时，其总是引用的类模板本身而
+不是模板的特例化。「例：
+\begin{lstlisting}
+  template<class T> class X {
+    X* p;             // meaning X<T>
+    X<T>* p2;
+    X<int>* p3;
+    ::X* p4;          // error: missing template argument list
+                      // ::X does not refer to the injected-class-name
+  };
+\end{lstlisting}」
+
+\paragraph{}
+模板参数不应该在其作用域中重声明（包括嵌套作用域）。\nt{template-parameter}不应
+该具有与模板相同的名字。「例：
+\begin{lstlisting}
+  template<class T, int i> class Y {
+    int T;            // error: template-parameter redeclared
+    void f() {
+      char T;         // error: template-parameter redeclared
+    }
+  };
+
+  template<class X> class X;        // error: template-parameter redeclared
+\end{lstlisting}」
+
+\paragraph{}
+在出现于类模板定义之外的类模板成员定义中，类模板成员名隐藏任何包含类模板的
+\nt{template-parameter}名字（如果成员是一个类或函数模板则不隐藏该成员的
+\nt{template-parameter}）。「例：
+\begin{lstlisting}
+  template<class T> struct A {
+    struct B { /* ... */ };
+    typedef void C;
+    void f();
+    template<class U> void g(U);
+  };
+
+  template<class B> void A<B>::f() {
+    B b;              // A's B, not the template parameter
+  }
+
+  template<class B> template<class C> void A<B>::g(C) {
+    B b;              // A's B, not the template parameter
+    C c;              // the template parameter C, not A's C
+  }
+\end{lstlisting}」
+
+\paragraph{}
+在出现于含类模板定义作用域之外的类模板成员定义中，\nt{template-parameter}的名字
+隐藏该作用域成员的名字。「例：
+\begin{lstlisting}
+  namespace N {
+    class C { };
+    template<class T> class B {
+      void f(T);
+    };
+  }
+  template<class C> void N::B<C>::f(C) {
+    C b;              // C is the template parameter, not N::C
+  }
+\end{lstlisting}」
+
+\paragraph{}
+在类模板或在出现于模板定义之外的此模板成员定义中，对每一个非依赖基类
+（\ref{temp.dep.type}），如果基类名或基类成员名与\nt{template-parameter}的名字相
+同，则基类名或成员名隐藏\nt{template-parameter}的名字
+（\ref{basic.scope.hiding}）。「例：
+\begin{lstlisting}
+  struct A {
+    struct B { /* ... */ };
+    int a;
+    int Y;
+  };
+
+  template<class B, class a> struct X : A {
+    B b;              // A's B
+    a b;              // error: A's a isn't a type name
+  };
+\end{lstlisting}」
+
 \ssect{依赖名}{temp.dep}
+\paragraph{}
+在模板中，某些结构所具有的语义可能在实例化之间彼此不同。这样的结构\nt{依赖}于模
+板参数。特别的，类型和表达式可能依赖于模板参数的类型和/或值（由模板实参确定）而
+这确定了某些名字查询的上下文。按本节所述，一个表达式可能是\nt{类型依赖的}（即其
+类型可能依赖模板参数）或\nt{值依赖的}（即其值在求值为常量表达式
+（\ref{expr.const}）时可能依赖模板参数）。在形如                              \\
+\mbox{\qquad{\nt{postfix-expression} \tm{(} \nt{expression-list\tsub{opt}}
+  \tm{)}}}                                                                    \\
+的表达式中，其中\nt{postfix-expression}是一个\nt{unqualified-id}，如果
+\begin{enumerate}
+  \item{\nt{expression-list}中的任何表达式是一个包展开（\ref{temp.variadic}），}
+  \item{\nt{expression-list}中的任何表达式或\nt{braced-init-list}是类型依赖的
+    （\ref{temp.dep.expr}），或者}
+  \item{\nt{unqualified-id}是一个\nt{template-id}，其中任何模板实参依赖于模板形
+    参，}
+\end{enumerate}
+则该\nt{unqualified-id}表示一个\nt{依赖名}。如果一个运算符的某操作数是类型依赖表
+达式，则运算符也表示一个依赖名。这样的名字是未绑定的且在模板实例化点
+（\ref{temp.point}）会同时在模板定义上下文和实例化点的上下文中进行查询。
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  template<class T> struct X : B<T> {
+    typename T::A* pa;
+    void f(B<T>* pb) {
+      static int i = B<T>::i;
+      pb->j++;
+    }
+  };
+\end{lstlisting}
+基类名\tm{B<T>}，类型名\tm{T::A}，名字\tm{B<T>::i}和\tm{pb->j}显式依赖于
+\nt{template-parameter}。」
+
+\paragraph{}
+在类或类模板的定义中，在类模板或成员的定义点的未限定名字查询过程中，或者在类模板
+或成员的实例化过程中，不检查依赖基类（\ref{temp.dep.type}）的作用域。「例：
+\begin{lstlisting}
+  typedef double A;
+  template<class T> class B {
+    typedef int A;
+  };
+  template<class T> struct X : B<T> {
+    A a;              // a has type double
+  };
+\end{lstlisting}
+在\tm{X<T>}的定义中类型名\tm{A}绑定到全局命名空间作用域中定义的typedef名字，而不
+是基类\tm{B<T>}中定义的typedef名字。」「例：
+\begin{lstlisting}
+  struct A {
+    struct B { /* ... */ };
+    int a;
+    int Y;
+  };
+
+  int a;
+
+  template<class T> struct Y : T {
+    struct B { /* ... */ };
+    B b;                          // The B defined in Y
+    void f(int i) { a = i; }      // ::a
+    Y* p;                         // Y<T>
+  };
+
+  Y<A> ya;
+\end{lstlisting}
+类模板参数\tm{A}的成员\tm{A::B}，\tm{A::a}和\tm{A::Y}不影响\tm{Y<A>}中名字的绑
+定。」
+
 \sssect{依赖类型}{temp.dep.type}
+\paragraph{}
+如果一个名字是
+\begin{enumerate}
+  \item{当其处于类模板，类模板的嵌套类，类模板的成员或者类模板嵌套类成员的定义
+    中，类模板或嵌套类的注入类名（第\ref{class}章），}
+  \item{当其处于主类模板或主类模板成员的定义中，类模板的名字后跟上包含于\tm{<>}
+    （或等价的模板别名特例化）中的主模板（以下描述）的模板实参列表，}
+  \item{当其处于类模板的嵌套类定义中，作为当前实例化成员来引用的嵌套类名，或者}
+  \item{当其处于部分特例化或部分特例化成员的定义中，类模板名后跟上包含于\tm{<>}
+    （或等价的模板别名特例化）中的部分特例化的模板实参列表。如果第\nt{n}个模板参
+    数是一个参数包，则第\nt{n}个模板实参是包展开（\ref{temp.variadic}），其模式
+    为参数包的名字，}
+\end{enumerate}
+则该名字引用的是\nt{当前实例化}。
+
+\paragraph{}
+主模板的模板实参列表的第\nt{n}个模板实参具有类模板的第\nt{n}个形参的值。如果第
+\nt{n}个模板形参是一个模板参数包（\ref{temp.variadic}），则第\nt{n}个模板实参是
+一个包展开（\ref{temp.variadic}），其模式为模板参数包的名字。
+
+\paragraph{}
+等价于模板形参（即与模板形参具有相同的常量值或相同的类型）的模板实参在当前实例化
+的引用中可用于替换该模板形参。在非类型模板参数的情况下，这只在实参赋予与模板形参
+相同值而不是模板形参作为其子表达式的表达式时才适用。「例：
+\begin{lstlisting}
+  template <class T> class A {
+    A* p1;                        // A is the current instantiation
+    A<T>* p2;                     // A<T> is the current instantiation
+    A<T*> p3;                     // A<T*> is not the current instantiation
+    ::A<T>* p4;                   // ::A<T> is the current instantiation
+    class B {
+      B* p1;                      // B is the current instantiation
+      A<T>::B* p2;                // A<T>::B is the current instantiation
+      typename A<T*>::B* p3;      // A<T*>::B is the current instantiation
+    };
+  };
+
+  template <class T> class A<T*> {
+    A<T*>* p1;                    // A<T*> is the current instantiation
+    A<T>* p2;                     // A<T> is the current instantiation
+  };
+
+  template <class T1, class T2, int I> struct B {
+    B<T1, T2, I>* b1;             // refers to the current instantiation
+    B<T2, T1, I>* b1;             // not the current instantiation
+    typedef T1 my_T1;
+    static const int my_I = I;
+    static const int my_I2 = I+0;
+    static const int my_I3 = my_I;
+    B<my_T1, T2, my_I>* b3;       // refers to the current instantiation
+    B<my_T1, T2, my_I2>* b4;      // not the current instantiation
+    B<my_T1, T2, my_I3>* b5;      // refers to the current instantiation
+  };
+\end{lstlisting}」
+
+\paragraph{}
+\nt{依赖基类}指是依赖类型且不是当前实例化的基类。「注：在确定包含类作为基类的嵌
+套的情况下类基类可以是当前实例化。「例：
+\begin{lstlisting}
+  template<class T> struct A {
+    typedef int M;
+    struct B {
+      typedef void M;
+      struct C;
+    };
+  };
+
+  template<class T> struct A<T>::B::C : A<T> {
+    M m;                          // OK, A<T>::M
+  };
+\end{lstlisting}」」
+
+\paragraph{}
+如果一个名字是
+\begin{enumerate}
+  \item{一个未限定名，在查询时引用至少一个类的成员，该类为当前实例化或其非依赖基
+    类。「注：这只能在从类模板定义所包含的作用域中查询名字时才会出现。」}
+  \item{一个\nt{qualified-id}，其中的\nt{nested-name-specifier}引用的是当前实例
+    化，且查询时，引用至少一个类成员，该类为当前实例化或其非依赖基类。「注：如果
+    未找到这样的成员，且当前实例化具有任何依赖基类，则\nt{qualified-id}为未知特
+    例化的成员；见以下。」}
+  \item{一个表示类成员访问表达式（\ref{expr.ref}）中成员的\nt{id-expression}，该
+    表达式的对象表达式类型为当前实例化，且该\nt{id-expression}在查询时引用至少一
+    个类成员，该类为当前实例化或其非依赖基类。「注：如果未找到这样的成员，且当前
+    实例化具有任何依赖基类，则\nt{id-expression}为未知特例化的成员；见以下。」}
+\end{enumerate}
+则它是一个\nt{当前实例化的成员}。「例：
+\begin{lstlisting}
+  template <class T> class A {
+    static const int i = 5;
+    int n1[i];        // i refers to a member of the current instantiation
+    int n2[A::i];     // A::i refers to a member of the current instantiation
+    int n3[A<T>::i];  // A<T>::i refers to a member of the current instantiation
+    int f();
+  };
+
+  template <class T> int A<T>::f() {
+    return i;         // i refers to a member of the current instantiation
+  }
+\end{lstlisting}」
+如果名字是当前实例化的成员，在查询时引用至少一个当前实例化的类成员则该名字是一
+个\nt{当前实例化的依赖成员}。
+
+\paragraph{}
+如果一个名字是
+\begin{enumerate}
+  \item{一个\nt{qualified-id}，其中\nt{nested-name-specifier}确定不是当前实例化
+    的依赖类型。}
+  \item{一个\nt{qualified-id}，其中\nt{nested-name-specifier}确定当前实例化，该
+    当前实例化具有至少一个依赖基类，且\nt{qualified-id}的名字查询未找到当前实例
+    化或其非依赖基类的任何成员。}
+  \item{一个\nt{id-expression}，表示类成员访问表达式（\ref{expr.ref}）的成员，其
+    中，
+    \begin{enumerate}
+      \item{对象表达式的类型为当前实例化，该当前实例化具有至少一个依赖基类，且
+        \nt{id-expression}的名字查询未找到当前实例化或其非依赖基类的任何成员；或
+        者}
+      \item{对象表达式的类型为依赖的且不是当前实例化。}
+    \end{enumerate}}
+\end{enumerate}
+则它是一个\nt{未知特例化的成员}。
+
+\paragraph{}
+如果一个\nt{qualified-id}，其中的\nt{nested-name-specifier}确定当前实例化，不是
+当前实例化的成员或未知特例化的成员，则程序为病态，即使包含该\nt{qualified-id}的
+模板未实例化；无需诊断。类似的，如果一个类成员访问表达式的\nt{id-expression}，其
+中的对象表达式类型为当前实例化，未确定当前实例化的成员或未知特例化的成员，则程序
+为病态，即使包含成员访问表达式的模板未实例化；无需诊断。「例：
+\begin{lstlisting}
+  template<class T> class A {
+    typedef int type;
+    void f() {
+      A<T>::type i;                 // OK: refers to a member of the current instantiation
+      typename A<T>::other j;       // error: neither a member of the current instantiation nor
+                                    // a member of an unknown specialization
+    }
+  };
+\end{lstlisting}」
+
+\paragraph{}
+对于一组给定的模板实参集合，如果模板特例化使用一个\nt{qualified-id}或类成员访问
+表达式实例化为引用当前实例化的成员，则\nt{qualified-id}或类成员访问表达式的名字
+在模板实例化上下文中进行查询。如果查询结果与在模板定义上下文名字查询的结果不同，
+则名字查询有歧义。「例：
+\begin{lstlisting}
+  struct A {
+    int m;
+  };
+
+  struct B {
+    int m;
+  };
+
+  template<typename T>
+  struct C : A, T {
+    int f() { return this->m; } // finds A::m in the template definition context
+    int g() { return m; }       // finds A::m in the template definition context
+  };
+
+  template int C<B>::f();       // error: finds both A::m and B::m
+  template int C<B>::g();       // OK: transformation to class member access syntax
+                                // does not occur in the template definition context; see 12.2.2
+\end{lstlisting}」
+
+\paragraph{}
+如果类型是
+\begin{enumerate}
+  \item{一个模板形参，}
+  \item{一个未知特例化的成员，}
+  \item{一个当前实例化的嵌套类或枚举依赖成员，}
+  \item{一个cv限定类型，其中的cv未限定类型是依赖类型，}
+  \item{一个从依赖类型构建的复合类型，}
+  \item{一个数组类型，其元素为依赖类型或其上界（如果有）为值依赖的，}
+  \item{一个函数类型，其异常规范为值依赖的，}
+  \item{一个\nt{simple-template-id}，其中的模板名为模板形参，或者任何模板实参是
+    一个依赖类型或是一个类型依赖或值依赖的表达式或是一个包展开「注：这包括不带
+    \nt{template-argument-list}而使用的类模板注入类名（第\ref{class}章）。」，或
+    者}
+  \item{由\tm{decltype(}\nt{expression}\tm{)}表示，其中\nt{expression}为类型依赖
+    的（\ref{temp.dep.expr}）。}
+\end{enumerate}
+则它是依赖类型。
+
+\paragraph{}
+「注：因typedef不引入新类型，而只是简单地引用其他类型，引用当前实例化成员的
+typedef的名字只有在所引用类型为依赖的情况下才是依赖的。」
+
 \sssect{类型依赖表达式}{temp.dep.expr}
+\paragraph{}
+除以下描述之外，如果任何子表达式为类型依赖的，则表达式为类型依赖的。
+
+\paragraph{}
+如果包含成员函数的类类型为依赖的（\ref{temp.dep.type}），则\tm{this}是类型依赖
+的。
+
+\paragraph{}
+一个\nt{id-expression}如果包含
+\begin{enumerate}
+  \item{一个\nt{identifier}，名字查询将其关联到一个或多个使用依赖类型声明的声
+    明，}
+  \item{一个\nt{identifier}，名字查询将其关联到使用含占位类型
+    （\ref{dcl.spec.auto}）的类型声明的非类型\nt{template-parameter}，}
+  \item{一个\nt{identifier}，名字查询将其关联到一个或多个使用含占位类型的返回类
+    型所声明的当前实例化的成员函数声明，}
+  \item{一个\nt{identifier}，名字查询将其关联到一个结构化绑定声明
+    （\ref{dcl.struct.bind}），其\nt{brace-or-equal-initializer}是类型依赖的，}
+  \item{\nt{identifier} \tm{\_\_{}func\_\_}（\ref{dcl.fct.def.general}），此处的
+    任何包含函数为模板，类模板的成员或一个一般的lambda，}
+  \item{一个依赖的\nt{template-id}，}
+  \item{一个指定依赖类型的\nt{conversion-function-id}，或者}
+  \item{一个确定未知特例化成员的\nt{nested-name-specifier}或\nt{qualified-id}；}
+\end{enumerate}
+或者如果对某个\tm{T}，它确定一个当前实例化的依赖成员，该实例化是一个类型为
+``\tm{T}的未知上界数组''（\ref{temp.static}）的静态数据成员，则它是类型依赖的。
+以下形式的表达式仅当\nt{type-id}，\nt{simple-type-specifier}或\nt{new-type-id}所
+指定类型是依赖的才是类型依赖的，即使任何子表达式是类型依赖的：                \\
+\mbox{\qquad{\nt{simple-type-specifier} \tm{(} \nt{expression-list\tsub{opt}}
+  \tm{)}}}                                                                    \\
+\mbox{\qquad{\tm{::}\nt{\tsub{opt}} \tm{new} \nt{new-placement\tsub{opt}
+  new-type-id new-initializer\tsub{opt}}}}                                    \\
+\mbox{\qquad{\tm{::}\nt{\tsub{opt}} \tm{new} \nt{new-placement\tsub{opt}}
+  \tm{(} \nt{type-id} \tm{)} \nt{new-initializer\tsub{opt}}}}                 \\
+\mbox{\qquad{\tm{dynamic\_cast <} \nt{type-id} \tm{> (} \nt{expression}
+  \tm{)}}}                                                                    \\
+\mbox{\qquad{\tm{static\_cast <} \nt{type-id} \tm{> (} \nt{expression}
+  \tm{)}}}                                                                    \\
+\mbox{\qquad{\tm{const\_cast <} \nt{type-id} \tm{> (} \nt{expression}
+  \tm{)}}}                                                                    \\
+\mbox{\qquad{\tm{reinterpret\_cast <} \nt{type-id} \tm{> (} \nt{expression}
+  \tm{)}}}                                                                    \\
+\mbox{\qquad{\tm{(} \nt{type-id} \tm{)} \nt{cast-expression}}}
+
+\paragraph{}
+以下形式的表达式不是类型依赖的（因表达式的类型不能是依赖的）：                \\
+\mbox{\qquad{\nt{literal}}}                                                   \\
+\mbox{\qquad{\nt{postfix-expression} \tm{.} \nt{pseudo-destructor-name}}}     \\
+\mbox{\qquad{\nt{postfix-expression} \tm{->} \nt{pseudo-destructor-name}}}    \\
+\mbox{\qquad{\tm{sizeof} \nt{unary-expression}}}                              \\
+\mbox{\qquad{\tm{sizeof (} \nt{type-id} \tm{)}}}                              \\
+\mbox{\qquad{\tm{sizeof ... (} \nt{identifier} \tm{)}}}                       \\
+\mbox{\qquad{\tm{alignof (} \nt{type-id} \tm{)}}}                             \\
+\mbox{\qquad{\tm{typeid (} \nt{expression} \tm{)}}}                           \\
+\mbox{\qquad{\tm{typeid (} \nt{type-id} \tm{)}}}                              \\
+\mbox{\qquad{\tm{::}\nt{\tsub{opt}} \tm{delete} \nt{cast-expression}}}        \\
+\mbox{\qquad{\tm{::}\nt{\tsub{opt}} \tm{delete [ ]} \nt{cast-expression}}}    \\
+\mbox{\qquad{\tm{throw} \nt{assignment-expression\tsub{opt}}}}                \\
+\mbox{\qquad{\tm{noexcept (} \nt{expression} \tm{)}}}
+
+「注：对于标准库宏\tm{offsetof}，见21.2。」
+
+\paragraph{}
+如果类成员访问表达式（\ref{expr.ref}）的表达式引用当前实例化的成员且所引用成员的
+类型是依赖的，或者类成员访问表达式引用未知特例化的成员，则它是类型依赖的。「注：
+在形如\tm{x.y}或\tm{xp->y}的表达式中，表达式的类型通常是类\tm{x}（或\tm{xp}所指
+向的类）的成员\tm{y}的类型。然而，如果\tm{x}或\tm{xp}引用非依赖类型或引用当前实
+例化，则\tm{y}的类型为类成员访问表达式的类型。」
+
+\paragraph{}
+一个\nt{braced-init-list}如果其任何元素为类型依赖的或是一个包展开则它是类型依赖
+的。
+
+\paragraph{}
+一个\nt{fold-expression}是类型依赖的。
+
 \sssect{值依赖表达式}{temp.dep.constexpr}
+\paragraph{}
+除以下所述之外，在需要常表达式的上下文中所用的表达式如果其任何子表达式为值依赖的
+则它也是值依赖的。
+
+\paragraph{}
+一个\nt{id-expression}如果：
+\begin{enumerate}
+  \item{它是类型依赖的，}
+  \item{它是非类型模板参数的名字，}
+  \item{它确定依赖的当前实例化静态数据成员且未在\nt{member-declarator}中初始化，}
+  \item{它确定依赖的当前实例化静态成员函数，或者}
+  \item{它是字面类型的常量且使用值依赖的表达式来初始化，}
+\end{enumerate}
+则它是值依赖的。以下形式的表达式如果\nt{unary-expression}或\nt{expression}为类型
+依赖的或\nt{type-id}为依赖的则是值依赖的：                                    \\
+\mbox{\qquad{\tm{sizeof} \nt{unary-expression}}}                              \\
+\mbox{\qquad{\tm{sizeof (} \nt{type-id} \tm{)}}}                              \\
+\mbox{\qquad{\tm{typeid (} \nt{expression} \tm{)}}}                           \\
+\mbox{\qquad{\tm{typeid (} \nt{type-id} \tm{)}}}                              \\
+\mbox{\qquad{\tm{alignof (} \nt{type-id} \tm{)}}}                             \\
+\mbox{\qquad{\tm{noexcept (} \nt{expression} \tm{)}}}
+
+「注：对于标准库宏\tm{offsetof}，见21.2。」
+
+\paragraph{}
+以下形式的表达式如果\nt{type-id}或\nt{simple-type-specifier}为依赖的或者
+\nt{expression}或\nt{cast-expression}为值依赖的则为值依赖的：                 \\
+\mbox{\qquad{\nt{simple-type-specifier} \tm{(} \nt{expression-list\tsub{opt}}
+  \tm{)}}}                                                                    \\
+\mbox{\qquad{\tm{static\_cast <} \nt{type-id} \tm{> (} \nt{expression}
+  \tm{)}}}                                                                    \\
+\mbox{\qquad{\tm{const\_cast <} \nt{type-id} \tm{> (} \nt{expression}
+  \tm{)}}}                                                                    \\
+\mbox{\qquad{\tm{reinterpret\_cast <} \nt{type-id} \tm{> (} \nt{expression}
+  \tm{)}}}                                                                    \\
+\mbox{\qquad{\tm{(} \nt{type-id} \tm{)} \nt{cast-expression}}}
+
+\paragraph{}
+以下形式的表达式为值依赖的：                                                  \\
+\mbox{\qquad{\tm{sizeof ... (} \nt{identifier} \tm{)}}}                       \\
+\mbox{\qquad{\nt{fold-expression}}}
+
+\paragraph{}
+形如\tm{\&}\nt{qualified-id}的表达式，其中\nt{qualified-id}确定当前实例化的依赖
+成员，是值依赖的。形如\tm{\&}\nt{cast-expression}的表达式，如果
+\nt{cast-expression}作为核心常量表达式（\ref{expr.const}）求值成功并且求值的结果
+引用一个静态或线程存储期对象或成员函数的模板化实体，则也是值依赖的。
+
 \sssect{依赖模板参数}{temp.dep.temp}
+\paragraph{}
+一个类型\nt{template-argument}如果其所指定的类型是依赖的则它是依赖的。
+
+\paragraph{}
+一个非类型\nt{template-argument}如果其类型是依赖的或其所指定的常量表达式是值依赖
+的则它是依赖的。
+
+\paragraph{}
+此外，一个非类型\nt{template-argument}如果对应的非类型\nt{template-parameter}具
+有引用类型或指针类型，且该\nt{template-argument}表示或指向当前实例化的成员或一个
+依赖类型的成员。
+
+\paragraph{}
+一个\nt{template-argument}如果它确定一个\nt{template-parameter}或是一个引用未知
+实例化成员的\nt{qualified-id}则它是依赖的。
+
 \ssect{非依赖名}{temp.nondep}
+\paragraph{}
+用于模板定义中的非依赖名使用常规名字查询来查找且在使用点进行绑定。「例：
+\begin{lstlisting}
+  void g(double);
+  void h();
+
+  template<class T> class Z {
+  public:
+    void f() {
+      g(1);           // calls g(duoble)
+      h++;            // ill-formed: cannot increment function; this could be diagnosed
+                      // either here or at the point of instantiation
+    }
+  };
+
+  void g(int);        // not in scope at the point of the template definition, not considered for the call g(1)
+\end{lstlisting}」
+
 \ssect{依赖名解析}{temp.dep.res}
+\paragraph{}
+解析依赖名时，考虑以下来源的名字：
+\begin{enumerate}
+  \item{模板声明点可见的名字。}
+  \item{关联于来自实例化上下文（\ref{temp.point}）和定义上下文的函数实参类型的
+    命名空间中的声明。}
+\end{enumerate}
+
 \sssect{实例化点}{temp.point}
+\paragraph{}
+对于函数模板特例化，成员函数模板特例化或者类模板成员函数或静态数据成员的特例化，
+如果因其在另一模板特例化中被引用且引用所在的上下文依赖于一个模板形参而被隐式实例
+化，则特例化的实例化点为包含特例化的实例化点。否则，这样的特例化的实例化点直接跟
+在命名空间作用域声明或引用该特例化的定义之后。
+
+\paragraph{}
+如果函数模板或类模板的成员函数以使用函数模板或成员函数的缺省实参定义的方式而调用
+则缺省实参的实例化点为函数模板或成员函数特例化的实例化点。
+
+\paragraph{}
+对于一个函数模板实例化或类模板成员函数特例化的\nt{noexcept-specifier}，如果该
+\nt{noexcept-specifier}因其被另一个模板特例化所要且其所需的上下文依赖于模板形参
+则\nt{noexcept-specifier}的实例化点为需要它的特例化的实例化点。否则，这样的
+\nt{noexcept-specifier}的实例化点直接跟在命名空间声明或需要
+\nt{noexcept-specifier}的定义之后。
+
+\paragraph{}
+对于一个类模板特例化，类成员模板特例化或类模板的类成员特例化，如果特例化因另一个
+模板特例化中引用它而被隐式实例化，如果引用特例化所在的上下文依赖于模板形参，且如
+果特例化在包含模板实例化点之前未被实例化过，则实例化点紧接在包含模板的实例化点之
+前。否则，这样的特例化的实例化点紧接在命名空间声明或引用该特例化的定义之前。
+
+\paragraph{}
+如果虚函数被隐式实例化，其实例化点紧接在包含函数模板特例化的实例化点之后。
+
+\paragraph{}
+一个显式实例化定义是特例化或该显式实例化所指定的特例化的实例化点。
+
+\paragraph{}
+依赖于模板实参的表达式的实例化上下文为同一翻译单元中声明于模板特例化的实例化点之
+前的外部链接声明集合。
+
+\paragraph{}
+函数模板，成员函数模板或者类模板的成员函数或静态数据成员的特例化在一个翻译单元中
+可能有多个实例化点，且除以上所述的实例化点外，对翻译单元内有此实例化点的任何这样
+的实例化点，翻译单元结束处也认为是一个实例化点。类模板的特例化在一个翻译单元中至
+多只有一个实例化点。任何模板的特例化在多个翻译单元中可以有多个实例化点。如果根据
+单一定义原则（\ref{basic.def.odr}）两个不同的实例化点给出一个模板特例化的不同语
+义则程序为病态，无需诊断。
+
 \sssect{候选函数}{temp.dep.candidate}
-\ssect{类模板内声明友元名}{temp.inject}
+\paragraph{}
+当函数调用的\nt{postfix-expression}为依赖名时，候选函数使用常规查询规则
+（\ref{basic.lookup.unqual}，\ref{basic.lookup.argdep}）进行查询，除了：
+\begin{enumerate}
+  \item{对于使用未限定名查询（\ref{basic.lookup.unqual}）的查询部分，只有模板定
+    义上下文中的函数声明可以找到。}
+  \item{对于使用关联命名空间查询（\ref{basic.lookup.argdep}）的部分，只有模板定
+    义上下文或模板实例化上下文中的函数声明可以找到。}
+\end{enumerate}
+如果关联命名空间中的查询考虑了所有翻译中那些命名空间中引入的外部链接函数声明而不
+是仅仅只考虑模板定义和模板实例化上下文中的声明，则调用为病态或可以找到更好的匹配
+的话，那么程序具有未定义行为。
+
+\ssect{类模板内声明的友元名}{temp.inject}
+\paragraph{}
+友元类或函数可以在类模板中声明。当模板被实例化时，其友元的名字被当作如同特例化在
+其实例化点被显式声明一样。
+
+\paragraph{}
+与非模板类一样，类模板特例化的命名空间作用域友元函数名在常规查询过程中不可见，除
+非在命名空间作用域（\ref{class.friends}）中显式声明。这样的名字在关联类
+（\ref{basic.lookup.argdep}）的规则下可以找到。\footnote{友元声明不向任何作用域
+中引入新的名字，模板声明中当其实例化时也不会。}「
+\begin{lstlisting}
+  template<typename T> struct number {
+    number(int);
+    friend number gcd(number x, number y) { return 0; };
+  };
+
+  void g() {
+    number<double> a(3), b(4);
+    a = gcd(a,b);       // finds gcd because number<double> is an associated class,
+                        // making gcd visible in its namespace (global scope)
+    b = gcd(3,4);       // ill-formed; gcd is not visible
+  }
+\end{lstlisting}」
 
 \sect{模板实例化与特例化}{temp.spec}
+\paragraph{}
+实例化函数，类，类模板的成员或成员模板的行为称作\nt{模板实例化}。
+
+\paragraph{}
+从函数模板实例化的函数称为实例化函数。从类模板实例化的类称为实例化类。从类模板的
+成员定义实例化的函数成员，成员类，成员枚举或类模板的静态数据成员分别称为实例化成
+员函数，成员类，成员枚举或静态数据成员。从成员函数模板实例化的成员函数称为实例化
+成员函数。从成员类模板实例化的成员类称为实例化成员类。
+
+\paragraph{}
+可以为函数模板，类模板，类模板或成员模板的成员声明显式特例化。显式特例化声明由
+\tm{template<>}引入。在一个类模板，类模板的成员或类成员模板的显式特例化声明中，
+显式特例化类的名字应该是一个\nt{simple-template-id}。在函数模板或成员函数模板的
+显式特例化声明中，显式特例化的函数或成员函数的名字可能是一个\nt{template-id}。
+「例：
+\begin{lstlisting}
+  template<class T = int> struct A {
+    static int x;
+  };
+  template<class U> void g(U) { }
+
+  template<> struct A<double> { };          // specialize for T == double
+  template<> struct A<> { };                // specialize for T == int
+  template<> void g(char) { };              // specialize for U == char
+                                            // U is deduced from the parameter type
+  template<> void g<int>(int) { }           // specialize for U == int
+  template<> int A<char>::x = 0;            // specialize for T == char
+
+  template<class T = int> struct B {
+    static int x;
+  };
+  template<> int B<>::x = 1;                // specialize for T == int
+\end{lstlisting}」
+
+\paragraph{}
+实例化的模板特例化可以是为给定形参列表而隐式实例化（\ref{temp.inst}）或显式实例
+化（\ref{temp.explicit}）。特例化是一个实例化或显式特例化
+（\ref{temp.expl.spec}）的类，函数或类成员。
+
+\paragraph{}
+对一个给定模板和一个给定\nt{template-argument}的集合，
+\begin{enumerate}
+  \item{程序中一个显式实例化定义应该至多出现一次，}
+  \item{程序中一个显式特例化应该至多定义一次（依据\ref{basic.def.odr}），}
+  \item{除非显式实例化跟在显式特例化声明之后，显式实例化和显式特例化声明都不应该
+    出现在一个程序中。}
+\end{enumerate}
+实现不需要该规则的违反诊断。
+
+\paragraph{}
+实例化自一个模板的每一个类模板特例化具有任何静态成员其自己的拷贝。「例：
+\begin{lstlisting}
+  template<class T> class X {
+    static T s;
+  };
+  template<class T> T X<T>::s = 0;
+  X<int> aa;
+  X<char*> bb;
+\end{lstlisting}
+\tm{X<int>}具有类型为\tm{int}的静态成员\tm{s}，而\tm{X<char*>}具有类型为
+\tm{char*}的静态成员\tm{s}。」
+
+\paragraph{}
+如果一个函数声明未使用函数声明子的语法形式经依赖类型（\ref{temp.dep.type}）取得
+其函数类型，则程序为病态。「例：
+\begin{lstlisting}
+  template<class T> struct A {
+    static T t;
+  };
+  typedef int function();
+  A<function> a;      // ill-formed: would declare A<function>::t as a static member function
+\end{lstlisting}」
+
 \ssect{隐式实例化}{temp.inst}
+\paragraph{}
+除非类模板已被显式实例化（\ref{temp.explicit}）或显式特例化
+（\ref{temp.expl.spec}），则当特例化在需要完整定义对象类型的上下文中引用或当类类
+型的完整性影响程序语义时，类模板特例化被显式实例化。「注：特别的，如果表达式的语
+义依赖于类模板特例化的成员或基类列表，则隐式生成类模板特例化。比如，删除类类型指
+针依赖于类是否声明了析构函数，而指针到类类型转换依赖于两个相关类间的继承关系。」
+「例：
+\begin{lstlisting}
+  template<class T> class B { /* ... */ };
+  template<class T> class D : public B<T> { /* ... */ };
+
+  void f(void*);
+  void f(B<int>*);
+
+  void g(D<int>* p, D<char>* pp, D<double>* ppp) {
+    f(p);             // instantiation of D<int> required: call f(B<int>*)
+    B<char>* q = pp;  // instantiation of D<char> required: convert D<char>* to B<char>*
+    delete ppp;       // instantiation of D<double> required
+  }
+\end{lstlisting}」如果类模板已被声明但未定义，则在实例化点（\ref{temp.point}）实
+例化产生不完整类型（\ref{basic.types}）。「例：
+\begin{lstlisting}
+  template<class T> class X;
+  X<char> ch;         // error: incomplete type X<char>
+\end{lstlisting}」「例：在模板声明中，局部类（\ref{class.local}）或枚举以及局部
+类的成员不会被当作是可以单独实例化的（包括其缺省实参，\nt{noexcept-specifier}，
+以及非静态数据成员初始化，如果有的话）。其结果就是，依赖名会进行查询，语义约束会
+进行检查，且任何使用的模板实例化为局部类或枚举声明所在的实体实例化的一部分。」
+
+\paragraph{}
+类模板特例化的隐式实例化引起声明的隐式实例化，而对定义，缺省实参或者类成员函数的
+\nt{noexcept-specifier}、成员类、有作用域成员枚举、静态数据成员、成员模板和友元
+则不会；且引起无作用域成员枚举定义和成员匿名联合的实例化。但是，为了依据
+\ref{basic.def.odr}和\ref{class.mem}来确定实例化的重声明是否有效，模板中对应于定
+义的声明被当作是一个定义。「例：
+\begin{lstlisting}
+  template<class T, class U>
+  struct Outer {
+    template<class X, class Y> struct Inner;
+    template<class Y> struct Inner<T, Y>;         // #1a
+    template<class Y> struct Inner<T, Y> { };     // #1b; OK: valid redeclaration of #1a
+    template<class Y> struct Inner<U, Y> { };     // #2
+  };
+
+  Outer<int, int> outer;                          // error at #2
+\end{lstlisting}
+\tm{Outer<int, int>::Inner<int, Y>}在\tm{\#1b}被重声明。（其未被定义但被指出关联
+于\tm{Outer<T, U>}中的定义。\tm{\#2}也是\tm{\#1a}的重声明。其被指出关联于一个定
+义，因此是同一部分特例化的无效重声明。
+\begin{lstlisting}
+  template<typename T> struct Friendly {
+    template<typename U> friend int f(U) { return sizeof(T); }
+  };
+  Friendly<char> fc;
+  Friendly<float> ff;   // ill-formed: produces second definition of f(U)
+\end{lstlisting}」
+
+\paragraph{}
+除非类模板的成员或成员模板已经被显式实例化或显式特例化，成员的特例化在需要类定义
+存在的上下文中特例化被引用时被隐式实例化；特别的，静态数据成员不会被实例化（及任
+何关联的副作用），除非静态数据成员本身按需要静态数据成员定义存在的方式被使用。
+
+\paragraph{}
+除非函数模板特例化已经被显式实例化或显式特例化，函数模板特例化在需要函数定义存在
+的上下文中特例化被引用时被隐式实例化。其声明实例化自友元函数定义的函数当其在需要
+函数定义存在的上下文中被引用时被隐式实例化。除非是调用的函数模板显式特例化或调用
+显式特例化类模板的成员函数，函数模板或类模板成员函数的缺省实参在需要缺省实参值的
+上下文中调用该函数时被隐式实例化。
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  template<class T> struct Z {
+    void f();
+    void g();
+  };
+
+  void h() {
+    Z<int> a;         // instantiation of class Z<int> required
+    Z<char>* p;       // instantiation of class Z<char> not required
+    Z<double>* q;     // instantiation of class Z<double> not required
+
+    a.f();            // instantiation of z<int>::f() required
+    p->g();           // instantiation of class Z<char> required, and
+                      // instantiation of Z<char>::g() required
+  }
+\end{lstlisting}
+本例中不需要\tm{class Z<double>}，\tm{Z<int>::g()}或\tm{Z<char>::f()}的显式实
+例化。」
+
+\paragraph{}
+除非变量模板特例化已经被显式实例化或显式特例化，变量模板特例化在特例化被使用地被
+隐式实例化。变量模板的缺省模板实参在需要缺省实参值的上下文中变量模板被引用时被隐
+式实例化。
+
+\paragraph{}
+被重载解析（\ref{over.match}）选中的函数如果不实例化类模板定义就能确定的话，则该
+实例化是否真的发生是未指定的。「例：
+\begin{lstlisting}
+  template <class T> struct S {
+    operator int();
+  };
+
+  void f(int);
+  void f(S<int>&);
+  void f(S<float>);
+
+  void g(S<int>& sr) {
+    f(sr);            // instantiation of S<int> allowed but not required
+                      // instantiation of S<float> allowed but not required
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果函数模板或成员函数模板特例化按涉及重载解析的方式使用，则该特例化的声明被隐式
+实例化（\ref{temp.over}）。
+
+\paragraph{}
+实现不应该隐式实例化函数模板，变量模板，成员模板，非虚成员函数，成员类，类模板的
+静态数据成员或constexpr if语句（\ref{stmt.if}）的子语句，除非需要这样的实例化。
+如果虚成员函数不会被实例化则实现是否隐式实例化一个类模板的虚成员函数是未指定的。
+在缺省实参当中模板特例化的使用不应该引起模板隐式实例化，除非在需要类模板的完整类
+型以确定缺省实参的正确性的地方类模板被实例化。函数调用中缺省实参的使用引起缺省实
+参中的特例化被隐式实例化。
+
+\paragraph{}
+隐式实例化类，函数，变量模板特例化置于模板定义在的命名空间中。类模板成员的隐式实
+例化的特例化置于包含类模板定义所在的命名空间中。隐式实例化成员模板置于包含类或类
+模板定义在的命名空间中。「例：
+\begin{lstlisting}
+  namespace N {
+    template<class T> class List{
+    public:
+      T* get();
+    }
+  }
+
+  template<class K, class V> class Map {
+  public:
+    N::List<V> lt;
+    V get(K);
+  };
+
+  void g(Map<const char*,int>& m {
+    int i = m.get("Nicholas"）;
+  }
+\end{lstlisting}
+从\tm{Map<const char*,int>::get()}对\tm{lt.get()}的调用将\tm{List<int>::get()}置
+于命名空间\tm{N}中而不是全局命名空间中。」
+
+\paragraph{}
+如果函数模板\tm{f}按需要使用缺省实参的方式调用，则查询依赖名，进行语义约束检查且
+完成缺省实参中使用的任何模板的实例化，如同缺省实参是一个初始化，用于与该点所用的
+函数模板\tm{f}具有相同作用域，相同模板形参和相同访问，除了作用域中有声明了闭包类
+型（\ref{expr.prim.lambda.closure}）-- 因此其关联命名空间 -- 保持缺省实参定义上
+下文中所确定。该分析称为\nt{缺省实参实例化}。然后实例化的缺省实参被用作\tm{f}的
+实参。
+
+\paragraph{}
+每一个缺省实参独立实例化。「例：
+\begin{lstlisting}
+  template<class T> void f(T x, T y = ydef(T()), T z = zdef(T()));
+
+  class A { };
+
+  A zdef(A);
+
+  void g(A a, A b, A c) {
+    f(a, b, c);       // no default argument instantiation
+    f(a, b);          // default argument z = zdef(T()) instantiated
+    f(a);             // ill-formed; ydef is not declared
+  }
+\end{lstlisting}」
+
+\paragraph{}
+函数模板特例化的\nt{noexcept-specifier}不与函数声明一起实例化；它是按需实例化的
+（\ref{except.spec}）。如果需要这样的\nt{noexcept-specifier}但是尚未实例化，则查
+询依赖名，进行语义约束检查，且完成\nt{noexcept-specifier}中使用的任何模板的实例
+化，如同在该点作为特例化声明的实例化的一部分来完成一样。
+
+\paragraph{}
+「注：\ref{temp.point}定义了模板特例化的实例化点。」
+
+\paragraph{}
+存在一个实现定义的量，指明递归实例化总深度的限制，可能涉及多个模板。实例化中无限
+递归的结果未定义。「例：
+\begin{lstlisting}
+  template<class T> class X {
+    X<T>* p;          // OK
+    X<T*> a;          // implicit generation of X<T> requires
+                      // the implicit instantiation of X<T*> which requires
+                      // the implicit instantiation of X<T**> which ...
+  };
+\end{lstlisting}」
+
 \ssect{显式实例化}{temp.explicit}
+\paragraph{}
+类，函数，变量或成员模板特例化可以从其模板显式实例化。成员函数，成员类或类模板的
+静态数据成员可以从关联于其类模板的成员定义显式实例化。函数或类模板的成员函数的实
+例化不应该使用\tm{inline}或\tm{constexpr}说明符。
+
+\paragraph{}
+显式实例化的语法为
+
+\synsym{explicit-instantiation}
+  \synprd[]{\tm{extern}\nt{\tsub{opt}} \tm{template} \nt{declaration}}
+
+存在两种显式实例化：显式实例化定义和显式实例化声明。显式实例化声明以\tm{extern}
+关键字开始。
+
+\paragraph{}
+如果是为类或成员类的显式实例化，\nt{declaration}中的
+\nt{elaborated-type-specifier}应该包含\nt{simple-template-id}。如果是为函数或成
+员函数的显式实例化，则\nt{declaration}中的\nt{unqualified-id}应该是一个
+\nt{template-id}或者在所有模板实参可以推导出来的地方是一个\nt{template-name}或
+\nt{operator-function-id}。「注：声明可以声明一个\nt{qualified-id}，这种情况下
+\nt{qualified-id}的\nt{unqualified-id}必须是一个\nt{template-id}。」如果是为成员
+函数，成员类或类模板特例化的静态数据成员的显式实例化，成员名的\nt{qualified-id}
+中类模板特例化的名字应该是一个\nt{simple-template-id}。如果是为变量的显式实例化
+则声明中的\nt{unqualified-id}应该是一个\nt{template-id}。一个显式实例化应该出现
+在其模板的包含命名空间中。如果声明于显式实例化中的名字是一个未限定名，则显式实例
+化应该出现在其模板声明所在的命名空间中，或者如果命名空间是内联的
+（\ref{namespace.def}），在其包含命名空间集合的任何命名空间中。「注：关于声明子
+中的限定名，见\ref{dcl.meaning}。」「例：
+\begin{lstlisting}
+  template<class T> class Array { void mf(); };
+  template class Array<char>;
+  template void Array<int>::mf();
+
+  template<class T> void sort(Array<T>& v) { /* ... */ }
+  template void sort(Array<char>&);       // argument is deduced here
+
+  namespace N {
+    template<class T> void f(T&) { }
+  }
+  template void N::f<int>(int&);
+\end{lstlisting}」
+
+\paragraph{}
+函数模板，变量模板，成员函数或类模板的静态数据成员或者类或类模板的成员函数模板的
+声明应该处于该实体的显式实例化之前。类模板，类模板的成员类，或者类或类模板的成员
+类模板应该处于该实体的显式实例化之前，除非显式实例化之前存在一个该实体的相同模板
+实参的显式特例化。如果该显式特例化的\nt{declaration}确定一个隐式声明的特殊成员函
+数（第\ref{special}章），则程序为病态。
+
+\paragraph{}
+对于一个给定的模板实参集合，如果模板的一个显式实例化出现在该模板的一个显式特例化
+之后，则显式实例化无效果。否则，对于显式实例化定义，函数模板，变量模板，成员函数
+模板，或者类模板的成员函数或静态数据成员的定义应该在每一个其被显式实例化的翻译单
+元中存在。
+
+\paragraph{}
+类，函数模板或变量模板特例化的显式实例化被放置于模板所定义的命名空间中。类模板成
+员的显式实例化被放置于包含类模板定义所在的命名空间中。成员模板的显式实例化被放置
+于包含类或类模板定义所在的命名空间中。「例：
+\begin{lstlisting}
+  namespace N {
+    template<class T> class Y { void mf() { } };
+  }
+
+  template class Y<int>;            // error: class template Y not visible in the global namespace
+
+  using N::Y;
+  template class Y<int>;            // error: explicit instantiation outside of the namespace of the template
+
+  template class N::Y<char*>;       // OK: explicit instantiation in namespace N
+
+  template void N::Y<double>::mf(); // OK: explicit instantiation in namespace N
+\end{lstlisting}」
+
+\paragraph{}
+在一个函数模板特例化或成员函数模板特例化的显式实例化中，如果能从函数形参推导出其
+类型（\ref{temp.deduct}），则结尾的\nt{template-argument}可以省略而不指定。
+「例：
+\begin{lstlisting}
+  template<class T> class Array { /* ... */ };
+  template<class T> void sort(Array<T>& v) { /* ... */ }
+
+  // instantiate sort(Array<int>&) - template-argument deduced
+  template void sort<>(Array<int>&);
+\end{lstlisting}」
+
+\paragraph{}
+确定类模板特例化的显式实例化也是其每一个成员（不包含派生自基类的成员和模板成员）
+的同种类（声明或定义）显式实例化，除以下所述之外，在包含显式实例化的翻译单元中尚
+未显式特例化。「注：此外，它通常是关于类的某些实现定义数据的显式实例化。」
+
+\paragraph{}
+确定类模板特例化的显式实例化定义显式实例化类模板特例化且仅是在实例化点已定义成员
+的一个显式实例化定义。
+
+\paragraph{}
+除了内联函数和变量，类型为推导自其初始化或返回值（\ref{dcl.spec.auto}），字面类
+型的\tm{const}变量，引用类型的变量以及类模板特例化的声明，显式实例化声明具有抑制
+其所引用实体的隐式实例化的效果。「注：其意图是作为显式实例化声明主体的内联函数在
+odr-used（\ref{basic.def.odr}）时仍会被隐式实例化以使得可以考虑内联该函数体，但
+在翻译单元中不会生成内联函数的行外（out-of-line）拷贝。」
+
+\paragraph{}
+如果实体是同一翻译单元中的显式实例化声明和显式实例化定义的主体，则定义应该跟在声
+明之后。作为显式实例化声明的主体并且按翻译单元中可能会引起一个隐式实例化
+（\ref{temp.inst}）的方式被使用的实体应该是程序中某处的显式实例化定义的主体；否
+则程序为病态，无需诊断。「注：该规则对内联函数不适用，即使这样的实体的显式实例化
+声明没有其他规范性的效果。这是必须的，用以确保如果在一个翻译单元中取内联函数的地
+址，而实现选择抑制行外函数体，则另一个翻译单元将会提供该函数体。」一个显式实例化
+声明不应该确定具有内部链接的模板特例化。
+
+\paragraph{}
+常规的访问检查规则对用于指定显式实例化的名字不适用。「注：特别的，用于函数声明子
+的模板实参和名字（包括形参类型，返回类型和异常规范）可以是私有类型或者是正常情况
+下不可访问的对象，且模板可以是成员模板或正常情况下不可访问的成员函数。」
+
+\paragraph{}
+显式实例化不构成缺省实参的使用，因此不进行缺省实参的实例化。「例：
+\begin{lstlisting}
+  char* p = 0;
+  template<class T> T g(T x = &p) { return x; }
+  template int g<int>(int);       // OK even through &p isn't an int.
+\end{lstlisting}」
+
 \ssect{显式特例化}{temp.expl.spec}
+\paragraph{}
+以下任一个的显式特例化：
+\begin{enumerate}
+  \item{函数模板}
+  \item{类模板}
+  \item{变量模板}
+  \item{类模板的成员函数}
+  \item{类模板的静态数据成员}
+  \item{类模板的成员类}
+  \item{类模板的成员枚举}
+  \item{类或类模板的成员类模板}
+  \item{类或类模板的成员函数模板}
+\end{enumerate}
+可以由\tm{template<>}引入的声明来声明；即
+
+\synsym{explicit-specialization}
+  \synprd[]{\tm{template < >} \nt{declaration}}
+
+「例：
+\begin{lstlisting}
+  template<class T> class stream;
+
+  template<> class stream<char> { /* ... */ };
+
+  template<class T> class Array { /* ... */ };
+  template<class T> void sort(Array<T>& v) { /* ... */ }
+
+  template<> void sort<char*>(Array<char*>&);
+\end{lstlisting}
+给定这些声明，\tm{stream<char>}将被用于\tm{char}的流定义；其他流将被实例化自该类
+模板的类模板特例化所处理。类似的，\tm{sort<char*>}将被用于\tm{Array<char*>}类型
+参数的排序函数所使用；其他\tm{Array}类型将被生成自该模板的函数所排序。」
+
+\paragraph{}
+显式特例化可以声明于对应主模板可以定义所在的任何作用域中
+（\ref{namespace.memdef}，\ref{class.mem}，\ref{temp.mem}）。
+
+\paragraph{}
+被显式特例化的函数模板，类模板或变量模板的声明应该处于显式特例化声明之前。「注：
+需要一个模板的声明但不是定义。」类或类模板的定义应该处于类或类模板的成员模板显式
+特例化的声明之前。「例：
+\begin{lstlisting}
+  template<> class X<int> { /* ... */ };          // error: X not a template
+
+  template<class T> class X;
+
+  template<> class X<char*> { /* ... */ };        // OK: X is a template
+\end{lstlisting}」
+
+\paragraph{}
+类模板的成员函数，成员函数模板，成员类，成员枚举，成员类模板，静态数据成员或静态
+数据成员模板可以为一个显式实例化的类特例化而显式特例化；在此情况下，类模板的定义
+应该处于类模板的成员特例化之前。如果类模板成员的这种显式特例化确定一个隐式声明的
+特殊成员函数（第\ref{special}章），则程序为病态。
+
+\paragraph{}
+显式特例化类的成员不从类模板的成员声明隐式实例化；而如果需要其定义的话，类模板特
+例化的成员本身应该被显式定义。在此情况下，类模板显式特例化的定义应该处于成员定义
+点所在作用域中。显式特例化的类定义与生成特例化的定义无关。即，其成员不需要与生成
+特例化的成员具有相同的名字，类型等等。显式特例化类模板的成员与正常类的成员按相同
+方式定义，且不使用\tm{template<>}语法。定义显式特例化成员类的成员也是如此。但
+\tm{template<>}被用于定义特例化为类模板的显式特例化成员类模板的成员。「例：
+\begin{lstlisting}
+  template<class T> struct A {
+    struct B { };
+    template<class U> struct C { };
+  };
+
+  template<> struct A<int> {
+    void f(int);
+  };
+
+  void h() {
+    A<int> a;
+    a.f(16);          // A<int>::f must be defined somewhere
+  }
+
+  // template<> not used for a member of an explicitly specialized class template
+  void A<int>::f(int) { /* ... */ }
+
+  template<> struct A<char>::B {
+    void f();
+  };
+  // template<> also not used when defining a member of an explicitly specialized class template
+  void A<char>::B::f() { /* ... */ }
+
+  template<> template<class U> struct A<char>::C {
+    void f();
+  };
+  // template<> is used when defining a member of an explicitly specialized member class template
+  // specialized as a class template
+  template<>
+  template<class U> void A<char>::C<U>::f() { /* ... */ }
+
+  template<> struct A<short>::B {
+    void f();
+  };
+  template<> void A<short>::B::f() { /* ... */ }            // error: template<> not permitted
+
+  template<> template<class U> struct A<short>::C {
+    void f();
+  };
+  template<class U> void A<short>::C<U>::f() { /* ... */ }  // error: template<> required
+\end{lstlisting}」
+
+\paragraph{}
+如果一个模板，成员模板或者类模板的成员被显式特例化则该特例化应该在可能引起隐式实
+例化发生的该特例化的首次使用之前声明，在这种使用出现的每一个翻译单元中都如此；
+无需诊断。如果程序没有为显式特例化提供定义，且该特例化按可能引起隐式实例化发生的
+方式使用或该成员是一个虚成员函数，则程序为病态，无需诊断。隐式实例化不会为声明但
+未定义的显式特例化而生成。「例：
+\begin{lstlisting}
+  class String { };
+  template<class T> class Array { /* ... */ };
+  template<class T> void sort(Array<T>& v) { /* ... */ }
+
+  void f(Array<String>& v) {
+    sort(v);          // use primary template sort(Array<T>&), T is String
+  }
+
+  template<> void sort<String>(Array<String>& v);       // error: specialization after use of primary template
+  template<> void sort<>(Array<char*>& v);              // OK: sort<char*> not yet used
+  template<class T> struct A {
+    enum E : T;
+    enum class S : T;
+  };
+  template<> enum A<int>::E : int { eint };             // OK
+  template<> enum class A<int>::S : int { sint };       // OK
+  template<class T> enum A<T>::E : T { eT };
+  template<class T> enum class A<T>::S : T { sT };
+  template<> enum A<char>::E : char { echar };          // ill-formed, A<char>::E was instantiated
+                                                        // when A<char> was instantiated
+  template<> enum class A<char>::S : char { schar };    // OK
+\end{lstlisting}」
+
+\paragraph{}
+函数模板，类模板，变量模板，类模板成员函数，类模板静态数据成员，类模板成员类，类
+模板成员枚举，类模板的成员类模板，类模板的成员函数模板，类模板的静态数据成员模
+板，类模板的成员模板的成员函数，非模板类成员模板的成员函数，非模板类的静态数据成
+员模板，类模板成员类的成员函数模板等等的显式特例化的放置，以及类模板，变量模板，
+非模板类的成员类模板，非模板类的静态数据成员模板，类模板的成员类模板等等的部分特
+例化声明的放置，根据上文和下文所指定的显式特例化声明和其在翻译单元中实例化点的相
+对位置，可能影响程序是否合法。在写一个特例化时要小心其位置；否则要使其成功编译将
+是一场点燃其自焚的试验。
+
+\paragraph{}
+模板显式特例化处于其定义所在的命名空间作用域中。「例：
+\begin{lstlisting}
+  namespace N {
+    template<class T> class X { /* ... */ };
+    template<class T> class Y { /* ... */ };
+
+    template<> class X<int> { /* ... */ };        // OK: specialization in same namespace
+    template<> class Y<double>;                   // forward-declare intent to specialize for double
+  }
+
+  template<> class N::Y<double> { /* ... */ };    // OK: specialization in enclosing namespace
+  template<> class N::Y<short> { /* ... */ };     // OK: specialization in enclosing namespace
+\end{lstlisting}」
+
+\paragraph{}
+一个确定已声明未定义的类模板显式特例化的\nt{simple-template-id}可以像其他不完整
+定义类（\ref{basic.types}）的名字一样进行使用。「例：
+\begin{lstlisting}
+  template<class T> class X;                  // X is a class template
+  template<> class X<int>;
+
+  X<int>* p;                                  // OK: pointer to declared class X<int>
+  X<int> x;                                   // error: object of incomplete class X<int>
+\end{lstlisting}」
+
+\paragraph{}
+结果的\nt{template-argument}在确定显式函数模板特例化的\nt{template-id}中可以不指
+定，假定它可从函数实参类型推导出来。「例：
+\begin{lstlisting}
+  template<class T> class Array { /* ... */ };
+  template<class T> void sort(Array<T>& v);
+
+  // explicit specialization for sort(Array<int>&)
+  // with deduced template-argument of type int
+  template<> void sort(Array<int>&);
+\end{lstlisting}」
+
+\paragraph{}
+具有与一个模板同名和与一个模板特例化完全匹配的类型的函数不是一个显式特例化
+（\ref{temp.fct}）。
+
+\paragraph{}
+一个函数或变量模板的显式特例化仅当其使用\tm{inline}说明声明或定义为删除的时才是
+内联的，而独立于其函数或变量模板是否是内联的。「例：
+\begin{lstlisting}
+  template<class T> void f(T) { /* ... */ }
+  template<class T> inline T g(T) { /* ... */ }
+
+  template<> inline void f<>(int) { /* ... */ }   // OK: inline
+  template<> int g<>(int) { /* ... */ }           // OK: not inline
+\end{lstlisting}」
+
+\paragraph{}
+模板的静态数据成员的显式特例化或静态数据成员模板的显式特例化，如果声明包含了一个
+初始化则它是一个定义；否则是一个声明。「注：需要缺省初始化的模板静态数据成员的定
+义必须使用\nt{braced-init-list}：
+\begin{lstlisting}
+  template<> X Q<int>::x;                         // declaration
+  template<> X Q<int>::x ();                      // error: declares a function
+  template<> X Q<int>::x { };                     // definition
+\end{lstlisting}」
+
+\paragraph{}
+类模板的成员或成员模板可以为一个类模板的给定隐式实例化而显式特例化，即使该成员或
+成员模板在类模板定义中定义。成员或成员模板的显式特例化使用显式特例化的语法进行指
+定。「例：
+\begin{lstlisting}
+  template<class T> struct A {
+    void f(T);
+    template<class X1> void g1(T, X1);
+    template<class X2> void g2(T, X2);
+    void h(T) { }
+  };
+
+  // specialization
+  template<> void A<int>::f(int);
+
+  // out of class member template definition
+  template<class T> template<class X1> void A<T>::g1(T, X1) { }
+
+  // member template specialization
+  template<> template<class X1> void A<int>::g1(int, X1);
+
+  // member template specialization
+  template<> template<>
+    void A<int>::g1(int, char);             // X1 deduced as char
+  template<> template<>
+    void A<int>::g2<char>(int, char);       // X2 specified as char
+
+  // member specialization even if defined in class definition
+  template<> void A<int>::h(int) { }
+\end{lstlisting}」
+
+\paragraph{}
+成员或成员模板可以嵌套于包含类模板中。在一个为这种成员的显式特例化中，成员声明之
+前对第一个显特例化的包含类模板都应该有\tm{template<>}。「例：
+\begin{lstlisting}
+  template<class T1> class A {
+    template<class T2> class B {
+      void mf();
+    };
+  };
+  template<> template<> class A<int>::B<double>;
+  template<> template<> void A<char>::B<char>::mf();
+\end{lstlisting}」
+
+\paragraph{}
+在一个出现于命名空间作用域中的类模板成员或成员模板的显式特例化声明中，成员模板或
+其包含类模板中的某一些可以保持未指定，除了如果其包含类模板也没有显式特例化则声明
+不应该显式特例化一个类成员模板。在这种显式特例化声明中，应该提供跟在
+\nt{template-parameter-list}之后的关键字\tm{template}而不是成员的显式特例化声明
+之前的\tm{template<>}。\nt{template-parameter-list}中\nt{template-parameter}的类
+型应该与主模板定义中所指定的那些一样。「例：
+\begin{lstlisting}
+  template <class T1> class A {
+    template<class T2> class B {
+      template<class T3> void mf1(T3);
+      void mf2();
+    };
+  };
+  template <> template <class X>
+    class A<int>::B {
+      template <class T> void mf1(T);
+    };
+  template <> template <> template<class T>
+    void A<int>::B<double>::mf1(T t) { }
+  template <class Y> template <>
+    void A<Y>::B<double>::mf2() { }         // ill-formed; B<double> is specialized but
+                                            // its enclosing class template A is not
+\end{lstlisting}」
+
+\paragraph{}
+成员函数模板，成员类模板或非特例化类模板的静态数据成员模板的特例化本身也是一个模
+板。
+
+\paragraph{}
+显式特例化声明不应该是一个友元声明。
+
+\paragraph{}
+缺省函数实参不应该在以下显式特例化之一的声明或定义中指定：
+\begin{enumerate}
+  \item{函数模板的显式特例化；}
+  \item{成员函数模板的显式特例化；}
+  \item{类模板的成员函数显式特例化，其中成员函数特例化所属的类模板特例化被隐式实
+    例化。「注：缺省函数实参可以在被显式特例化的类模板特例化的成员函数定义或声明
+    中指定。}
+\end{enumerate}」
 
 \sect{函数模板特例化}{temp.fct.spec}
-\ssect{显式模板参数规范}{temp.arg.explicit}
+\paragraph{}
+实例化自函数模板的函数作为函数模板特例化；函数模板的显式特例化也是。模板实参在确
+定函数模板特例化时可以显式指定，推导自上下文（如推导自函数模板特例化调用中的函数
+实参，见\ref{temp.deduct}），或者从缺省模板实参中获取。
+
+\paragraph{}
+实例化自模板的每一个函数模板特例化具有其自己的任何静态变量的拷贝。「例：
+\begin{lstlisting}
+  template<class T> void f(T* p) {
+    static T s;
+  };
+
+  void g(int a, char* b) {
+    f(&a);            // calls f<int>(int*)
+    f(&b);            // calls f<char*>(char**)
+  }
+\end{lstlisting}
+此处\tm{f<int>(int*)}具有一个类型为\tm{int}的静态变量\tm{s}，
+\tm{f<char*>(char**)}具有一个类型为\tm{char*}的静态变量\tm{s}。
+
+\ssect{显式模板参数的指定}{temp.arg.explicit}
+\paragraph{}
+在引用函数模板特例化时模板实参可以与类模板特例化的使用中指定
+\nt{template-argument}一样的方式通过使用限定函数模板名来指定。「例：
+\begin{lstlisting}
+  template<class T> void sort(Array<T>& v);
+  void f(Array<dcomplex>& cv, Array<int>& ci) {
+    sort<dcomplex>(cv);                   // sort(Array<dcomplex>&)
+    sort<int>(ci);                        // sort(Array<int>&)
+  }
+\end{lstlisting}
+以及
+\begin{lstlisting}
+  template<class U, class V> U convert(V v);
+
+  void g(double d) {
+    int i = convert<int,double>(d);       // int convert(double)
+    char c = convert<char,double>(d);     // char convert(double)
+  }
+\end{lstlisting}」
+
+\paragraph{}
+在引用函数模板特例化时可以指定模板实参列表
+\begin{enumerate}
+  \item{在一个函数被调用时，}
+  \item{在取一个函数的地址时，在一个函数初始化一个函数引用时，或在形成一个成员函
+    数指针时，}
+  \item{在显式特例化中，}
+  \item{在显式实例化中，或者}
+  \item{在友元声明中。}
+\end{enumerate}
+
+\paragraph{}
+可以推导（\ref{temp.deduct}）出来或从缺省的\nt{template-argument}获取的结尾模板
+实参可以从显式\nt{template-argument}列表中省略。未推导的结尾模板参数包
+（\ref{temp.variadic}）将被推导为模板参数的空序列。如果所有模板参数可以都可以推
+导则它们都可以省略；在此情形中，空模板参数列表\tm{<>}本身也可以省略。在推导已经
+完成但失败了的上下文中，或者在推导未完成，如果指定了模板参数列表且连同任何缺省模
+板参数可以定位单个函数模板特例化，则\nt{template-id}为函数模板特例化的左值。
+「例：
+\begin{lstlisting}
+  template<class X, class Y> X f(Y);
+  template<class X, class Y, class ... Z> X g(Y);
+  void h() {
+    int i = f<int>(5.6);          // Y is deduced to be double
+    int j = f(5.6);               // ill-formed: X cannot be deduced
+    f<void>(f<int, bool>);        // Y for outer f deduced to be int (*)(bool)
+    f<void>(f<int>);              // ill-formed: f<int> does not denote a single function template specialization
+    int k = g<int>(5.6);          // Y s deduced to be double, Z is deduced to an empty sequence
+    f<void>(g<int, bool>);        // Y for outer f is deduced to be int (*)(bool),
+                                  // Z is deduced to an empty sequence
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：空模板参数列表可用来指示一个给定使用引用的是函数模板的特例化，即使当一个非
+模板函数（\ref{dcl.fct}）可见且否则就会被使用。比如：
+\begin{lstlisting}
+  template <class T> int f(T);    // #1
+  int f(int);                     // #2
+  int k = f(1);                   // uses #2
+  int l = f<>(1);                 // uses #1
+\end{lstlisting}」
+
+\paragraph{}
+存在的模板实参应该按与其对应\nt{template-parameter}的声明顺序指定。模板实参列表
+中不应该指定比存在的对应\nt{template-parameter}更多的\nt{template-argument}，除
+非\nt{template-parameter}之一是模板参数包。「例：
+\begin{lstlisting}
+  template<class X, class Y, class Z> X f(Y,Z);
+  template<class ... Args) void f2();
+  void g() {
+    f<int,const char*,double>("aa",3.0);
+    f<int,const char*>("aa",3.0);   // Z is deduced to be double
+    f<int>("aa",3.0);               // Y is deduced to be const char*, and Z is deduced to be double
+    f("aa",3.0);                    // error: X cannot be deduced
+    f2<char, short, int, long>();   // OK
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果形参类型不包含参与模板实参推导的\nt{template-parameter}，则对函数实参进行隐
+式转换（第\ref{conv}章）以转换它到对应函数形参的类型。「注：如果显式指定则模板形
+参不参与模板实参推导。比如，
+\begin{lstlisting}
+  template<class T> void f(T);
+
+  class Complex {
+    Complex(double);
+  };
+
+  void g() {
+    f<Complex>(1);      // OK, means f<Complex>(Complex(1))
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：因显式模板实参列表跟在函数模板名之后，且因转换成员函数模板和构造函数模板不
+使用函数名来调用，没有办法为这些函数模板提供显式模板实参列表。」
+
+\paragraph{}
+「注：对于简单函数名，适用参数依赖查询（\ref{basic.lookup.argdep}），即使当函数
+名在调用的作用域中不可见。这是因为调用仍有函数调用（\ref{basic.lookup.unqual}）
+的语法形式。但当使用一个有显式模板实参的函数模板时，调用不再有正确的语法形式，除
+非存在该名字的函数模板在调用点可见。如果没有此名字可见，则调用在语法上不合法且不
+应用参数依赖查询。如果这样的名字可见，则应用参数依赖查询且可能在其他命名空间中找
+到其他的函数模板。「例：
+\begin{lstlisting}
+  namespace A {
+    struct B { };
+    template<int X> void f(B);
+  }
+  namespace C {
+    template<class T> void f(T t);
+  }
+  void g(A::B b) {
+    f<3>(b);          // ill-formed: not a function call
+    A::f<3>(b);       // well-formed
+    C::f<3>(b);       // ill-formed; argument dependent lookup applies only to unqualified names
+    using C::f;
+    f<3>(b);          // well-formed because C::f is visible; when A::f is found by argument dependent lookup
+  }
+\end{lstlisting}」」
+
+\paragraph{}
+模板参数推导可以扩展对应于模板参数包的模板实参序列，即使当该序列包含显式指定的模
+板实参。「例：
+\begin{lstlisting}
+  template<class ... Types> void f(Types ... values);
+
+  void g() {
+    f<int*, float*>(0, 0, 0);     // Types is deduced to the sequence int*, float*, int
+  }
+\end{lstlisting}」
+
 \ssect{模板参数推导}{temp.deduct}
+\paragraph{}
+在引用函数模板特例化时，所有模板都应该有值。这些值可以显式指定，或者在某些情况下
+从其使用推导而来，或者从缺省的\nt{template-argument}取得。「例：
+\begin{lstlisting}
+  void f(Array<dcomplex>& cv, Array<int>& ci) {
+    sort(cv);                     // calls sort(Array<dcomplex>&)
+    sort(ci);                     // calls sort(Array<int>&)
+  }
+\end{lstlisting}
+以及
+\begin{lstlisting}
+  void g(double d) {
+    int i = convert<int>(d);      // calls convert<int,double>(double)
+    int c = convert<char>(d);     // calls convert<char,double>(double)
+\end{lstlisting}」
+
+\paragraph{}
+在指定模板实参列表时，如果模板实参不兼容于模板形参列表或按以下所述不产生合法函数
+类型，则类型推导失败。确切地，在相对于给定函数模板求值显式指定的模板实参时执行以
+下步骤：
+\begin{enumerate}
+  \item{如果指定模板实参在种类上（即类型，非类型，模板）不匹配于模板形参，或者如
+    果实参比形参个数多且没有模板参数包，或者如果不是每一个非包形参都有实参，则类
+    型推导失败。}
+  \item{如果非类型实参不匹配对应非类型模板形参的类型，且不可按
+    \ref{temp.arg.nontype}所指定转换到对应非类型形参类型，则类型推导失败。}
+  \item{所指定的模板实参值按以下指定替换对应模板形参。}
+\end{enumerate}
+
+\paragraph{}
+在该替换完成之后，执行\ref{dcl.fct}中所述的函数形参类型调整。「例：形参类型
+``\tm{void (const int, int[5])}''成为``\tm{void(*)(int,int*)}''。」「注：函数参
+数声明中的顶层限定符不影响函数类型，但仍会影响函数内的函数参数变量的类型。」
+「例：
+\begin{lstlisting}
+  template <class T> void f(T t);
+  template <class X> void g(const X x);
+  template <class Z> void h(Z, Z*);
+
+  int main() {
+    // #1: function type is f(int), t is non const
+    f<int>(1);
+
+    // #2: function type is f(int), t is const
+    f<const int>(1);
+
+    // #3: function type is g(int), x is const
+    g<int>(1);
+
+    // #4: function type is g(int), x is const
+    g<const int>(1);
+
+    // #5: function type is h(int, const int*)
+    h<const int>(1,0);
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：\tm{f<int>(1)}和\tm{f<const int>(1)}调用不同函数，即使两个所调用函数具有相
+同函数类型。」
+
+\paragraph{}
+替换并调整后的函数类型用作模板参数推导的函数模板类型。如果模板实参未被推导且其对
+应模板形参具有缺省实参，则模板实参由替换由为之前的模板形参所确定的模板实参到缺省
+实参来确定。如果替换产生无效类型则类型推导失败。「例：
+\begin{lstlisting}
+  template <class T, class U = double>
+  void f(T t = 0, U u = 0);
+
+  void g() {
+    f(1, 'c');        // f<int,char>(1,'c')
+    f(1);             // f<int,double>(1,0)
+    f();              // error: T cannot be deduced
+    f<int>();         // f<int,double>(0,0)
+    f<int,char>();    // f<int,char>(0,0)
+  }
+\end{lstlisting}」
+在所有模板实参被推导或从缺省模板实参获取到之后，模板的模板形参列表中模板形参的所
+有使用和函数类型使用对应的推导或缺省实参值来替换。如果按以上所述替换产生无效类型
+则类型推导失败。
+
+\paragraph{}
+在模板参数推导过程上的某些点必须取出使用模板形参的函数类型并使用对应模板实参替换
+这些模板形参。这在任何显式指定模板实参替换到函数类型时这在模板参数推导的开始处完
+成，且在任何推导的或从缺省实参取得的模板实参被替换时在模板推导结束处再次进行。
+
+\paragraph{}
+替换出现在用于函数类型和模板参数声明中的所类型和表达式中。表达式不仅包含常量表达
+式，如出现在数组上界中或非类型模板中的那些，也包括\tm{sizeof}，\tm{decltype}和其
+他允许非常量表达式的上下文中的通用表达式（即非常量表达式）。替换按记法顺序进行并
+在遇到满足替换失败的条件时终止。「注：异常规范中的等价替换仅当
+\nt{noexcept-specifier}被实例化时进行，在该点如果替换产生无效类型或表达式则程序
+为病态。」「例：
+\begin{lstlisting}
+  template <class T> struct A { using X = typename T::X; };
+  template <class T> typename T::x f(typename A<T>::X);
+  template <class T> void f(...) { }
+  template <class T> auto g(typename A<T>::X) -> typename T::X;
+  template <class T> void g(...) { }
+
+  void h() {
+    f(int)(0);          // OK, substituting return type causes deduction to fail
+    g(int)(0);          // error, substituting parameter type instantiates A<int>
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果替换产生无效类型或表达式，是类型推导失败。无效类型或表达式指如果用于被替换实
+参则为病态的那些，需要诊断。「注：如果无需诊断，程序仍为病态。访问检查作为替换过
+程的一部分进行。」只有函数类型和其模板参数类型的直接上下文中的无效类型和表达式可
+以导致推导失败。「注：类型和表达式的替换会导致比如类模板特例化和/或函数模板特例
+化的实例化，隐式定义函数生成等等这样的效果。此类效果不在``直接上下文''中且可能导
+致程序为病态。」
+
+「例：
+\begin{lstlisting}
+  struct X { };
+  struct Y {
+    Y(X){}
+  };
+
+  template <class T> auto f(T t1, T t2) -> decltype(t1 + t2);     // #1
+  X f(Y, Y);                                                      // #2
+
+  X x1, x2;
+  X x3 = f(x1, x2); // deduction fails on #1 (cannot add X+X), calls #2
+\end{lstlisting}
+
+「注：类型推导可能因以下原因而失败：
+\begin{enumerate}
+  \item{尝试实例化一个包含多个不同长度参数包的包展开。}
+  \item{尝试创建元素为\tm{void}类型，函数类型，引用类型或者抽象类类型的数组，或
+    者尝试创建大小为零或为负的数组。「例：
+\begin{lstlisting}
+  template <class T> int f(T[5]);
+  int I = f<int>(0);
+  int j = f<void>(0);             // invalid array
+\end{lstlisting}」}
+  \item{尝试使用一个限定名中的非类或枚举类型。「例：
+\begin{lstlisting}
+  template <class T> int f(typename T::B*);
+  int i = f<int>(0);
+\end{lstlisting}」}
+  \item{尝试使用\nt{qualified-id}的\nt{nested-name-specifier}中的类型而类型不包
+    含指定的成员，或者
+    \begin{enumerate}
+      \item{在需要类型的地方所指定的成员不是一个类型，或者}
+      \item{在需要模板的地方所指定的成员不是一个模板，或者}
+      \item{在需要非类型的地方所指定的成员不是非类型。}
+    \end{enumerate}
+    「例：
+\begin{lstlisting}
+  template <int I> struct X { };
+  template <template <class T> class> struct Z { };
+  template <class T> void f(typename T::Y*){}
+  template <class T> void g(X<T::N>*){}
+  template <class T> void h(Z<T::template TT>*){}
+  struct A {};
+  struct B { int Y; };
+  struct C {
+    typedef int N;
+  };
+  struct D {
+    typedef int TT;
+  };
+
+  int main() {
+    // Deduction fails in each of these cases:
+    f<A>(0);              // A does not contain a member Y
+    f<B>(0);              // The Y member of B is not a type
+    g<C>(0);              // The N member of C is not a non-type
+    h<D>(0);              // The TT member of D is not a template
+  }
+\end{lstlisting}」}
+  \item{尝试创建引用类型的指针。}
+  \item{尝试创建\tm{void}的引用。}
+  \item{尝试创建``\tm{T}的成员指针''而\tm{T}不是类类型。「例：
+\begin{lstlisting}
+  template <class T> int f(int T::*);
+  int i = f<int>(0);
+\end{lstlisting}」}
+  \item{尝试将一个无效类型赋给一个非类型模板形参。「例：
+\begin{lstlisting}
+  template <class T, T> struct S {};
+  template <class T> int f(S<T, T()>*);
+  struct X {};
+  int i0 = f<X>(0);
+\end{lstlisting}」}
+  \item{尝试在用于模板参数表达式或函数声明中的所用的表达式上进行无效转换。「例：
+\begin{lstlisting}
+  template <class T, T*> int f(int);
+  int i2 = f<int,1>(0);           // can't conv 1 to int*
+\end{lstlisting}」}
+  \item{尝试创建一个函数类型，其中形参具有\tm{void}类型，或其中返回类型为函数类
+    型或数组类型。}
+  \item{尝试创建一个函数类型，其中形参类型或返回类型为抽象类类型
+    （\ref{class.abstract}）。}
+\end{enumerate}」
+
+\paragraph{}
+「例：在下面的例子中，假定\tm{signed char}不能表示值1000，需要一个窄转换
+（\ref{dcl.init.list}）将\tm{int}类型的模板参数，因此替换第二个模板时失败。
+（\ref{temp.arg.nontype}）。
+\begin{lstlisting}
+  template <int> int f(int);
+  template <signed char> int f(int);
+  int i1 = f<1000>(0);            // OK
+  int i2 = f<1>(0);               // ambiguous; not narrowing
+\end{lstlisting}」
+
 \sssect{从函数调用推导模板参数}{temp.deduct.call}
-\sssect{取函数模板地址推导模板参数}{temp.deduct.funcaddr}
+\paragraph{}
+模板参数推导按以下所述通过比较每一个函数模板形参类型（称其为\tm{P}）和调用的对应
+实参（称其为\tm{A}），形参类型包含参与模板参数推导的\nt{template-parameter}。如
+果对于某些\tm{P'}和\tm{N}，从\tm{P}去除引用和cv限定符给出
+\tm{std::initializer\_list<P'>}或者\tm{P'[N]}，且实参为非空初始化列表
+（\ref{dcl.init.list}），则推导是对初始化列表的每一个元素而进行，取\tm{P'}作为函
+数模板形参类型，初始化元素作为其实参，而在\tm{P'[N]}的情况下，如果\tm{N}是非类型
+模板形参，\nt{N}推导自初始化列表的长度。否则，初始化列表实参使得形参考虑为一个非
+推导上下文（\ref{temp.deduct.type}）。「例：
+\begin{lstlisting}
+  template<class T> void f(std::initializer_list<T>);
+  f({1,2,3});                     // T deduced to int
+  f({1,"asdf"});                  // error: T deduced to both int and const char*
+
+  template<class T> void g(T);
+  g({1,2,3});                     // error: no argument deduced for T
+
+  template<class T, int N> void h(T const(&)[N]);
+  h({1,2,3});                     // T deduced to int, N deduced to 3
+
+  template<class T> void j(T const(&)[3]);
+  j({42});                        // T deduced to int, array bound not considered
+
+  struct Aggr { int i; int j; };
+  template<int N> void k(Aggr const(&)[N]);
+  k({1,2,3});                     // error: deduction fails, no conversion from int to Aggr
+  k({{1},{2},{3});                // OK, N deduced to 3
+
+  template<int M, int N> void m(int const(&)[M][N]);
+  m({{1,2},{3,4}});               // OK, N deduced to 3
+
+  template<class T, int N> void n(T const(&)[N], T);
+  n({{1},{2},{3}},Aggr());        // OK, T is Aggr, N is 3
+\end{lstlisting}」对于出现在\nt{parameter-declaration-list}结尾的函数参数包，推
+导对调用的每一个剩余实参进行，取函数参数包的\nt{declarator-id}的类型\tm{P}作为对
+应函数模板参数类型。每一个推导要为函数参数包展开的模板参数包中后续位置推导出模板
+实参。当函数参数包出现在非推导上下文中时（\ref{temp.deduct.type}），该参数包的类
+型不进行推导。「例：
+\begin{lstlisting}
+  template<class ... Types> void f(Types& ...);
+  template<class T1, class ... Types> void g(T1, Types ...);
+  template<class T1, class ... Types> void g1(Types ..., T1);
+  void h(int x, float& y) {
+    const int z = x;
+    f(x, y, z);                   // Types is deduced to int, float, const int
+    g(x, y, z);                   // T1 is deduced to int; Types is deduced to float, int
+    g1(x, y, z);                  // error: Types is not deduced
+    g1<int, int, int>(x, y, z);   // OK, no deduction occurs
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果\tm{P}不是引用类型：
+\begin{enumerate}
+  \item{如果\tm{A}是数组类型，使用数组到指针标准转换（\ref{conv.array}）所产生的
+    指针代替\tm{A}来进行类型推导；否则，}
+  \item{如果\tm{A}是函数类型，使用函数到指针标准转换（\ref{conv.func}）所产生的
+    指针代替\tm{A}来进行类型推导；否则，}
+  \item{如果\tm{A}是cv限定类型，忽略\tm{A}的类型中的顶层cv限定符来进行类型推
+    导。}
+\end{enumerate}
+
+\paragraph{}
+如果\tm{P}是cv限定类型，忽略\tm{P}的类型中顶层的cv限定符来参与类型推导。如果
+\tm{P}是一个引用类型，使用\tm{P}所引用的类型来做类型推导。「例：
+\begin{lstlisting}
+  template<class T> int f(const T&);
+  int n1 = f(5);                  // calls f<int>(const int&)
+  const int i = 0;
+  int n2 = f(i);                  // calls f<int>(const int&)
+  template <class T> int g(volatile T&);
+  int n3 = g(i);                  // calls g<const int>(const volatile int&)
+\end{lstlisting}」
+一个\nt{前向引用}（\nt{forwarding reference}）指cv未限定模板形参的右值引用，该模
+板形参（在类模板参数推导过程中（\ref{over.match.class.deduct}）不表示类模板的模
+板形参。如果\tm{P}是一个前向引用而实参是一个左值，则使用类型``\tm{A}的左值引用''
+代替\tm{A}来进行类型推导。「例：
+\begin{lstlisting}
+  template <class T> int f(T&& heisenreference);
+  template <class T> int g(const T&&);
+  int i;
+  int n1 = f(i);                  // calls f<int&>(int&)
+  int n2 = f(0);                  // calls f<int>(int&&)
+  int n3 = g(i);                  // error: would call g<int>(const int&&), which
+                                  // would bind an rvalue reference to an lvalue
+
+  template <class T> struct A {
+    template <class U>
+      A(T&&, U&&, int*);          // #1: T&& is not a forwarding reference.
+                                  // U&& is a forwarding reference.
+    A(T&&, int*);                 // #2
+  };
+
+  template <class T> A(T&&, int*) -> A<T>;  // #3: T&& is a forwarding reference.
+
+  int *ip;
+  A a{i, 0, ip};                  // error: cannot deduce from #1
+  A a0{0, 0, ip};                 // uses #1 to deduce A<int> and #1 to initialize
+  A a2{i, ip};                    // uses #3 to deduce A<int&> and #2 to initialize
+\end{lstlisting}」
+
+\paragraph{}
+通常，推导过程尝试找到模板实参值使得推导的\tm{A}与原\tm{A}等价（在类型\tm{A}如上
+所述变换之后）。但存在三种情况允许有不同：
+\begin{enumerate}
+  \item{如果原\tm{P}是引用类型，推导的\tm{A}（即引用所引的类型）可以比变换后的
+    \tm{A}更多cv限定。}
+  \item{变换后的\tm{A}可以是另一个指针或成员类型指针，可以通过函数指针转换
+    （\ref{conv.fctptr}）和/或限定转换（\ref{conv.qual}）将其转换到推导的
+    \tm{A}。}
+  \item{如果\tm{P}是类并且\tm{P}形如\nt{simple-template-id}，则变换后的\tm{A}可
+    以是推导的\tm{A}的派生类。类似的，如果\tm{P}是形如\nt{simple-template-id}的
+    类的指针，则变换后的\tm{A}可以是推导的\tm{A}所指向的派生类的指针。}
+\end{enumerate}
+
+\paragraph{}
+这些备选情形只在类型推导失败的情况下才予以考虑。如果它们产生超过一种可能的推导的
+\tm{A}则推导失败。「注：如果\nt{template-parameter}未在函数模板的任何函数参数中
+使用，或只在非推导上下文中使用了，则其对应\nt{template-argument}不能推导自函数调
+用，且\nt{template-argument}必须显式指定。」
+
+\paragraph{}
+当\tm{P}是函数类型，函数指针类型或成员函数指针类型时：
+\begin{enumerate}
+  \item{如果实参是包含一个或多个函数模板的重载集合，则形参当作是非推导上下文。}
+  \item{如果实参是一个重载集合（不含函数模板），则使用集合中每一个成员尝试试验性
+    的参数推导。如果推导只对一个重载集合成员成功，则该成员用作推导的实参值。如果
+    推导对多于一个重载集合成员成功是形参被当作非推导上下文。}
+\end{enumerate}
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  // Only one function of an overload set matches the call so the function parameter is a deduced context.
+  template <class T> int f(T (*p)(T));
+  int g(int);
+  int g(char);
+  int i = f(g);         // calls f(int (*)(int))
+\end{lstlisting}」
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+// Ambiguous deduction causes the second function parameter to be a non-deduced context.
+  template <class T> int f(T, T (*p)(T));
+  int g(int);
+  char g(char);
+  int i = f(1, g);      // calls f(int, int (*)(int))
+\end{lstlisting}」
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  // The overload set contains a template, causing the second function parameter to be a non-deduced context.
+  template <class T> int f(T, T (*p)(T));
+  char g(char);
+  template <class T> T g(T);
+  int i = f(1, g);      // calls f(int, int (*)(int))
+\end{lstlisting}」
+
+\paragraph{}
+如果对含有参与模板参数推导的\nt{template-parameter}的所有形参推导成功，且所有模
+板实参被显式指定，推导或从缺省模板实参获取，剩余形参随后与对应实参进行比较。对每
+一个剩余形参\tm{P}，其具有在任何显式指定模板实参替换之前是非依赖的类型，如果对应
+实参\tm{A}不能隐式转换到\tm{P}，则推导失败。「注：依赖类型的形参，其中没有
+\nt{template-parameter}参与到模板参数推导中，以及因显式模板实参的替换而变成非依
+赖的形参，在重载解析过程中会被检查。」「例：
+\begin{lstlisting}
+  template <class T> struct Z {
+    typedef typename T::x xx;
+  };
+  template <class T> typename Z<T>::xx f(void *, T);    // #1
+  template <class T> void f(int, T);                    // #2
+  struct A {} a;
+  int main() {
+    f(1, a);        // OK, deduction fails for #1 because there is no conversion from int to void*
+  }
+\end{lstlisting}
+
+\sssect{从函数模板地址推导模板参数}{temp.deduct.funcaddr}
+\paragraph{}
+模板参数可以从取重载函数（\ref{over.over}）地址时所指定的类型进行推导。函数模板
+的函数类型以及所指定的类型用作\tm{P}和\tm{A}的类型，且推导按
+\ref{temp.deduct.type}中所述进行。
+
+\paragraph{}
+函数模板返回类型中的占位类型（\ref{dcl.spec.auto}）是一个非推导上下文。如果对这
+样的函数模板参数推导成功了，则返回类型从函数体的实例化来确定。
+
 \sssect{推导转换函数模板参数}{temp.deduct.conv}
-\sssect{偏序中推导模板参数}{temp.deduct.partial}
+\paragraph{}
+模板参数推导按\ref{temp.deduct.type}中所述通过比较转换函数模板（称为\tm{P}）的
+返回类型和转换所需要的类型（称为\tm{A}；见\ref{dcl.init}，\ref{over.match.conv}
+以及\ref{over.match.ref}关于该类型的确定）来进行。
+
+\paragraph{}
+如果\tm{P}为引用类型，则使用\tm{P}所引用的类型代替\tm{P}进行类型推导以及本节剩余
+部分中\tm{P}的任何进一步引用或变换。
+
+\paragraph{}
+如果\tm{A}不是引用类型：
+\begin{enumerate}
+  \item{如果\tm{P}是数组类型，则使用数组到指针标准转换（\ref{conv.array}）所产生
+    的指针类型代替\tm{P}来进行类型推导；否则，}
+  \item{如果\tm{P}是函数类型，则使用函数到指针标准转换（\ref{conv.func}）所产生
+    的指针类型代替\tm{P}来进行类型推导；否则，}
+  \item{如果\tm{P}是cv限定类型，则类型推导忽略\tm{P}类型的顶层cv限定符。}
+\end{enumerate}
+
+\paragraph{}
+如果\tm{A}是cv限定类型，则类型推导忽略\tm{A}类型的顶层cv限定符。如果\tm{A}是一个
+引用类型，则使用\tm{A}所引用的类型来进行类型推导。
+
+\paragraph{}
+一般的，推导过程尝试查询模板实参值使得推导的\tm{A}等价于\tm{A}。但是，存在四种情
+形允许不同：
+\begin{enumerate}
+  \item{如果原\tm{A}为引用类型，\tm{A}可以比推导的\tm{A}具有更多cv限定（即引用所
+    引的类型）。}
+  \item{如果原\tm{A}为函数指针类型，\tm{A}可以是``函数指针''，即使推导的\tm{A}是
+    ``无异常的函数指针''。}
+  \item{如果原\tm{A}是成员函数指针类型，\tm{A}可以是``成员函数指针类型''，即使推
+    导的\tm{A}为``无异常的成员函数指针类型''。}
+  \item{推导的\tm{A}可以是另一个指针或成员类型指针，可以通过限定转换将其转换到
+    \tm{A}。}
+\end{enumerate}
+
+\paragraph{}
+这些备选情形仅当类型推导失败时才考虑。如果它们产生多于一个可能的推导的\tm{A}则类
+型推导失败。
+
+\paragraph{}
+当推导过程按上述需要指针或成员类型指针的限定转换时，使用以下过程以确定推导的模板
+实参值：
+
+如果\tm{A}是一个类型 \\
+\mbox{\qquad{\nt{cv\tsub{1,0}} ``...的指针'' \nt{cv\tsub{1,n-1}} ``指针指向''
+  \nt{cv\tsub{1,n}} \tm{T1}}} \\
+且\tm{P}为类型 \\
+\mbox{\qquad{\nt{cv\tsub{2,0}} ``...的指针'' \nt{cv\tsub{2,n-1}} ``指针指向''
+  \nt{cv\tsub{2,n}} \tm{T2}}} \\
+则cv未限定的\tm{T1}和\tm{T2}分别用作\tm{A}和\tm{P}的类型来作类型推导。
+
+「例：
+\begin{lstlisting}
+  struct A {
+    template <class T> operator T***();
+  };
+  A a;
+  const int * const * const * p1 = a;   // T is deduced as int, not const int
+\end{lstlisting}」
+
+\sssect{偏序比较过程中推导模板参数}{temp.deduct.partial}
+\paragraph{}
+模板参数推导通过比较某些关联于被比较的两个函数模板的类型来进行。
+
+\paragraph{}
+两个类型集合用于确定该偏序。对每一个相关模板存在原函数类型和变换的函数类型。
+「注：变换类型的创建在\ref{temp.func.order}中描述。」推导过程使用变换的类型作为
+实参模板且另一模板的原类型用作形参模板。该过程对偏序比较中每一个相关的类型进行两
+次：一次使用变换模板1作为实参模板和模板2作为形参模板，另一次使用变换模板2作为实
+参模板和模板1作为形参模板。
+
+\paragraph{}
+用于确定顺序的类型依赖于进行偏序比较的上下文：
+\begin{enumerate}
+  \item{在函数调用上下文中，所用类型为函数调用有实参的那些函数形参。\footnote{缺
+    省实参不认为是此上下文中的实参；它们只在函数被选中后才成员实参。}}
+  \item{在转换函数调用上下文中，使用转换函数模板的返回类型。}
+  \item{在其他上下文中（\ref{temp.func.order}使用函数模板的函数类型。}
+\end{enumerate}
+
+\paragraph{}
+以上所提到的形参模板的每一个类型以及对应实参模板的类型用作\tm{P}和\tm{A}的类型。
+如果一个特别的\tm{P}不含参与模板参数推导的\nt{template-parameter}，则不用该
+\tm{P}来确定排序。
+
+\paragraph{}
+在偏序完成之前，对用于偏序的类型进行某些变换：
+\begin{enumerate}
+  \item{如果\tm{P}是引用类型，则\tm{P}替换为其所引用的类型。}
+  \item{如果\tm{A}是引用类型，则\tm{A}替换为其所引用的类型。}
+\end{enumerate}
+
+\paragraph{}
+如果\tm{P}和\tm{A}均（曾）为引用类型（如上被其所引类型替换之前），确定这两个类型
+中哪一个（如果有）比另一个具有更多cv限定；否则为了偏序这些类型认为有相同cv限定。
+确定的结果将在以下使用。
+
+\paragraph{}
+移除任何顶层cv限定符：
+\begin{enumerate}
+  \item{如果\tm{P}是cv限定类型，\tm{P}被其cv未限定版本替换。}
+  \item{如果\tm{A}是cv限定类型，\tm{A}被其cv未限定版本替换。}
+\end{enumerate}
+
+\paragraph{}
+使用所产生的类型\tm{P}和\tm{A}，随后的推导按\ref{temp.deduct.type}中所述进行。如
+果\tm{P}是一个函数参数包，则实参模板的每一个剩余参数类型\tm{A}与函数参数包的
+\nt{declarator-id}的类型\tm{P}进行比较。每一次比较推导函数参数包展开的模板参数包
+中后续位置上的模板实参。类似的，如果\tm{A}（曾）变量自函数参数包，它与形参模板的
+每一个剩余形参类型进行比较。如果对给定类型推导成功，则实参模板中的类型认为至少与
+形参模板中的类型一样特殊。「例：
+\begin{lstlisting}
+  template<class... Args>           void f(Args... args);         // #1
+  template<class T1, class... Args> void f(T1 a1, Args... args);  // #2
+  template<class T1, class T2>      void f(T1 a1, T2 a2);         // #3
+
+  f();                // calls #1
+  f(1, 2, 3);         // calls #2
+  f(1, 2);            // calls #3; non-variadic template #3 is more specialized
+                      // than the variadic templates #1 and #2
+\end{lstlisting}」
+
+\paragraph{}
+如果对一个给定类型，推导在两个方向均成功了（即类型在变换后是等价的）且\tm{P}和
+\tm{A}均（曾）为引用类型（在如上被其所引类型替换之前）：
+\begin{enumerate}
+  \item{如果实参模板中的类型（曾）是一个左值引用而形参模板中的类型不是，则形参类
+    型不认为是至少和实参类型一样特殊；否则，}
+  \item{如果实参模板中的类型比形参模板中的类型具有更多cv限定（如上所述），则形参
+    类型不为是至少和实参类型一样特殊。}
+\end{enumerate}
+
+\paragraph{}
+函数模板\tm{F}至少和函数模板\tm{G}一样特殊，如果对用于确定排序的每一对类型，
+\tm{F}中的类型至少和\tm{G}中的类型一样特殊。\tm{F}比\tm{G}更特殊，如果\tm{F}至少
+和\tm{G}一样特殊而\tm{G}不是至少和\tm{F}一样特殊。
+
+\paragraph{}
+如果在以上考虑之后，函数模板\tm{F}至少和函数模板\tm{G}一样特殊且反之亦然，且如果
+\tm{G}有结尾参数包而\tm{F}没有对应的形参，且如果\tm{F}没有结尾参数包，则\tm{F}比
+\tm{G}更特殊。
+
+\paragraph{}
+在大部分情况下，如果不是所有模板形参都有值则推导失败，但为排序目的一个模板形参可
+以保持无值，如果它未用于用作偏序的类型中。「注：一个用于非推导上下文中的模板形参
+认为被使用过。」「例：
+\begin{lstlisting}
+  templates <class T> T f(int);           // #1
+  templates <class T, class U> T f(U);    // #2
+  void g() {
+    f<int>(1);                            // calls #1
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：含模板参数包的函数模板偏序独立于这些模板参数包的推导实参数目。」「例：
+\begin{lstlisting}
+  template<class ...> struct Tuple { };
+  template<class ... Types> void g(Tuple<Types ...>);                 // #1
+  template<class T1, class ... Types> void g(Tuple<T1, Types ...>);   // #2
+  template<class T1, class ... Types> void g(Tuple<T1, Types& ...>);  // #3
+
+  g(Tuple<>());             // calls #1
+  g(Tuple<int, float>());   // calls #2
+  g(Tuple<int, float&>());  // calls #3
+  g(Tuple<int>());          // calls #3
+\end{lstlisting}」
+
 \sssect{从类型推导模板参数}{temp.deduct.type}
+\paragraph{}
+模板参数可在多个不同上下文中推导，但在每一种情形中就模板形参（称为\tm{P}）而言所
+指定的类型与一个实际类型（称为\tm{A}）进行比较，且尝试查询模板实参值（对于类型参
+数为一个类型，对非类型参数为一个值，或对模板参数是一个模板），该值在替换推导的值
+（称为推导的\tm{A}）之后兼容于\tm{A}。
+
+\paragraph{}
+在某些情况下，推导使用类型\tm{P}和\tm{A}的单个集合来进行，其他情况下将存在对应类
+型\tm{P}和\tm{A}的集合。类型推导独立于每一个\tm{P/A}对进行，然后推导的模板实参值
+再组合起来。如果类型推导对任\tm{P/A}对不能进行，或如果对任一对推导产生多于一个可
+能的推导值集合，或者如果不同对产生不同推导值，或者如果任何模板实参保持既不能推导
+也不显式指定，则模板参数推导失败。类型参数的类型如果不推导则只从数组上界推导。
+
+\paragraph{}
+给定类型\tm{P}可以由一些其他类型，模板和非类型值组成：
+\begin{enumerate}
+  \item{函数类型包含每一个函数形参的类型以及返回类型。}
+  \item{成员类型指针包含所指类对象和所指成员的类型。}
+  \item{类模板特例化（如\tm{A<int>}）的类型包含特例化的模板参数列表引用引用的类
+    型，模板和非类型值。}
+  \item{数组类型包含数组元素类型和数组上界的值。}
+\end{enumerate}
+
+\paragraph{}
+在大部分情况下，用于组成\tm{P}的类型，模板和非类型值参与模板参数推导。即它们可以
+用于确定模板参数的值，且如果如此确定的值不兼容于别处确定的值则模板参数推导失败。
+但在某些上下文中值不参与类型推导，而是使用别处推导或显式指定的模板参数值。如果模
+板形参只用于非推导上下文中且未显式指定，则模板参数推导失败。「注：在
+\ref{temp.deduct.call}和\ref{temp.deduct.partial}下，如果\tm{P}不包含出现在推导
+上下文中的\nt{template-parameter}则不进行推导，因此\tm{P}和\tm{A}不需要具有相同
+形式。」
+
+\paragraph{}
+非推导上下文为：
+\begin{enumerate}
+  \item{使用\nt{qualified-id}指定的类型的\nt{nested-name-specifier}。}
+  \item{\nt{decltype-specifier}的\nt{expression}。}
+  \item{非类型模板参数或数组上界，其中的子表达式引用模板形参。}
+  \item{用于函数参数的参数类型中的模板形参，该函数参数中具有参数推导已经完成的调
+    用中使用的缺省实参。}
+  \item{参数推导不能进行的函数形参，因关联函数实参是一个函数，或者一个重载函数集
+    合（\ref{over.over}），且以下一个或多个成立：
+    \begin{enumerate}
+      \item{多于一个函数匹配函数形参类型（产生歧义推导），或者}
+      \item{没有函数匹配函数形参类型，或者}
+      \item{提供作为实参的函数集合包含一个或多个函数模板。}
+    \end{enumerate}}
+  \item{关联实参为初始化列表（\ref{dcl.init.list}）但形参不具有自初始化列表的推
+    导为其所指定（\ref{temp.deduct.call}）的类型的函数形参。「例：
+\begin{lstlisting}
+  template<class T> void g(T);
+  g({1,2,3});                 // error: no argument deduced for T
+\end{lstlisting}」}
+  \item{未出现在\nt{parameter-declaration-lits}结尾的函数参数包。}
+\end{enumerate}
+
+\paragraph{}
+当一个类型名按包含非推导上下文的方式指定时，构成该类型名的所有类型也是非推导的。
+然而，复合类型可以包含推导和非推导类型。「例：如果一个类型指定为
+\tm{A<T>::B<T2>}，则\tm{T}和\tm{T2}均为非推导的。同样，如果一个类型指定为
+\tm{A<I+J>::X<T>}，则\tm{I}，\tm{J}和\tm{T}为非推导的。如果一个类型指定为
+\tm{void f(typename A<T>::B, A<T>)}，则\tm{A<T>::B}中的\tm{T}是非推导的，但
+\tm{A<T>}中的\tm{T}为推导的。」
+
+\paragraph{}
+「例：此处是一个例子，其中不同形参/实参对产生不一致的模板参数推导：
+\begin{lstlisting}
+  template<class T> void f(T x, T y) { /* ... */ }
+  struct A { /* ... */ };
+  struct B : A { /* ... */ };
+  void g(A a, B b) {
+    f(a, b);          // error: T could be A or B
+    f(b, a);          // error: T could be A or B
+    f(a, a);          // OK: T is A
+    f(b, b);          // OK: T is B
+  }
+\end{lstlisting}
+这里是一个例子，其中两个模板实参推导自单个函数形参/实参对。这可能引起导致类型推
+导失败的冲突：
+\begin{lstlisting}
+  template <class T, class U> void f( T (*) ( T, U, U ) );
+  int g1( int, float, float);
+  char g2( int, float, float);
+  int g3( int, char, float);
+  void r() {
+    f(g1);             // OK: T is int and U is float
+    f(g2);             // error: T could be char or int
+    f(g3);             // error: U could be char or float
+  }
+\end{lstlisting}
+此处是一个例子，其中限定转换应用于函数调用的实参类型和推导模板实参类型之间。
+\begin{lstlisting}
+  template<class T> void f(const T*) { }
+  int* p;
+  void s() {
+    f(p); // f(const int*)
+  }
+\end{lstlisting}
+此处是一个例子，其中模板实参用于实例化对应函数形参类型的派生类类型：
+\begin{lstlisting}
+  template <class T> struct B { };
+  template <class T> struct D : public B<T> {};
+  struct D2 : public B<int> {};
+  template <class T> void f(B<T>&) {}
+  void t() {
+    D<int> d;
+    D2 d2;
+    f(d);             // calls f(B<int>&)
+    f(d2);            // calls f(B<int>&)
+  }
+\end{lstlisting}」
+
+\paragraph{}
+模板类型参数\tm{T}，模板模板参数\tm{TT}或模板非类型参数\tm{i}如果\tm{P}和\tm{A}
+具有以下形式之一则可以推导：                                                  \\
+\mbox{\qquad{\tm{T}}}                                                         \\
+\mbox{\qquad{\nt{cv} \tm{T}}}                                                 \\
+\mbox{\qquad{\tm{T*}}}                                                        \\
+\mbox{\qquad{\tm{T\&}}}                                                       \\
+\mbox{\qquad{\tm{T\&\&}}}                                                     \\
+\mbox{\qquad{\tm{T[} \nt{integer-constant} \tm{]}}}                           \\
+\mbox{\qquad{\nt{template-name}\tm{<T>} （\nt{template-name}指一个类模板）}}  \\
+\mbox{\qquad{\nt{type}\tm{(T)}}}                                              \\
+\mbox{\qquad{\tm{T()}}}                                                       \\
+\mbox{\qquad{\tm{T(T)}}}                                                      \\
+\mbox{\qquad{\tm{T} \nt{type}\tm{::*}}}                                       \\
+\mbox{\qquad{\nt{type} \tm{T::*}}}                                            \\
+\mbox{\qquad{\tm{T T::*}}}                                                    \\
+\mbox{\qquad{\tm{T (}\nt{type}\tm{::*)()}}}                                   \\
+\mbox{\qquad{\nt{type} \tm{(T::*)()}}}                                        \\
+\mbox{\qquad{\nt{type} \tm{(}\nt{type}\tm{::*)(T)}}}                          \\
+\mbox{\qquad{\nt{type} \tm{(T::*)(T)}}}                                       \\
+\mbox{\qquad{\tm{T (}\nt{type}\tm{::*)(T)}}}                                  \\
+\mbox{\qquad{\tm{T (T::*)()}}}                                                \\
+\mbox{\qquad{\tm{T (T::*)(T)}}}                                               \\
+\mbox{\qquad{\nt{type}\tm{[i]}}}                                              \\
+\mbox{\qquad{\nt{template-name}\tm{<i>} （\nt{template-name}指类模板）}}      \\
+\mbox{\qquad{\tm{TT<T>}}}                                                     \\
+\mbox{\qquad{\tm{TT<i>}}}                                                     \\
+\mbox{\qquad{\tm{TT<>}}}                                                      \\
+这里的\tm{(T)}表示至少一个形参类型包含\tm{T}的形参类型列表（\ref{dcl.fct}），
+\tm{()}表示没有形参类型包含\tm{T}的形参类型列表。类似的，\tm{<T>}表示至少一个实
+参包含\tm{T}的模板实参列表，\tm{<i>}表示至少一个实参包含\tm{i}的模板实参列表，
+\tm{<>}表示没有实参包含\tm{T}或\tm{i}的模板实参列表。
+
+\paragraph{}
+如果\tm{P}具有含\tm{<T>}或\tm{<i>}的形式，则\tm{P}的对应模板实参列表的每一个实参
+\tm{P}\nt{\tsub{i}}与\tm{A}的对应模板实参列表的对应实参\tm{A}\nt{\tsub{i}}进行比
+较。如果\tm{P}的模板实参列表包含不是最后一个模板实参的包展开，则整个模板实参列表
+是一个非推导上下文。如果\tm{P}\nt{\tsub{i}}是一个包展开，则\tm{P}\nt{\tsub{i}}的
+模式与\tm{A}的模板实参列表的每一个剩余实参进行比较。每一个比较为
+\tm{P}\nt{\tsub{i}}所展开的模板形参包中后续位置推导模板实参。在偏序
+（\ref{temp.deduct.partial}）中，如果\tm{A}\nt{\tsub{i}}原来是一个包展开：
+\begin{enumerate}
+  \item{如果\tm{P}不包含对应于\tm{A}\nt{\tsub{i}}的模板实参则忽略
+    \tm{A}\nt{\tsub{i}}；}
+  \item{否则，如果\tm{P}\nt{\tsub{i}}不是包展开，则模板参数推导失败。}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  template<class T1, class... Z> class S;                       // #1
+  template<class T1, class... Z> class S<T1, const Z&...> { };  // #2
+  template<class T1, class T2>   class S<T1, const T2&> { };    // #3
+  S<int, const int&> s;         // both #2 and #3 match; #3 is more specialized
+
+  template<class T, class... U>            struct A { };                // #1
+  template<class T1, class T2, class... U> struct A<T1, T2*, U...> { }; // #2
+  template<class T1, class T2>             struct A<T1, T2> { };        // #3
+  template struct A<int, int*>; // selects #2
+\end{lstlisting}」
+
+\paragraph{}
+类似的，如果\tm{P}具有含\tm{(T)}的形式，则\tm{P}的对应参数类型列表的每一个类型
+\tm{P}\nt{\tsub{i}}与\tm{A}的对应参数类型列表的对应形参类型\tm{A}\nt{\tsub{i}}进
+行比较。如果\tm{P}和\tm{A}为函数类型，源自取函数模板
+（\ref{temp.deduct.funcaddr}）取地址时或从函数声明（\ref{temp.deduct.decl}）推导
+模板参数时的推导，并且\tm{P}\nt{\tsub{i}}和\tm{A}\nt{\tsub{i}}分别为\tm{P}和
+\tm{A}的顶层参数类型列表的参数，如果\tm{P}\nt{\tsub{i}}是一个前向引用
+（\ref{temp.deduct.call}）且\tm{A}\nt{\tsub{i}}为左值引用则调用
+\tm{P}\nt{\tsub{i}}，这种情况下\tm{P}\nt{\tsub{i}}的类型改为模板形参类型（即
+\tm{T\&\&}改为仅\tm{T}）。「注：结果就是当\tm{P}\nt{\tsub{i}}为\tm{T\&\&}且
+\tm{A}\nt{\tsub{i}}为\tm{X\&}时，调整后的\tm{P}\nt{\tsub{i}}将是\tm{T}，使得
+\tm{T}推导为\tm{X\&}。」「例：
+\begin{lstlisting}
+  template <class T> void f(T&&);
+  template <> void f(int&) { }    // #1
+  template <> void f(int&&) { }   // #2
+  void g(int i) {
+    f(i);                         // calls f<int&>(int&), i.e., #1
+    f(0);                         // calls f<int>(int&&), i.e., #2
+  }
+\end{lstlisting}」
+如果对应于\tm{P}\nt{\tsub{i}}的\nt{parameter-declaration}是函数参数包，则其
+\nt{declarator-id}的类型与\tm{A}的参数类型列表中的每一个剩余形参类型进行比较。每
+一个比较推导由函数参数包所展开的模板参数包中后续位置的模板实参。在偏序过程中
+（\ref{temp.deduct.partial}），如果\tm{A}\nt{\tsub{i}}原来是一个函数参数包：
+\begin{enumerate}
+  \item{如果\tm{P}不包含对应\tm{A}\nt{\tsub{i}}的函数形参类型则忽略
+    \tm{A}\nt{\tsub{i}}；}
+  \item{否则，如果\tm{P}\nt{\tsub{i}}不是一个函数参数包，则模板参数推导失败。}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  template<class T, class... U> void f(T*, U... ) { } // #1
+  template<class T>             void f(T) { }         // #2
+  template                      void f(int*);         // selects #1
+\end{lstlisting}」
+
+\paragraph{}
+这些形式可以像\tm{T}一样用于进一步的类型组合。「例：
+\begin{lstlisting}
+  X<int> (*)(char[6])
+\end{lstlisting}
+的形式为                                                                      \\
+\mbox{\qquad{\nt{template-name}\tm{<T> (*)(}\nt{type}\tm{[i])}}}              \\
+它是                                                                          \\
+\mbox{\qquad{\nt{type} \tm{(*)(T)}}}                                          \\
+的一个变体，其中\nt{type}是\tm{X<int>}，\tm{T}为\tm{char[6]}。」
+
+\paragraph{}
+模板参数不能从涉及除以上指定的结构之外的函数参数推导出来。
+
+\paragraph{}
+当对应于使用依赖类型声明的非类型模板参数\tm{P}的实参值从表达式推导时，\tm{P}的类
+型中的模板形参推导自值的类型。「例：
+\begin{lstlisting}
+  template<long n> struct A { };
+  template<typename T> struct C;
+  template<typename T, T n> struct C<A<n>> {
+    using Q = T;
+  };
+  using R = long;
+  using R = C<A<2>>::Q;           // OK; T was deduced to long from the
+                                  // template argument value in the type A<2>
+\end{lstlisting}」类型\tm{T[N]}中的类型\tm{N}为\tm{std::size\_t}。「例：
+\begin{lstlisting}
+  template<typename T> struct S;
+  template<typename T, T n> struct S<int[n] > {
+    using Q = T;
+  };
+  using V = decltype(sizeof 0);
+  using V = S<int[42] >::Q;       // OK; T was deduced to std::size_t from the type int[42]
+\end{lstlisting}」
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  template<class T, T i> void f(int (&a) [i]);
+  int v[10];
+  void g() {
+    f(v);                         // OK: T is std::size_t
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：除引用和指针类型外，主数组上界不是函数形参类型的一部分，且不能从实参推导出
+来：
+\begin{lstlisting}
+  template<int i> void f1(int a[10][i]);
+  template<int i> void f2(int a[i][20]);
+  template<int i> void f3(int (&a)[i][20]);
+  void g() {
+    int v[10][20];
+    f1(v);                          // OK: i deduced to be 20
+    f1<20>(v);                      // OK
+    f2(v);                          // error: cannot deduce template-argument i
+    f2<10>(v);                      // OK
+    f3(v);                          // OK: i deduced to be 10
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：在带有非类型模板参数的函数模板声明中，如果非类型模板参数用于函数参数列表的
+子表达式中，则按以上指定的，表达式为非推导上下文。「例：
+\begin{lstlisting}
+  template <int i> class A { /* ... */ };
+  template <int i> void g(A<i+1>);
+  template <int i> void f(A<i>, A<i+1>);
+  void k() {
+    A<1> a1;
+    A<2> a2;
+    g(a1);                          // error: deduction fails for expression i+1
+    g<0>(a1);                       // OK
+    f(a1, a2);                      // OK
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「注：如果仅用于非推导上下文，则模板形参不参与模板参数推导。比如：
+\begin{lstlisting}
+  template<int i, typename T>
+  T deduce(typename A<T>::X x,  // T is not deduced here
+           T t,                 // but T is deduced here
+           typename B<i>::Y y); // i is not deduced here
+  A<int> a;
+  B<77>  b;
+
+  int    x = deduce<77>(a.xm, 62, b.ym);
+  // T is deduced to be int, a. xm must be convertible to A<int>::X
+  // i is explicitly specified to be 77, b.ym must be convertible to B<77>::Y
+\end{lstlisting}」
+
+\paragraph{}
+如果\tm{P}具有含\tm{<i>}的形式，且如果\tm{i}的类型不同于包含
+\nt{simple-template-id}所确定的模板的对应模板形参的类型，则推导失败。如果\tm{P}
+具有含\tm{[i]}的形式，且如果\tm{i}的类型不是整型，则推导失败。\footnote{尽管对应
+于\tm{bool}类型\nt{template-parameter}的\nt{template-argument}可以从数组上界推导
+出来，所产生的值将永远是\tm{true}，因为数组上界为非零。}「例：
+\begin{lstlisting}
+  template<int i> class A { /* ... */ };
+  template<short s> void f(A<s>);
+  void k1() {
+    A<1> a;
+    f(a);             // error: deduction fails for conversion from int to short
+    f<1>(a);          // OK
+  }
+  template<const short cs> class B { };
+  template<short s> void g(B<s>);
+  void k2() {
+    B<1> b;
+    g(b);             // OK: cv-qualifiers are ignored on template parameter types
+  }
+\end{lstlisting}」
+
+\paragraph{}
+一个\nt{template-argument}可以推导自函数，函数指针或成员函数指针类型。
+
+「例：
+\begin{lstlisting}
+  template<class T> void f(void(*)(T, int));
+  template<class T> void foo(T, int);
+  void g(int, int);
+  void g(char, int);
+
+  void h(int, int, int);
+  void h(char, int);
+  int m() {
+    f(&g);              // error: ambiguous
+    f(&h);              // OK: void h(char, int) is a unique match
+    f(&foo);            // error: type deduction fails because foo is a template
+  }
+\end{lstlisting}」
+
+\paragraph{}
+一个模板\nt{type-parameter}不能推导自函数缺省参数的类型。「例：
+\begin{lstlisting}
+  template <class T> void f(T = 5, T = 7);
+  void g() {
+    f(1);             // OK: call f<int>(1, 7)
+    f();              // error: cannot deduce T
+    f<int>();         // OK: call f<int>(5, 7)
+  }
+\end{lstlisting}」
+
+\paragraph{}
+对应于模板\nt{template-parameter}的\nt{template-argument}推导自用于函数调用实参
+列表中的类模板特例化的\nt{template-argument}的类型。「例：
+\begin{lstlisting}
+  template <template <class T> class X> struct A { };
+  template <template <class T> class X> void f(A<X>) { }
+  template<class T> struct B { };
+  A<B> ab;
+  f(ab);                // calls f(A<B>)
+\end{lstlisting}」
+
+\paragraph{}
+「注：涉及参数包（\ref{temp.variadic}）的模板参数推导可以推导每一个参数包的零或
+多个参数。」「例：
+\begin{lstlisting}
+  template<class> struct X { };
+  template<class R, class ... ArgTypes> struct X<R(int, ArgTypes ...)> { };
+  template<class ... Types> struct Y { };
+  template<class T, class ... Types> struct Y<T, Types& ...> { };
+
+  template<class ... Types> int f(void (*)(Types ...));
+  void g(int, float);
+
+  X<int> x1;                        // uses primary template
+  X<int(int, float, double)> x2;    // uses partial specialization; ArgTypes contains float, double
+  X<int(float, int)> x3;            // uses primary template
+  Y<> y1;                           // use primary template; Types is empty
+  Y<int&, float&, double&> y2;      // uses partial specialization; T is int&, Types contains float, double
+  Y<int, float, double> y3;         // uses primary template; Types contains int, float, double
+  int fv = f(g);                    // OK; Types contains int, float
+\end{lstlisting}」
+
 \sssect{从函数声明推导模板参数}{temp.deduct.decl}
+\paragraph{}
+在其\nt{declarator-id}引用函数模板特例化的声明中，进行模板参数推导以识别声明所引
+用的特例化。确切地说是对显式实例化（\ref{temp.explicit}），显式特例化
+（\ref{temp.expl.spec}）和某些友元声明（\ref{temp.friend}）进行模板参数推导。也
+会为确定释放函数模板特例化是否匹配放置\tm{operator new}
+（\ref{basic.stc.dynamic.deallocation}，\ref{expr.new}）而进行模板参数推导。在所
+有这些情形中，\tm{P}为考虑作为潜在匹配的函数模板的类型，\tm{A}为声明的函数类型或
+为按\ref{expr.new}中所述可能匹配放置\tm{operator new}的释放函数的类型。推导按
+\ref{temp.deduct.type}中所述进行。
+
+\paragraph{}
+对如此考虑的函数模板集合，如果在考虑过偏序（\ref{temp.func.order}）之后不存在匹
+配或存在多于一个匹配，则推导失败，并且在声明的情形中，程序为病态。
 
 \ssect{重载解析}{temp.over}
+\paragraph{}
+函数模板可以被其名字的（非模板）函数重载或者被（其他）同名函数模板所重载。当（显
+式或用运算符记法隐式地）写出此名字的调用时，为每一个函数模板进行模板参数推导
+（\ref{temp.deduct}）并检查任何显式模板参数（\ref{temp.arg}）以查询可用于该函数
+模板来实例化可使用调用参数进行调用的函数模板特例化的模板参数值（如果有）。对每一
+个函数模板，如果参数推导和检查成功，则\nt{template-argument}（推导和/或显式的）
+用于合成单个函数模板特例化声明，将其添加到用于重载解析的候选函数集合。如果对一个
+给定函数模板，参数推导失败，或者合成的函数模板特例化为病态，则不为该模板添加这样
+的函数到候选函数集合中。完整的候选函数集合包含所有合成的声明和所有同名的非模板重
+载函数。合成的声明在重载解析其余部分与其他函数一样对待，\ref{over.match.best}显
+式提到的除外。\footnote{函数模板特例化的参数不包含模板参数类型。推导参数上的转换
+集合是有限的，因为参数推导过程产生的函数模板，其参数要么确切匹配调用参数，要么其
+仅有的区别可以由允许的有限转换连接起来。非推导参数允许全范围的转换。同样注意
+\ref{over.match.best}指明，如果两个函数为重载匹配的同样好的候选，则一个非模板函
+数将比一个模板特例化优先考虑。}
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  template<class T> T max(T a, T b) { return a>b?a:b; }
+  void f(int a, int b, char c, char d) {
+    int m1 = max(a,b);              // max(int a, int b)
+    char m2 = max(c,d);             // max(char a, char b)
+    int m3 = max(a,c);              // error: cannot generate max(int,char)
+  }
+\end{lstlisting}
+添加非模板函数
+\begin{lstlisting}
+  int max(int,int);
+\end{lstlisting}
+到上例中将可以解析第三个调用，通过提供一个函数，在使用标准转换将\tm{c}从
+\tm{char}转换到\tm{int}后可为\tm{max(a,c)}而调用。」
+
+\paragraph{}
+「例：这是一个\nt{template-argument}推导中涉及函数参数转换的例子：
+\begin{lstlisting}
+  template<class T> struct B { /* ... */ };
+  template<class T> struct D : public B<T> { /* ... */ };
+  template<class T> void f(B<T>&);
+  void g(B<int>& bi, D<int>& di) {
+    f(bi);            // f(bi)
+    f(di);            // f((B<int>&) di)
+  }
+\end{lstlisting}」
+
+\paragraph{}
+「例：这是一个非\nt{template-argument}推导中涉及函数参数转换的例子：
+\begin{lstlisting}
+template<class T> void f(T*, int); // #1
+template<class T> void f(T, char); // #2
+
+void h(int* pi, int i, char c) {
+  f(pi,i);            // #1: f<int>(pi,i)
+  f(pi,c);            // #2: f<int*>(pi,c)
+
+  f(i,c);            // #2: f<int>(i,c);
+  f(i,i);            // #2: f<int>(i,char(i))
+}
+\end{lstlisting}」
+
+\paragraph{}
+进入一组候选函数集合中的特例化只需要一个函数模板特例化的签名。因此只需要函数模板
+声明来解析函数模板特例化作为一个候选的调用。「例：
+\begin{lstlisting}
+  template<class T> void f(T);    // declaration
+
+  void g() {
+    f("Annemarie");               // call of f<const char*>
+  }
+\end{lstlisting}
+调用\tm{f}是合法的，即使模板\tm{f}在调用点仅声明未定义。除非\tm{f<const char*>}
+的隐式或显式生成特例化存在于某些翻译单元中，否则程序为病态。」
 
 \sect{推导指南}{temp.deduct.guide}
+\paragraph{}
+推导指南用于当\nt{template-name}用作推导类类型（\ref{dcl.type.class.deduct}）的
+类型说明符时。推导指南不会被名字查询找到。而是在进行类模板参数推导
+（\ref{over.match.class.deduct}）时考虑为类模板所声明的任何推导指南。
+
+\synsym{deduction-guide}
+  \synprd[]{\tm{explicit}\nt{\tsub{opt} template-name} \tm{(}
+    \nt{parameter-declaration-clause} \tm{) ->} \nt{simple-template-id} \tm{;}}
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  template<class T, class D = int>
+  struct S {
+    T data;
+  };
+  template<class U>
+  S(U) -> S<typename U::type>;
+
+  struct A {
+    using type = short;
+    operator type();
+  };
+  S x{A()};           // x is of type S<short, int>
+\end{lstlisting}」
+
+\paragraph{}
+同样的限制与函数声明（\ref{dcl.fct}）中一样也适用于推导指南的
+\nt{parameter-declaration-clause}。\nt{simple-template-id}确定一个类模板特例化。
+\nt{template-name}应该声明在与对应类模板一样的作用域中且对于成员类模板应该具有相
+同的访问。同一翻译单元中同一类模板的两个推导指南声明不应该具有等价的
+\nt{parameter-declaration-clause}。

@@ -1,15 +1,541 @@
 %% 18.except
 
 \chptr{异常处理}{except}
+\paragraph{}
+异常处理提供了一种从线程执行中的一点转移控制和信息到关联于之前已执行点的异常处理
+程序的机制。处理程序只会通过其try块或其try块中所调用函数中的执行代码抛出异常来调
+用。
+
+\synsym{try-block}
+  \synprd{\tm{try} \nt{compound-statement handler-seq}}
+\synsym{function-try-block}
+  \synprd{\tm{try} \nt{ctor-initializer\tsub{opt} compound-statement
+    handler-seq}}
+\synsym{handler-seq}
+  \synprd{\nt{handler handler-seq\tsub{opt}}}
+\synsym{handler}
+  \synprd{\tm{catch (} \nt{exception-declaration} \tm{)}
+    \nt{compound-statement}}
+\synsym{exception-declaration}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} type-specifier-seq declarator}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} type-specifier-seq
+    abstract-declarator\tsub{opt}}}
+  \synprd[]{\tm{...}}
+
+一个\nt{exception-declaration}中可选的\nt{attribute-specifier-seq}应用于catch语
+句的参数（\ref{except.handle}）。
+
+\paragraph{}
+一个\nt{try-block}是一个语句（第\ref{stmt.stmt}）。「注：本章中``try块''既指
+\nt{try-block}也指\nt{function-try-block}。」
+
+\paragraph{}
+不应该使用\tm{goto}或\tm{switch}语句来转换控制到try块中或处理程序中。「例：
+\begin{lstlisting}
+  void f() {
+    goto l1;            // ill-formed
+    goto l2;            // ill-formed
+    try {
+      goto l1;          // OK
+      goto l2;          // ill-formed
+      l1: ;
+    } catch (...) {
+      l2: ;
+      goto l1;          // ill-formed
+      gotl l2;          // OK
+    }
+  }
+\end{lstlisting}」\tm{goto}、\tm{break}、\tm{return}或\tm{continue}语句可用于从
+try块或处理程序中转移出控制。当这种转移发生时，声明于try块中声明的每一个变量将会
+从直接包含此声明的上下文中销毁。「例：
+\begin{lstlisting}
+  lab: try {
+    T1 t1;
+    try {
+      T2 t2;
+      if (condition)
+        goto lab;
+    } catch(...) { /* handler 2 */ }
+  } catch(...) { /* handler 1 */ }
+\end{lstlisting}
+此处，执行\tm{goto lab;}将会首先销毁\tm{t2}，然后销毁\tm{t1}，假定\nt{condition}
+没有声明新变量。在销毁\tm{t2}时抛出的任何异常将导致\tm{handler 2}的执行；销毁
+\tm{t1}时所抛出的任何异常将导致\tm{handler 1}的执行。」
+
+\paragraph{}
+\nt{function-try-block}将\nt{handler-seq}关联于\nt{ctor-initializer}（如果存在的
+话）和\nt{compound-statement}。抛出于\nt{compound-statement}的执行过程中或者
+对于构造函数和析构函数分别抛出于类子对象的初始化和析构过程中的异常，和
+\nt{try-block}执行过程中抛出的异常转移控制到其他处理程序按同样方式的将控制转移至
+一个处理程序。「例：
+\begin{lstlisting}
+  int f(int);
+  class C {
+    int i;
+    double d;
+  public:
+    C(int, double);
+  };
+
+  C::C(int ii, double id)
+  try : i(f(ii)), d(id) {
+    // constructor statements
+  } catch (...) {
+    // handles exceptions thrown from the ctor-initializer and from the constructor statements
+  }
+\end{lstlisting}」
+
+\paragraph{}
+在本节中，``前''和``后''指的是``前序于''关系（\ref{intro.execution}）。
 
 \sect{抛出异常}{except.throw}
+\paragraph{}
+抛出一个异常将控制转移到处理程序。「注：异常可以从以下上下文中抛出：
+\nt{throw-expressions}（\ref{expr.throw}），分配函数
+（\ref{basic.stc.dynamic.allocation}），\tm{dynamic\_cast}
+（\ref{expr.dynamic.cast}），\tm{typeid}（\ref{expr.typeid}），
+\nt{new-expressions}（\ref{expr.new}）以及标准库函数（20.4.1.4）。」传递一个对象
+且对象的类型决定哪个处理程序可以抓取到它。「例：
+\begin{lstlisting}
+  throw "Help!";
+\end{lstlisting}
+可以被\tm{const char*}类型的处理程序抓取：
+\begin{lstlisting}
+  try {
+    // ...
+  } catch(const char* p) {
+    // handle character string exceptions here
+  }
+\end{lstlisting}
+而
+\begin{lstlisting}
+  class Overflow {
+  public:
+    Overflow(char,double,double);
+  };
+
+  void f(double x) {
+    throw Overflow('+',x,3.45e107);
+  }
+\end{lstlisting}
+可以被处理异常类型\tm{Overflow}的处理程序所抓取：
+\begin{lstlisting}
+  try {
+    f(1.2);
+  } catch(Overflow& oo) {
+    // handle exceptions of type Overflow here
+  }
+\end{lstlisting}」
+
+\paragraph{}
+当一个异常被抛出时，控制转移到具有匹配类型的最近的处理程序
+（\ref{except.handle}）；``\nt{最近}''指控制线程最近进入且未结束的跟在\tm{try}关
+键字之后的\nt{compound-statement}或\nt{ctor-initializer}的处理程序。
+
+\paragraph{}
+抛出一个异常拷贝初始化（\ref{dcl.init}，\ref{class.copy}）一个临时对象，称为
+\nt{异常对象}。使用一个表示临时对象的左值来初始化声明于匹配处理程序中的变量
+（\ref{except.handle}）。如果异常对象的类型可能为不完整类型或指向除\nt{cv}
+\tm{void}外的不完整类型则程序为病态。
+
+\paragraph{}
+除\ref{basic.stc.dynamic.allocation}说明之外，异常对象的内存分配方式未指定。如果
+一个处理程序通过重抛出结束，则控制转移到同一异常对象的另一个处理程序中。异常对象
+的潜在销毁点有：
+\begin{enumerate}
+  \item{当异常的当前处理程序通过除重抛出之外的方式结束，紧跟处理程序的
+    \nt{exception-declaration}中声明的对象（如果有）销毁之后；}
+  \item{当引用异常对象的\tm{std::exception\_ptr}（21.8.6）类型的对象销毁时，在
+    \tm{std::exception\_ptr}的析构函数返回前。}
+\end{enumerate}
+在异常对象的所有潜在销毁点中，存在未指定的销毁异常对象的最后点。所有其他点在该最
+后点之前发生（\ref{intro.races}）。「注：异常处理中没有其他隐含线程同步。」实现
+可以随后释放异常对象内存；未指定任何这样的释放方式。「注：抛出的异常不会传播到其
+他线程，除非使用合适的库函数被抓取、存储或重抛出；见21.8.6和33.6。」
+
+\paragraph{}
+当抛出对象为类对象时，为拷贝初始化所选的构造函数以及拷贝抛出对象为左值时为拷贝初
+始化所选的构造函数应该未删除且可访问，即使拷贝/移动操作被消除
+（\ref{class.copy}）。析构函数可能会被调用（\ref{class.dtor}）。
+
+\paragraph{}
+当异常的处理程序活跃后，异常被认为被抓取了（\ref{except.handle}）。「注：异常可
+以有活跃处理程序，如果被重抛出则仍被当作未被抓取。」
+
+\paragraph{}
+如果处理未抓取异常（\ref{except.uncaught}）的异常处理机制直接调用通过异常结束的
+函数，则调用\tm{std::terminate}（\ref{except.terminate}）。「例：
+\begin{lstlisting}
+  struct C {
+    C() { }
+    C(const C&) {
+      if (std::uncaught_exceptions()) {
+        throw 0;      // throw during copy to handler's exception-declaration object (18.3)
+      }
+    }
+  };
+
+  int main() {
+    try {
+      throw C();      // calls std::terminate() if construction of the handler's
+                      // exception-declaration object is not elided (15.8)
+    } catch(C) { }
+  }
+\end{lstlisting}」「注：其结果就是一般情况下析构函数应该抓取异常，不要让它们传播
+下去。」
 
 \sect{构造函数与析构函数}{except.ctor}
+\paragraph{}
+随着控制从异常抛出点传递到处理程序中，进程会按本节所指定的方式调用析构函数，称为
+\nt{栈展开}（\nt{stack unwinding}）。
+
+\paragraph{}
+析构函数将为每一个自进入try块起所构建仍未销毁的类类型自动对象而调用。如果异常在
+临时对象或\tm{return}语句（\ref{stmt.return}）的局部变量销毁过程中抛出，则所返回
+对象（如果存在）的析构函数也会被调用。对象按其构建完成的顺序相反的顺序销毁。
+「例：
+\begin{lstlisting}
+  struct A { };
+
+  struct Y { ~Y() noexcept(false) { throw 0; } };
+
+  A f() {
+    try {
+      A a;
+      Y y;
+      A b;
+      return {};        // #1
+    } catch (...) {
+    }
+    return {};          // #2
+  }
+\end{lstlisting}
+在\#1，类型\tm{A}的返回对象被构建。随后局部变量\tm{b}被销毁（\ref{stmt.jump}）。
+接下来局部变量\tm{y}被销毁，引起栈展开，导致返回对象的销毁，接着是局部变量\tm{a}
+的销毁。最后，返回对象在\#2处再次被构建。」
+
+\paragraph{}
+如果对象的除代理构造函数之外的初始化或销毁被异常终止，则析构函数会为对象的每一个
+直接子对象，完整对象，虚基类子对象而调用，其初始化已完成（\ref{dcl.init}）且析构
+函数还未开始执行，除了在析构的情况下，联合式类的可变成员不会被销毁。子对象按其构
+建完成顺序的相反顺序进行销毁。这样的销毁前序于进入构造函数或析构函数
+\nt{function-try-block}的处理程序，如果有的话。
+
+\paragraph{}
+如果对象的代理构造函数\nt{function-body}的\nt{compound-statement}由于异常终止，
+则调用对象的析构函数。这样的销毁于进行该对象的代理构造函数
+\nt{function-try-block}的处理程序，如果有的话。
+
+\paragraph{}
+「注：如果对象由\nt{new-expression}分配（\ref{expr.new}），则调用匹配的释放函数
+（\ref{basic.stc.dynamic.deallocation}）（如果有的话）来释放对象所占用内存。」
 
 \sect{处理异常}{except.handle}
+\paragraph{}
+\nt{处理程序}的\nt{exception-declaration}描述可引起进入该处理程序的异常类型。
+\nt{exception-declaration}不应该是不完整类型，抽象类型或右值引用类型。
+\nt{exception-declaration}不应该是指向不完整类型的指针或引用，除了\tm{void*}，
+\tm{const void*}，\tm{volatile void*}或者\tm{const volatile void*}。
+
+\paragraph{}
+类型为``\tm{T}的数组''或函数类型\tm{T}的处理程序调整为``指向\tm{T}的指针''类型。
+
+\paragraph{}
+\nt{处理程序}匹配于类型\tm{E}的异常对象，如果
+\begin{enumerate}
+  \item{\nt{处理程序}为\nt{cv} \tm{T}或\nt{cv} \tm{T\&}类型，且\tm{E}和\tm{T}为
+    相同类型（忽略顶层的cv限定符），或者}
+  \item{\nt{处理程序}为\nt{cv} \tm{T}或\nt{cv} \tm{T\&}类型，且\tm{T}为\tm{E}的
+    无歧义公有基类，或者}
+  \item{\nt{处理程序}为\nt{cv} \tm{T}或\tm{const T\&}类型，其中\tm{T}为指针或指
+    向成员的指针类型，且\tm{E}为一个可以通过以下一个或多个转换到\tm{T}的指针或
+    成员指针类型
+    \begin{enumerate}
+      \item{不涉及到私有或保护或歧义类的转换的标准指针转换（\ref{conv.ptr}）}
+      \item{函数指针转换（\ref{conv.fctptr}）}
+      \item{限定转换（\ref{conv.qual}），或者}
+    \end{enumerate}}
+  \item{\nt{处理程序}为\nt{cv} \tm{T}或\tm{const T\&}类型，其中\tm{T}为指针或指
+    向成员的指针类型，且\tm{E}为\tm{std::nullptr\_t}。}
+\end{enumerate}
+「注：操作数为零值整型字面值的\nt{throw-expression}不会匹配指针或成员指针类型的
+处理程序。数组或函数类型的处理程序不会匹配任何异常对象（\ref{expr.throw}）。」
+「例：
+\begin{lstlisting}
+  class Matherr { /* ... */ virtual void vf(); };
+  class Overflow: public Matherr { /* ... */ };
+  class Underflow: public Matherr { /* ... */ };
+  class Zerodivide: public Matherr { /* ... */ };
+
+  void f() {
+    try {
+      g();
+    } catch (Overflow oo) {
+      // ...
+    } catch (Matherr mm) {
+      // ...
+    }
+  }
+\end{lstlisting}
+此处的\tm{Overflow}处理程序将抓取类型为\tm{Overflow}的异常，且\tm{Matherr}处理程
+序将抓取类型为\tm{Matherr}以及所有公有派生自\tm{Matherr}的异常，包括异常类型
+\tm{Underflow}和\tm{Zerodivide}。」
+
+\paragraph{}
+try块的处理程序按其出现顺序进行尝试。「注：这使得写出永不会执行的处理程序成为可
+能，比如通过将最终派生类的处理程序放置到对应无歧义公有基类的处理程序之前。」
+
+\paragraph{}
+处理程序的\nt{exception-declaration}中的\tm{...}作用与函数参数声明中的\tm{...}类
+似；指定匹配任何异常。如果存在，一个\tm{...}处理程序应该是其try块的最后一个。
+
+\paragraph{}
+如果在try的处理程序中未找到匹配，则在同一线程的动态包含try块中继续搜索匹配处理程
+序。
+
+\paragraph{}
+当catch语句的参数（如果有）的初始化完成时一个处理程序变得活跃。「注：在该点栈应
+该已经展开。」同样，当因异常抛出进入\tm{std::terminate()}时的隐式处理程序变得活
+跃。当catch语句结束时处理程序不再活跃。
+
+\paragraph{}
+最近激活且仍处理活跃状态的处理程序的异常被称为\nt{当前处理异常}。
+
+\paragraph{}
+如果没有找到匹配处理程序，则调用函数\tm{std::terminate()}；其调用前栈是否展开由
+实现定义（\ref{except.terminate}）。
+
+\paragraph{}
+在对象的构造函数或析构函数的\tm{function-try-block}处理程序中引用对象的非静态数
+据成员或基类为未定义行为。
+
+\paragraph{}
+函数或构造函数参数的作用域和生命期扩展到\nt{function-try-block}的处理程序中。
+
+\paragraph{}
+静态存储期对象析构函数或命名空间作用域静态存储期对象构造函数中抛出的异常不被
+\tm{main}函数（\ref{basic.start.main}）中的\nt{function-try-block}所抓取。线程存
+储期对象析构函数或命名空间作用域线程存储期对象的构造函数中抛出的异常不会被线程起
+始函数中的\nt{function-try-block}所抓取。
+
+\paragraph{}
+如果返回语句出现在构造函数\nt{function-try-block}的处理程序中则程序为病态。
+
+\paragraph{}
+如果控制到达构造函数或析构函数\nt{function-try-block}的处理程序结尾处则当前处理
+异常被重抛出。否则，控制流过\nt{function-try-block}处理程序的
+\nt{compound-statement}的结尾等同于流过该函数的\nt{compound-statement}结尾（见
+\ref{stmt.return}）。
+
+\paragraph{}
+由\nt{exception-declaration}所定义类型为\nt{cv} \tm{T}或\nt{cv} \tm{T\&}的变量由
+类型为\tm{E}的异常对象初始化，如下：
+\begin{enumerate}
+  \item{如果\tm{T}是\tm{E}的基类，则变量使用异常对象的对应基类子对象进行拷贝初始
+    化（\ref{dcl.init}）；}
+  \item{否则，对象使用异常对象进行拷贝初始化（\ref{dcl.init}）。}
+\end{enumerate}
+变量生命期在处理程序结束时终止，处于处理程序中初始化的自动对象的销毁之后。
+
+\paragraph{}
+当处理程序声明一个对象时，任何该对象的修改都不会影响异常对象。当处理程序声明对象
+的引用时，任何对引用对象的修改都是对异常对象的修改，且如果对象被重抛出的话这些修
+改将会有效果。
 
 \sect{异常规范}{except.spec}
+\paragraph{}
+表示函数能否通过异常退出的判断称为函数的\nt{异常规范}（\nt{exception
+specification}）。如果为假，则函数具有\nt{潜在抛出异常规范}
+（\nt{potentially-throwing exception specification}）。异常规范通过隐式定义或者
+通过使用\nt{noexcept-specifier}作为函数声明子后缀来显式定义（\ref{dcl.fct}）。
+
+\synsym{noexcept-specifier}
+  \synprd{\tm{noexcept (} \nt{constant-expression} \tm{)}}
+  \synprd{\tm{noexcept}}
+  \synprd[]{\tm{throw ( )}}
+
+\paragraph{}
+在\nt{noexcept-specifier}中，如果有\nt{constant-expression}，则应该是一个按上下
+文转换的\tm{bool}类型常量表达式（\ref{expr.const}）；该常量表达式是
+\nt{noexcept-specifier}所出现在函数类型的异常规范。一个\tm{(}标记跟在
+\tm{noexcept}之后而没有\nt{constant-expression}等价于\nt{noexcept-specifier}
+\tm{noexcept(true)}。\nt{noexcept-specifier} \tm{throw()}已弃用（D.3），其等价于
+\nt{noexcept-specifier} \tm{noexcept(true)}。
+
+\paragraph{}
+如果函数声明没有\nt{noexcept-specifier}，则声明具有潜在抛出异常规范，除非它是一
+个析构函数或者它的首次声明缺省化了，此时其异常规范如下指定，而该函数的其他声明不
+应该再有\nt{noexcept-specifier}。在显式实例化（\ref{temp.explicit}）中可以指定
+\nt{noexcept-specifier}，但不是必须。如果显式实例化指令中指定了
+\nt{noexcept-specifier}，则异常规范应该与该函数的所有其他声明中的异常规范一致。
+仅当在同一翻译单元中异常规范不一致时才需要诊断。
+
+\paragraph{}
+如果虚函数具有不抛出异常规范，则任何派生类中重写该函数的任何函数的所有声明，包括
+定义都应该具有不抛出异常规范，除非重写函数定义为删除的。「例：
+\begin{lstlisting}
+  struct B {
+    virtual void f() noexcept;
+    virtual void g();
+    virtual void h() noexcept = delete;
+  };
+
+  struct D: B {
+    void f();                     // ill-formed
+    void g() noexcept;            // OK
+    void h() = delete;            // OK
+  };
+\end{lstlisting}
+\tm{D::f}的声明为病态的是因为它具有潜在抛出异常规范，而\tm{B::f}具有不抛出异常规
+范。」
+
+\paragraph{}
+当异常抛出时且处理程序的搜索（\ref{except.handle}）到达具有不抛出异常规范的函数
+最外层块时，总是调用\tm{std::terminate()}（\ref{except.terminate}）。「注：实现
+不应该仅仅因为从具有不抛出异常规范的函数在执行时抛出或可能抛出异常而拒绝一个表达
+式。」「例：
+\begin{lstlisting}
+  extern void f();                // potentially-throwing
+
+  void g() noexcept {
+    f();                          // valid, even if f throws
+    throw 42;                     // valid, effectively a call to std::terminate
+  }
+\end{lstlisting}
+调用\tm{f}是合法的，即使在调用时\tm{f}可能抛出异常。」
+
+\paragraph{}
+表达式\tm{e}为\nt{潜在抛出}的，如果
+\begin{enumerate}
+  \item{\tm{e}是一个函数调用（\ref{expr.call}），其\nt{postfix-expression}具有函
+    数类型，或函数类型的指针，带有潜在抛出异常规范，或者}
+  \item{\tm{e}隐式调用一个潜在抛出的函数（比如重载的运算符，\nt{new-expression}
+    中的分配函数，函数参数的构造函数或者如果\tm{e}是一个全表达式
+    （\ref{intro.execution}），一个析构函数），或者}
+  \item{\tm{e}是一个\nt{throw-expression}（\ref{expr.throw}），或者}
+  \item{\tm{e}是一个\tm{dynamic\_cast}表达式，转换到引用类型且需要运行时检查
+    （\ref{expr.dynamic.cast}），或者}
+  \item{\tm{e}是一个应用于（可能加括号的）内置一元运算符\tm{*}的\tm{typeid}表达
+    式，该运算符应用于指向多态类类型（\ref{expr.typeid}）的指针，或者}
+  \item{\tm{e}的任何直接子表达式（\ref{intro.execution}）为潜在抛出。}
+\end{enumerate}
+
+\paragraph{}
+类\tm{X}隐式声明的构造函数，或者首次声明时缺省化的无\nt{noexcept-specifier}构造
+函数，具有潜在抛出异常规范，当且仅当任何以下结构为潜在抛出：
+\begin{enumerate}
+  \item{从类\tm{X}的隐式定义的构造函数中通过重载解析选择的用以初始化一个潜在构建
+    子对象的构造函数，或者}
+  \item{该初始化的子表达式，比如缺省参数表达式，或者，}
+  \item{对于缺省构造函数，一个缺省的成员初始化。}
+\end{enumerate}
+「注：即使完全构建子对象的析构函数在构造函数执行过程中当异常抛出时被调用
+（\ref{except.ctor}），其异常规范不构成构造函数的异常规范，因为从该析构函数中抛
+出的异常会调用\tm{std::terminate}而不是退出构造函数（\ref{except.throw}，
+\ref{except.terminate}）。」
+
+\paragraph{}
+隐式声明的析构函数或者无\nt{noexcept-specifier}的析构函数的异常规范当且仅当任何
+其潜在构建子对象的任何析构函数为潜在抛出的。
+
+\paragraph{}
+潜在声明的赋值运算符，或者首次声明缺省化的无\nt{noexcept-specifier}的赋值运算符
+当且仅当隐式定义中任何赋值运算符的调用为潜在抛出的。
+
+\paragraph{}
+无显式\nt{noexcept-specifier}的释放函数（\ref{basic.stc.dynamic.deallocation}）
+具有不抛出异常规范。
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  struct A {
+    A(int = (A(5), 0)) noexcept;
+    A(const A&) noexcept;
+    A(A&&) noexcept;
+    ~A();
+  };
+  struct B {
+    B() throw();
+    B(const B&) = default;    // implicit exception specification is noexcept(true)
+    B(B&&, int = (throw Y(), 0)) noexcept;
+    ~B() noexcept(false);
+  };
+  int n = 7;
+  struct D : public A, public B {
+    int * p = new int[n];
+    // D::D() potentially-throwing, as the new operator may throw bad_alloc or bad_array_new_length
+    // D::D(const D&) non-throwing
+    // D::D(D&&) potentially-throwing, as the default argument for B's constructor may throw
+    // D::~D() potentially-throwing
+  };
+\end{lstlisting}
+更进一步，如果\tm{A::~A()}为虚函数，则程序为病态，因重写基类中虚函数的函数如果基
+类函数具有不抛出异常规范，则该函数不应该具有潜在抛出异常规范。」
+
+\paragraph{}
+当以下成立时认为需要异常规范：
+\begin{enumerate}
+  \item{在表达式中，函数为唯一的查询结果或重载函数集合中选中的成员
+    （\ref{basic.lookup}，\ref{over.match}，\ref{over.over}）；}
+  \item{函数为odr-used（\ref{basic.def.odr}）或者，如果出现在未求值操作数中表达
+    式为潜在求值的将会是odr-used；}
+  \item{异常规范与另一个声明进行比较（比如显式特例化或重载虚函数）；}
+  \item{函数被定义时；或者}
+  \item{调用函数的缺省化特殊成员函数需要异常规范。「注：缺省化的声明不需要基类成
+    员函数的异常规范来求值，直到需要派生函数的隐式异常规范时，但一个显式的
+    \nt{noexcept-specifier}需要隐式异常规范来作比较。」}
+\end{enumerate}
+缺省化特殊成员函数的异常规范仅在需要时按上述进行求值；类似的，函数模板或类模板成
+员函数特例化的\nt{noexcept-specifier}仅按需实例化。
 
 \sect{特殊函数}{except.special}
+\paragraph{}
+函数\tm{std::terminate()}（\ref{except.terminate}）用于异常处理机制以处理异常处
+理机制本身相关的错误。函数\tm{std::current\_exception()}（21.8.6）和类
+\tm{std::nested\_exception}（21.8.7）可用于程序中以获取当前处理异常。
+
 \ssect{std::terminate()函数}{except.terminate}
+\paragraph{}
+某些情况下必须放弃异常处理而采用不那么精细的错误处理技巧。「注：这些情况有：
+\begin{enumerate}
+  \item{在异常对象初始化完成之后，异常处理程序激活（\ref{except.throw}）之前，当
+    异常处理机制调用通过异常来结束的函数时，或者}
+  \item{当异常处理机制找不到对应抛出异常的处理程序时（\ref{except.handle}），或
+    者}
+  \item{当搜索处理程序（\ref{except.handle}）遇到具有不抛出异常规范
+    （\ref{except.spec}）函数最外层块时，或者}
+  \item{栈展开过程中对象的销毁（\ref{except.ctor}）被抛出异常终止时，或者}
+  \item{静态或线程存储期（\ref{basic.start.dynamic}）非局部变量初始化因异常而结
+    束，或者}
+  \item{静态或线程存储期（\ref{basic.start.term}）非局部变量的销毁因异常而结束，
+    或者}
+  \item{通过\tm{std::atexit}或\tm{std::at\_quick\_exit}注册的函数执行因异常而终
+    止（21.5），或者}
+  \item{当无操作数的\nt{throw-expression}（\ref{expr.throw}）尝试重抛异常而当前
+    没有被处理异常（\ref{except.throw}），或者}
+  \item{为未抓取到异常的对象（21.8.7）调用
+    \tm{std::nested\_exception::rethrow\_nested}函数，或者}
+  \item{线程起始函数的执行因异常终止（33.3.2.2），或者}
+  \item{对于\tm{ExecutionPolicy}指定此类行为（23.19.4，23.19.5，23.19.6）的并行
+    算法，当并行算法的元素访问函数的执行因异常终止时（28.4.4），或者}
+  \item{当析构函数或拷贝赋值运算符调用于一个\tm{std::thread}类型引用可连接线程的
+    对象时（33.3.2.3，33.3.2.4），或者}
+  \item{当在条件变量上调用\tm{wait()}，\tm{wait\_until()}或者\tm{wait\_for()}函
+    数（33.5.3，33.5.4）不满足后置条件时。}
+\end{enumerate}」
+
+\paragraph{}
+在这些情况下，调用\tm{std::terminate()}（21.8.4）。在找不到匹配处理程序的情况下
+在调用\tm{std::terminate()}前是否栈展开由实现定义。在搜索处理程序
+（\ref{except.handle}）遇到具有不抛出异常规范（\ref{except.spec}）函数的最外层块
+的情况下在调用\tm{std::terminate()}之前是否栈展开、部分情节或根本不展开由实现定
+义。在所有其他情况下，在调用\tm{std::terminate()}前不应该栈展开。实现不允许基于
+展开过程将最终调用\tm{std::terminate()}的决定而过早结束栈展开。
+
 \ssect{std::uncaught\_exceptions()函数}{except.uncaught}
+\paragraph{}
+在异常对象初始化（\ref{except.throw}）完成之后直到异常处理程序激活完成
+（\ref{except.handle}）异常被认为是未抓取的。包括栈展开。如果异常被重抛出
+（\ref{expr.throw}，21.8.6），从重抛出点直到重抛异常被抓取被认为是未抓取的。函数
+\tm{std::uncaught\_exceptions()}（21.8.5）返回当前线程中未抓取异常数目。

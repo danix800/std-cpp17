@@ -47,7 +47,7 @@
 \synsym{empty-declaration}
   \synprd{\tm{;}}
 \synsym{attribute-declaration}
-  \synprd{\nt{attribute-specifier-seq} \tm{;}}
+  \synprd[]{\nt{attribute-specifier-seq} \tm{;}}
 
 「注：\nt{asm-definition}在\ref{dcl.asm}中描述，\nt{linkage-specification}在
 \ref{dcl.link}中描述。\nt{function-definition}在\ref{dcl.fct.def}中描述，
@@ -332,7 +332,7 @@
 \tm{typedef}说明出现在无\nt{declarator}的声明中，则程序为病态。
 
 \synsym{typdef-name}
-  \synprd{\nt{identifier}}
+  \synprd[]{\nt{identifier}}
 
 使用\tm{typedef}说明符声明的名字成为\nt{typedef-name}。在其声明的作用域中，一个
 \nt{typedef-name}语法上等价于一个关键字且按第\ref{dcl.decl}章所述的方式命名关联
@@ -699,7 +699,7 @@ C的``隐式int''规则不再支持。}
 存在\tm{const}和\tm{volatile}两个\nt{cv-qualifier}。每个\nt{cv-qualifier}在
 \nt{cv-qualifier-seq}中应该出现至多一次。如果\nt{cv-qualifier}出现在
 \nt{decl-specifier-seq}中，则声明中该\nt{init-declarator-list}或
-\nt{member-declarator-list}不能为空。「注：\ref{basic.type-qualifier}和
+\nt{member-declarator-list}不能为空。「注：\ref{basic.type.qualifier}和
 \ref{dcl.fct}描述cv限定符如何影响对象和函数类型。」冗余的cv限定将被忽略。「注：
 比如可以通过typedef引入。」
 
@@ -880,10 +880,10 @@ C中相同。」
 \tm{decltype}说明符的操作数为不求值操作数（第\ref{expr}章）。
 「例：
 \begin{lstlisting}
-const int&& foo() ;
+const int&& foo();
 int i;
 struct A { double x; };
-const A* a = new A() ;
+const A* a = new A();
 decltype(foo() ) x1 = 17;   // type is const int&&
 decltype(i) x2;             // type is int
 decltype(a->x) x3;          // type is double
@@ -1019,7 +1019,7 @@ decltype((a->x) ) x4 = x3;  // type is const double&
 的初始化中，\nt{expression-list}应该是单个\nt{assignment-expression}。「例：
 \begin{lstlisting}
   auto x = 5;                // OK: x has type int
-  const auto *v = &x, u = 6; // OK: v has type const int* , u has type const int
+  const auto *v = &x, u = 6; // OK: v has type const int*, u has type const int
   static auto y = 0.0;       // OK: y has type double
   auto int r;                // error: auto is not a storage-class-specifier
   auto f() -> int;           // OK: f returns int
@@ -1064,7 +1064,7 @@ decltype((a->x) ) x4 = x3;  // type is const double&
 剩余部分，包括在其他返回语句中。「例：
 \begin{lstlisting}
   auto n = n;             // error: n's type is unknown
-  auto f() ;
+  auto f();
   void g() { &f; }        // error, f's return type is unknown
   auto sum(int i) {
     if (i == 1)
@@ -1078,7 +1078,7 @@ decltype((a->x) ) x4 = x3;  // type is const double&
 即使函数体包含带有非类型依赖操作数的\tm{return}语句，声明类型中的带有占位符的函
 数返回类型推导在定义实例化时进行。「注：因此，任何函数模板特例化的使用将引起隐式
 实例化。任何因此实例化引起的错误不属于函数类型的直接上下文，且将导致病态程序
-（\ref{temp.deduced}）。」「例：
+（\ref{temp.deduct}）。」「例：
 \begin{lstlisting}
   template <class T> auto f(T t) { return t; } // return type deduced at
                                                // instantiation time
@@ -1096,7 +1096,7 @@ decltype((a->x) ) x4 = x3;  // type is const double&
   auto f() { return 42; } // OK
   auto f();               // error, cannot be overloaded with auto f()
   int f();                // error, auto and decltype(auto) don’t match
-  decltype(auto) f() ;
+  decltype(auto) f();
 
   template <typename T> auto g(T t) { return t; } // #1
   template auto g(int);   // OK, return type is int
@@ -2127,7 +2127,7 @@ cv限定和\nt{ref-qualifier}（如果存在）的成员函数和成员函数模
     namespace C {
       namespace D {
         using namespace A;
-        int j ;
+        int j;
         int k;
         int a = i;            // B::i hides A::i
       }
@@ -2427,7 +2427,7 @@ C++和非C++代码段间的链接（\ref{basic.link}）可以通过\nt{linkage-s
 \nt{attribute-using-prefix}如何影响\nt{attribute-argument-clause}的标记加以约束。
 」「例：
 \begin{lstlisting}
-  [[using CC: opt(1) , debug]]        // same as [[CC::opt(1), CC::debug] ]
+  [[using CC: opt(1), debug]]         // same as [[CC::opt(1), CC::debug] ]
     void f() {}
   [[using CC: opt(1)]] [[CC::debug]]  // same as [[CC::opt(1)]] [[CC::debug]]
     void g() {}

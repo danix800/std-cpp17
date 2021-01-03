@@ -4,45 +4,596 @@
 \paragraph{}
 类成员可以是
 \begin{enumerate}
-  \item{<++>}
-  \item{<++>}
-  \item{<++>}
-\end{enumerate}<++>
+  \item{\tm{private}；即其名字只能在其声明所在的类的成员和友元中可用。}
+  \item{\tm{protected}；即其名字只能在其声明所在的类的成员和友元，派生自该类的类
+    以及这些派生类的友元中可用（见\ref{class.protected}）。}
+  \item{\tm{public}；即其名字可在任何地方使用，不受访问限制。}
+\end{enumerate}
 
 \paragraph{}
-<++>
+类的成员也可以访问类可以访问的所有名字。成员函数的局部类可以访问成员函数本身可以
+访问的名字\footnote{访问权限因此传递并累积到嵌套类和局部类中。}。
 
 \paragraph{}
-<++>
+使用关键字\tm{class}定义的类的成员缺省是\tm{private}。使用关键字\tm{struct}或
+\tm{union}定义的类的成员缺省是\tm{public}。「例：
+\begin{lstlisting}
+  class X {
+    int a; // X::a is private by default
+  };
+
+  struct S {
+    int a; // S::a is public by default
+  };
+\end{lstlisting}」
 
 \paragraph{}
-<++>
+访问控制一律对所有名字适用，无论是从声明还是从表达式中引用。「注：访问控制适用友
+元声明（\ref{class.friends}）和\nt{using-declaration}（\ref{namespace.udecl}）所
+提及的名字。」在重载函数名的情况下，访问控制适用重载解析所选择的函数。「注：因为
+访问控制适用于名字，如果访问控制应用于类型定义名，只考虑类型定义名本身的可访问
+性。不考虑类型定义所引用实体的可访问性。比如，
+\begin{lstlisting}
+  class A {
+    class B { };
+  public:
+    typedef B BB;
+  };
+
+  void f() {
+    A::BB x;    // OK, typedef name A::BB is public
+    A::B y;     // access error, A::B is private
+  }
+\end{lstlisting}」
 
 \paragraph{}
-<++>
+应该注意是对成员和基类的\nt{访问}进行的控制，而不是它们的\nt{可见性}。成员的名字
+仍然可见，且当那些成员和基类不可访问时，到基类的隐式转换仍会被考虑。建立给定结构
+的解释无关访问控制。如果所建立的解释用到不可访问成员名或基类，则该结构是病态的。
 
 \paragraph{}
-<++>
+第\ref{class.access}章中所有访问控制影响特定实体声明中的成员名的访问能力，包括所
+声明名字之前的声明的部分，如果实体是一个类，则包括出现在类的
+\nt{member-specification}之外的类的成员定义。「注：该访问对构造函数，转换函数和
+析构函数的隐式引用也适用。」
 
 \paragraph{}
-<++>
+「例：
+\begin{lstlisting}
+  class A {
+    typedef int I;          // private member
+    I f();
+    friend I g(I);
+    static I x;
+    template<int> struct Q;
+    template<int> friend struct R;
+  protected:
+    struct B { };
+  };
+
+  A::I A::f() { return 0; }
+  A::I g(A::I p = A::x);
+  A::I g(A::I p) { return 0; }
+  A::I A::x = 0;
+  template<A::I> struct A::Q { };
+  template<A::I> struct R { };
+
+  struct D: A::B, A { };
+\end{lstlisting}
+这里，\tm{A::I}的所有使用都是合法的，因为\tm{A::f}，\tm{A::x}和\tm{A::Q}是类
+\tm{A}的成员，且\tm{g}和\tm{R}是类\tm{A}的友元。这意味着，比如对\tm{A::I}的首次
+使用必须推迟到\tm{A::I}的该使用是作为\tm{A}的成员的返回类型确定以后。类似的，
+\tm{A::B}用作\nt{base-specifier}是合法的，因为\tm{D}派生自\tm{A}，因此
+\nt{base-specifier}的检查必须推迟到见到整个\nt{base-specifier-list}以后。」
 
 \paragraph{}
-<++>
+缺省参数（\ref{dcl.fct.default}）中的名字在声明点绑定，且访问在该点进行检查而不
+是任何其他使用缺省参数的点进行。函数模板和模板类成员函数中的缺省参数的访问检查如
+\ref{temp.inst}所述进行。
 
 \paragraph{}
-<++>
+缺省\nt{template-argument}（\ref{temp.param}）中的名字在其所出现的上下文中而不是
+缺省\nt{template-argument}的任何使用点进行检查。「例：
+\begin{lstlisting}
+  class B { };
+  template <class T> class C {
+  protected:
+    typedef T TT;
+  };
+
+  template <class U, class V = typename U::TT>
+  class D : public U { };
+
+  D<C<B> >* d;    // access error, C::TT is protected
+\end{lstlisting}」
 
 \sect{访问说明符}{class.access.spec}
+\paragraph{}
+成员声明可以用\nt{access-specifier}（\ref{class.derived}）来标记：            \\
+\mbox{\qquad{\nt{access-specifier} \tm{:} \nt{member-specification\tsub{opt}}}}
 
-\sect{基类与基类成员可访问性}{class.access.base}
+一个\nt{access-specifier}指定跟在其后的声明的访问规则，直到类结束或遇到另一个
+\nt{access-specifier}。
+
+「例：
+\begin{lstlisting}
+  class X {
+    int a;    // X::a is private by default: class used
+  public:
+    int b;    // X::b is public
+    int c;    // X::c is public
+  };
+\end{lstlisting}」
+
+\paragraph{}
+允许任意数目的访问说明符，无特定顺序要求。「例：
+\begin{lstlisting}
+  struct S {
+    int a;    // S::a is public by default: struct used
+  protected:
+    int b;    // S::b is protected
+  private:
+    int c;    // S::c is private
+  public:
+    int d;    // S::d is public
+  };
+\end{lstlisting}」
+
+\paragraph{}
+「注：访问控制对数据成员的分配效果在\ref{class.mem}的描述。」
+
+\paragraph{}
+当成员在其类定义中重声明时，其声明点所指定的访问性应该与其初始声明一样。「例：
+\begin{lstlisting}
+  struct S {
+    class A;
+    enum E : int;
+  private:
+    class A { };        // error: cannnot change access
+    enum E: int { e0 }; // error: cannnot change access
+  };
+\end{lstlisting}」
+
+\paragraph{}
+「注：在派生类中，基类名的查询将找到注入类名而不是其声明所在作用域中的基类名。
+注入类名可能比其声明所在作用域中的基类名有更低的访问性。」
+
+「例：
+\begin{lstlisting}
+  class A { };
+  class B : private A { };
+  class C : public B {
+    A* p;       // error: injected-class-name A is inaccessible
+    ::A* q;     // OK
+  };
+\end{lstlisting}」
+
+\sect{基类及基类成员可访问性}{class.access.base}
+\paragraph{}
+如果使用\tm{public}访问说明符声明一个类为另一个类的基类（\ref{class.derived}），
+则基类的公有成员作为派生类的公有成员来访问，基类的保护成员作为派生类的保护成员来
+访问。如果使用\tm{protected}访问说明符声明一个类为另一个类的基类，则基类的公有和
+保护成员作为派生类的保护成员来访问。如果使用\tm{private}访问说明符声明一个类为另
+一个类的基类，则基类的公有和保护成员作为派生类的私有成员来访问\footnote{按之前在
+第\ref{class.access}章中所指定，基类的私有成员即使对派生类也是不可访问的，除非基
+类声明中使用友元声明来显式赋予可访问性。}。
+
+\paragraph{}
+如果基类缺少\nt{access-specifier}，当派生类使用\nt{class-key} \tm{struct}来定义
+时则假定为\tm{public}，当派生类使用\nt{class-key} \tm{class}来定义时则假定为
+\tm{private}。「例：
+\begin{lstlisting}
+  class B { /* ... */ };
+  class D1 : private B { /* ... */ };
+  class D2 : public B { /* ... */ };
+  class D3 : B { /* ... */ };           // B private by default
+  struct D4 : public B { /* ... */ };
+  struct D5 : private B { /* ... */ };
+  struct D6 : B { /* ... */ };          // B public by default
+  class D7 : protected B { /* ... */ };
+  struct D8 : protected B { /* ... */ };
+\end{lstlisting}
+这里\tm{B}是\tm{D2}，\tm{D4}和\tm{D6}的公有基类，\tm{D1}，\tm{D3}和\tm{D5}的私有
+基类，\tm{D7}和\tm{D8}的保护基类。」
+
+\paragraph{}
+「注：私有基类的成员作为派生类成员名可能是不可访问的，但直接访问则可以。由于指针
+转换（\ref{conv.ptr}）和显式转换（\ref{expr.cast}）的规则，派生类指针到不可访问
+基类指针的转换如果是隐式的则是病态的，但如果是显式转换则是合法的。比如，
+\begin{lstlisting}
+  class B {
+  public:
+    int mi;                   // non-static member
+    static int si;            // static member
+  };
+  class D : private B {
+  };
+  class DD : public D {
+    void f();
+  };
+
+  void DD::f() {
+    mi = 3;                   // error: mi is private in D
+		si = 3;                   // error: si is private in D
+    ::B b;
+    b.mi = 3;                 // OK (b.mi is different from this->mi)
+    b.si = 3;                 // OK (b.si is different from this->si)
+    ::B::si = 3;              // OK
+    ::B* bp1 = this;          // error: B is a private base class
+    ::B* bp2 = (::B*)this;    // OK with cast
+    bp2->mi = 3;              // OK: access through a pointer to B.
+  }
+\end{lstlisting}」
+
+\paragraph{}
+\tm{N}的基类\tm{B}在\nt{R}处\nt{可访问}，如果
+\begin{enumerate}
+  \item{\tm{B}的假想公有成员将也是\tm{N}的公有成员，或}
+  \item{\nt{R}出现在类\tm{N}的成员或友元中，且\tm{B}的假想公有成员将也是\tm{N}的
+    私有或保护成员，或}
+  \item{\nt{R}出现在派生自\tm{N}的类\tm{P}的成员或友元中，且\tm{B}的假想公有成员
+    将也是\tm{P}的私有或保护成员，或}
+  \item{存在类\tm{S}使得\tm{B}是在\nt{R}点可访问的\tm{S}的基类，而\tm{S}是在
+    \nt{R}点可访问的\tm{N}的基类。}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  class B {
+  public:
+    int m;
+  };
+
+  class S: private B {
+    friend class N;
+  };
+
+  class N: private S {
+    void f() {
+      B* p = this;    // OK because class S satifies the fourth condition above:
+                      // B is a base class of N accessible in f() because B is
+                      // an accessible base class of S and S is an accessible
+                      // base class of N.
+    }
+  };
+\end{lstlisting}」
+
+\paragraph{}
+如果基类可访问，你可以隐式转换派生类指针到基类指针（\ref{conv.ptr}，
+\ref{conv.mem}）。「注：因而类\tm{X}的成员和友元可以隐式转换一个\tm{X*}到\tm{X}
+的私有或保护直接基类的指针。」成员的访问受成员所在类的影响。该命名类是在其中查找
+并找到成员名称的类。「注：该类可以是显式的，比如当使用\nt{qualified-id}时，或者
+是隐式的，比如当使用类成员访问运算符时（包括隐式添加``\tm{this->}''的情形）。如
+果同时使用类成员访问运算符和\nt{qualified-id}来确定成员（比如\tm{p->T::m}），确
+定成员的类为\nt{qualified-id}的\nt{nested-name-specifier}所表示的类
+（即\nt{T}）。」当在类\tm{N}中确定时，成员\tm{m}在\nt{R}点可访问，如果
+\begin{enumerate}
+  \item{\tm{m}作为\tm{N}的成员是公有的，或者}
+  \item{\tm{m}作为\tm{N}的成员是私有的，且\nt{R}在类\tm{N}的成员或友元中，或者}
+  \item{\tm{m}作为\tm{N}的成员是保护的，且\nt{R}在类\tm{N}的成员或友元中，或者在
+    派生自\tm{N}的类\tm{P}的成员中，这里\tm{m}作为\tm{P}的成员是公有，保护或私有
+    的，或者}
+  \item{存在\tm{N}的基类\tm{B}，在\nt{R}点可访问，且当在类\tm{B}中确定时，\tm{m}
+    在\nt{R}点可访问。}
+\end{enumerate}
+「例：
+\begin{lstlisting}
+  class B;
+  class A {
+  private:
+    int i;
+    friend void f(B*);
+  };
+  class B : public A { };
+  void f(B* p) {
+    p->i = 1;           // OK: B* can be implicitly converted to A*, and f has
+                        // access to i in A
+  }
+\end{lstlisting}」
+
+\paragraph{}
+如果类成员访问运算符，包括隐式的``\tm{this->}''用于访问非静态数据成员或非静态成
+员函数，如果左操作数（在``\tm{.}''运算符的情况下当作是指针）不能隐式转换成右操作
+数所确定类的指针，则引用是病态的。「注：该需求是对所确定成员可访问要求的补充。」
 
 \sect{友元}{class.friends}
+\paragraph{}
+一个类的友元指给予使用类中私有和保护成员名权限的函数或类。如有，类通过友元声明指
+定其友元。这样的声明给予友元特殊访问权限，但并不使提及的友元成为该友好类的成员。
+「例：以下示例展示成员和友元间的区别：
+\begin{lstlisting}
+  class X {
+    int a;
+    friend void friend_set(X*, int);
+  public:
+    void member_set(int);
+  };
+
+  void friend_set(X* p, int i) { p->a = i; }
+  void X::member_set(int i) { a = i; }
+
+  void f() {
+    X obj;
+    friend_set(&obj,10);
+    obj.member_set(10);
+  }
+\end{lstlisting}」
+
+\paragraph{}
+声明一个类为友元意味着赋予友元关系的类中的私有和保护成员可以在被赋予友元关系的类
+的\nt{base-specifier}和成员声明中访问。
+
+「例：
+\begin{lstlisting}
+  class A {
+    class B { };
+    friend class X;
+  };
+
+  struct X : A::B {       // OK: A::B accessible to friend
+    A::B mx;              // OK: A::B accessible to member of friend
+    class Y {
+      A::B my;            // OK: A::B accessible to nested member of friend
+    };
+  };
+\end{lstlisting}」「例：
+\begin{lstlisting}
+  class X {
+    enum { a=100 };
+    friend class Y;
+  };
+
+  class Y {
+    int v[X::a];          // OK, Y is a friend of X
+  };
+
+  class Z {
+    int v[X::a];          // error: X::a is private
+  };
+\end{lstlisting}」
+
+一个类不应该在友元声明中定义。「例：
+\begin{lstlisting}
+  class A {
+    friend class B { };   // error: cannot define class in friend declaration
+  };
+\end{lstlisting}」
+
+\paragraph{}
+不是声明函数的友元声明应该具有以下形式之一：                                  \\
+\mbox{\qquad{\tm{friend} \nt{elaborated-type-specifier}}}                     \\
+\mbox{\qquad{\tm{friend} \nt{simple-type-specifier}}}\\
+\mbox{\qquad{\tm{friend} \nt{typename-specifier}}} \\
+「注：友元声明可以是\tm{template-declaration}（\ref{temp}，\ref{temp.friend}）中
+的声明。」如果友元声明中的类型说明符代表一个（可能cv限定的）类类型，则该类声明为
+友元；否则，友元声明被忽略。「例：
+\begin{lstlisting}
+  class C;
+  typedef C Ct;
+
+  class X1 {
+    friend C;       // OK: class C is a friend
+  };
+
+  class X2 {
+    friend Ct;      // OK: class C is a friend
+    friend D;       // error: no type-name D in scope
+    friend class D; // OK: elaborated-type-specifier declares new class
+  };
+
+  template <typename T> class R {
+    friend T;
+  };
+
+  R<C> rc;          // class C is a friend of R<C>
+  R<int> Ri;        // OK: "friend int;" is ignored
+\end{lstlisting}」
+
+\paragraph{}
+友元声明中首次声明的函数具有其作为成员的命名空间的链接（\ref{basic.link}）。
+否则，函数保持其之前的链接（\ref{dcl.stc}）。
+
+\paragraph{}
+当友元声明引用一个重载名或运算符时，只有参数类型所确定的函数成员友元。类\tm{X}的
+成员函数可以成员另一个类\tm{Y}的友元。「例：
+\begin{lstlisting}
+  class Y {
+    friend char* X::foo(int);
+    friend X::X(char);          // constructors can be friends
+    friend X::~X();             // destructors can be friends
+  };
+\end{lstlisting}」
+
+\paragraph{}
+函数可以在类的友元声明中定义，当且仅当类是非局部类（\ref{class.local}），函数名
+未限定且函数具有命名空间作用域。「例：
+\begin{lstlisting}
+  class M {
+    friend void f() { }   // definition of global f, a friend of M,
+                          // not the definition of a member function
+  };
+\end{lstlisting}」
+
+\paragraph{}
+这样的函数隐式即是内联（\ref{dcl.inline}）。定义于类中的友元函数处于类定义所在的
+（词法）作用域中。定义于类之外的友元函数则不是（\ref{basic.lookup.unqual}）。
+
+\paragraph{}
+\nt{storage-class-specifier}不应该出现在友元声明的\nt{decl-specifier-seq}中。
+
+\paragraph{}
+友元声明所提及的名字应该在包含友元声明的类所在作用域中可访问。无论友元声明出现在
+类的\nt{member-specification}的私有，保护还是公有部分（\ref{class.mem}），友元声
+明的涵义都是一样的。
+
+\paragraph{}
+友元关系即不可继承也不会传递。「例：
+\begin{lstlisting}
+  class A {
+    friend class B;
+    int a;
+  };
+
+  clsss B {
+    friend class C;
+  };
+
+  class C {
+    void f(A* p) {
+      p->a++;       // error: C is not a friend of A despite being a friend of a
+                    // friend
+    }
+  };
+
+  class D : public B {
+    void f(A* p) {
+      p->a++;       // error: D is not a friend of A despite being derived from
+                    // a friend
+    }
+  };
+\end{lstlisting}」
+
+\paragraph{}
+如果友元声明出现在内部类（\ref{class.local}）且所指定的名字是未限定名，则在之前
+的声明中查询而不考虑最内层包含非类作用域之外的作用域。对于友元函数声明，如果没有
+之前的声明，则程序为病态。对友元类声明，如果没有之前的声明，则所指定的类属于最内
+层包含非类作用域，但如果后续有引用到，则直到最内层包含非类作用域中提供了一个匹配
+的声明，其名字都不会被名字查询找到。「例：
+\begin{lstlisting}
+  class X;
+  void a();
+  void f() {
+    class Y;
+    extern void b();
+    class A {
+      friend class X;   // OK, but X is a local class, not ::X
+      friend class Y;   // OK
+      friend class Z;   // OK, introduces local class Z
+      friend void a();  // error, ::a is not considered
+      friend void b();  // OK
+      friend void c();  // error
+    };
+    X* px;              // OK, but ::X is found
+    Z* pz;              // error, no Z is found
+  }
+\end{lstlisting}」
 
 \sect{保护成员访问}{class.protected}
+\paragraph{}
+当非静态数据成员或非静态成员函数是其所确定类中的保护成员
+（\ref{class.access.base}）
+时，除之前在第\ref{class.access}章中所述之外，还会进行额外的访问检查\footnote{这
+个额外检查对其他成员不适用，比如静态数据成员或枚举子成员常量。}。如前所述，访问
+保护成员是允许的，因为引用出现在某些类\tm{C}的友元或成员中。如果访问用于形成指向
+成员的指针（\ref{expr.unary.op}），则\nt{nested-name-specifier}应该表示\tm{C}或
+派生自\tm{C}的类。所有其他访问都涉及到一个（可能隐含的）对象表达式
+（\ref{expr.ref}）。这种情形下，对象表达式的类应该是\tm{C}或派生自\tm{C}的类。
+「例：
+\begin{lstlisting}
+  class B {
+  protected:
+    int i;
+    static int j;
+  };
+
+  class D1 : public B {
+  };
+
+  class D2 : public B {
+    friend void fr(B*,D1*,D2*);
+    void mem(B*,D1*);
+  };
+
+  void fr(B* pb, D1* p1, D2* p2) {
+    pb->i = 1;                // ill-formed
+    p1->i = 2;                // ill-formed
+    p2->i = 3;                // OK (access through a D2)
+    p2->B::i = 4;             // OK (access through a D2, even through naming
+                              // class is B)
+    int B::* pmi_B = &B::i;   // ill-formed
+    int B::* pmi_B2 = &D2::i; // OK (type of &D2::i is int B::*)
+    B::j = 5;                 // ill-formed (not a friend of naming class B)
+    D2::j = 6;                // OK (because refers to static member)
+  }
+
+  void D2::mem(B* pb, D1* p1) {
+    pb->i = 1;                // ill-formed
+    p1->i = 2;                // ill-formed
+    i = 3;                    // OK (access through this)
+    B::i = 4;                 // OK (access through this, qualification ignored)
+    int B::* pmi_B = &B::i;   // ill-formed
+    int B::* pmi_B2 = &D2::i; // OK
+    j = 5;                    // OK (because j refers to static member)
+    B::j = 6;                 // OK (because B::j refers to static member)
+  }
+
+  void g(B* pb D1* p1, D2* p2) {
+    pb->i = 1;                // ill-formed
+    p1->i = 2;                // ill-formed
+    p2->i = 3;                // ill-formed
+  }
+\end{lstlisting}」
 
 \sect{访问虚函数}{class.access.virt}
+\paragraph{}
+虚函数的访问规则（第\ref{class.access}章）由其声明所确定而不受后续重写它的函数的
+规则影响。「例：
+\begin{lstlisting}
+  class B {
+  public:
+    virtual int f();
+  };
+
+  class D : public B {
+  private:
+    int f();
+  };
+
+  void f() {
+    D d;
+    B* pb = &d;
+    D* pd = &d;
+
+    pb->f();                  // OK: B::f() is public, D::f() is invoked
+    pd->f();                  // error: D::f() is private
+  }
+\end{lstlisting}」
+
+\paragraph{}
+访问在调用点使用表达式类型进行检查，该表达式指代成员函数调用对象（上例中的
+\tm{B*}）。定义于类中的成员函数访问（上例中的\tm{D}）通常未知。
 
 \sect{多重访问}{class.paths}
+\paragraph{}
+如果名字通过多重继承图经多条路径可达，则经由给予最多访问权限的路径进行访问。
+「例：
+\begin{lstlisting}
+  class W { public: void f(); };
+  class A : private virtual W { };
+  class B : public virtual W { };
+  class C : public A, public B {
+    void f() { W::f(); }          // OK
+  };
+\end{lstlisting}
+因\tm{W::f()}对\tm{C::f()}通过\tm{B}的公有路径是可用的，访问是允许的。」
 
 \sect{嵌套类}{class.access.nest}
+\paragraph{}
+嵌套类是一个成员，因此与其他成员一样具有访问权限。包含类的成员没有嵌套类成员的特
+殊访问权限；应该遵循常规访问规则（第\ref{class.access}章）。「例：
+\begin{lstlisting}
+  class E {
+    int x;
+    class B { };
+    class I {
+      B b;                      // OK: E::I can access E::B
+      int y;
+      void f(E* p, int i) {
+        p->x = i;               // OK: E::I can access E::x
+      }
+    };
+
+    int g(I* p) {
+      return p->y;              // error: I::y is private
+    }
+  };
+\end{lstlisting}」

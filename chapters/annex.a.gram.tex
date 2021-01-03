@@ -19,7 +19,7 @@
   \synprd{\nt{identifier}}
   \synprd{\nt{namespace-alias}}
 \synsym{namespace-alias}
-  \synprd{\nt{identifier}}
+\synprd{\nt{identifier}}
 \synsym{class-name}
   \synprd{\nt{identifier}}
   \synprd{\nt{simple-template-id}}
@@ -31,13 +31,761 @@
 注意命名一个类的\nt{typedef-name}也是一个\nt{class-name}（\ref{class.name}）。
 
 \sect{词法惯例}{gram.lex}
-\paragraph{}
-<++>
+
+\synsym{hex-quad}
+  \synprd{\nt{hexadecimal-digit hexadecimal-digit hexadecimal-digit
+    hexadecimal-digit}}
+\synsym{universal-character-name}
+  \synprd{\tm{\bs{}u} \nt{hex-quad}}
+  \synprd{\tm{\bs{}U} \nt{hex-quad} \nt{hex-quad}}
+\synsym{preprocessing-token}
+  \synprd{\nt{header-name}}
+  \synprd{\nt{identifier}}
+  \synprd{\nt{pp-number}}
+  \synprd{\nt{character-literal}}
+  \synprd{\nt{user-defined-character-literal}}
+  \synprd{\nt{string-literal}}
+  \synprd{\nt{user-defined-string-literal}}
+  \synprd{\nt{preprocessing-op-or-punc}}
+  \synprd{each non-white-space character that cannot be one of the above}
+\synsym{token}
+  \synprd{\nt{identifier}}
+  \synprd{\nt{keyword}}
+  \synprd{\nt{literal}}
+  \synprd{\nt{operator}}
+  \synprd{\nt{punctuator}}
+\synsym{header-name}
+  \synprd{\tm{<} \nt{h-char-sequence} \tm{>}}
+  \synprd{\tm{"} \nt{q-char-sequence} \tm{"}}
+\synsym{h-char-sequence}
+  \synprd{\nt{h-char}}
+  \synprd{\nt{h-char-sequence h-char}}
+\synsym{h-char}
+  \synprd{any member of the source character set except new-line and \tm{>}}
+\synsym{q-char-sequence}
+  \synprd{\nt{q-char}}
+  \synprd{\nt{q-char-sequence q-char}}
+\synsym{q-char}
+  \synprd{any member of the source character set except new-line and \tm{"}}
+\synsym{pp-number}
+  \synprd{\nt{digit}}
+  \synprd{\tm{.} \nt{digit}}
+  \synprd{\nt{pp-number digit}}
+  \synprd{\nt{pp-number identifier-nondigit}}
+  \synprd{\nt{pp-number} \tm{'} \nt{digit}}
+  \synprd{\nt{pp-number} \tm{'} \nt{nondigit}}
+  \synprd{\nt{pp-number} \tm{e} \nt{sign}}
+  \synprd{\nt{pp-number} \tm{E} \nt{sign}}
+  \synprd{\nt{pp-number} \tm{p} \nt{sign}}
+  \synprd{\nt{pp-number} \tm{P} \nt{sign}}
+  \synprd{\nt{pp-number} \tm{.}}
+\synsym{identifier}
+  \synprd{\nt{identifier-nondigit}}
+  \synprd{\nt{identifier identifier-nondigit}}
+  \synprd{\nt{identifier digit}}
+\synsym{identifier-nondigit}
+  \synprd{\nt{nondigit}}
+  \synprd{\nt{universal-character-name}}
+\synsym[one of]{nondigit}
+  \synprd{\texttt{a b c d e f g h i j k l m}}
+  \synprd{\texttt{n o p q r s t u v w x y z}}
+  \synprd{\texttt{A B C D E F G H I J K L M}}
+  \synprd{\texttt{N O P Q R S T U V W X Y Z \_}}
+\synsym[one of]{digit}
+  \synprd{\texttt{0 1 2 3 4 5 6 7 8 9}}
+\synsym[one of]{preprocessing-op-or-punc}
+\begin{table}[h!]
+  \vspace*{-2em}\hspace*{0.5em}
+  \makebox[\textwidth]{
+    \begin{tabular}{lllllllll}
+      \texttt{\{} & \texttt{\}} & \texttt{[} & \texttt{]} & \texttt{\#} &
+        \texttt{\#\#} & \texttt{(} & \texttt{)} &                             \\
+      \texttt{<:} & \texttt{:>} & \texttt{<\%} & \texttt{\%>} & \texttt{\%:} &
+        \texttt{\%:\%:} & \texttt{;} & \texttt{:} & \texttt{\ldots}           \\
+      \texttt{new} & \texttt{delete} & \texttt{?} & \texttt{::} & \texttt{.} &
+        \texttt{.*} & & &                                                     \\
+      \texttt{+} & \texttt{-} & \texttt{*} & \texttt{/} & \texttt{\%} &
+        \texttt{\textasciicircum} & \texttt{\&} & \texttt{|} &
+        \texttt{\textasciitilde}                                              \\
+      \texttt{!} & \texttt{=} & \texttt{<} & \texttt{>} & \texttt{+=} &
+        \texttt{-=} & \texttt{*=} & \texttt{/=} & \texttt{\%=}                \\
+      \texttt{\textasciitilde{}=} & \texttt{\&=} & \texttt{|=} &
+        \texttt{\textless{}\textless{}} & \texttt{\textgreater{}\textgreater}  &
+        \texttt{\textgreater{}\textgreater{}=} &
+        \texttt{\textless{}\textless{}=} & \texttt{==} & \texttt{!=}          \\
+      \texttt{<=} & \texttt{>=} & \texttt{\&\&} & \texttt{||} & \texttt{++}    &
+        \texttt{--} & \texttt{,} & \texttt{->*} & \texttt{->}                 \\
+      \texttt{and} & \texttt{and\_eq} & \texttt{bitand} & \texttt{bitor} &
+        \texttt{compl} & \texttt{not} & \texttt{not\_eq} & &                  \\
+      \texttt{or} & \texttt{or\_eq} & \texttt{xor} & \texttt{xor\_eq} &
+         & & & &                                                              \\
+    \end{tabular}
+  }
+\end{table}
+
+\synsym{literal}
+  \synprd{\textit{integer-literal}}
+  \synprd{\textit{character-literal}}
+  \synprd{\textit{floating-literal}}
+  \synprd{\textit{string-literal}}
+  \synprd{\textit{boolean-literal}}
+  \synprd{\textit{pointer-literal}}
+  \synprd{\textit{user-defined-literal}}
+\synsym{integer-literal}
+  \synprd{\textit{binary-literal integer-suffix$_{opt}$}}
+  \synprd{\textit{octal-literal integer-suffix$_{opt}$}}
+  \synprd{\textit{decimal-literal integer-suffix$_{opt}$}}
+  \synprd{\textit{hexdecimal-literal integer-suffix$_{opt}$}}
+\synsym{binary-literal}
+  \synprd{\texttt{0b} \textit{binary-digit}}
+  \synprd{\texttt{0B} \textit{binary-digit}}
+  \synprd{\textit{binary-literal} \texttt{\sq}\textit{$_{opt}$ binary-digit}}
+\synsym{octal-literal}
+  \synprd{\texttt{0}}
+  \synprd{\textit{octal-literal} \texttt{\sq}\textit{$_{opt}$ octal-digit}}
+\synsym{decimal-literal}
+  \synprd{\textit{nonzero-digit}}
+  \synprd{\textit{decimal-literal} \texttt{\sq}\textit{$_{opt}$ digit}}
+\synsym{hexdecimal-literal}
+  \synprd{\textit{hexdecimal-prefix hexdecimal-digit-sequence}}
+\synsym{binary-digit}
+  \synprd{\texttt{0}}
+  \synprd{\texttt{1}}
+\synsym[one of]{octal-digit}
+  \synprd{\texttt{0 1 2 3 4 5 6 7}}
+\synsym[one of]{nonzero-digit}
+  \synprd{\texttt{1 2 3 4 5 6 7}}
+\synsym[one of]{hexdecimal-prefix}
+  \synprd{\texttt{0x 0X}}
+\synsym{hexdecimal-digit-sequence}
+  \synprd{\textit{hexdecimal-digit}}
+  \synprd{\textit{hexdecimal-digit-sequence} \texttt{\sq}\textit{$_{opt}$
+                  hexdecimal-digit}}
+\synsym[one of]{hexdecimal-digit}
+  \synprd{\texttt{0 1 2 3 4 5 6 7 8 9}}
+  \synprd{\texttt{a b c d e f}}
+  \synprd{\texttt{A B C D E F}}
+\synsym{integer-suffix}
+  \synprd{\textit{unsigned-suffix long-suffix$_{opt}$}}
+  \synprd{\textit{unsigned-suffix long-long-suffix$_{opt}$}}
+  \synprd{\textit{long-suffix unsigned-suffix$_{opt}$}}
+  \synprd{\textit{long-long-suffix unsigned-suffix$_{opt}$}}
+\synsym[one of]{unsigned-prefix}
+  \synprd{\texttt{u U}}
+\synsym[one of]{long-prefix}
+  \synprd{\texttt{l L}}
+\synsym[one of]{long-long-prefix}
+  \synprd{\texttt{ll LL}}
+\synsym{character-literal}
+  \synprd{\textit{encoding-prefix$_{opt}$}
+          \texttt{\sq} \textit{c-char-sequence} \texttt{\sq}}
+\synsym[one of]{encoding-prefix}
+  \synprd{\texttt{u8 u U L}}
+\synsym{c-char-sequence}
+  \synprd{\textit{c-char}}
+  \synprd{\textit{c-char-sequence} \textit{c-char}}
+\synsym{c-char}
+  \synprd{除单引号\texttt{\sq}、反斜杠\texttt{\bs}和新行字符以外的源字符集成
+          员}
+  \synprd{\textit{escape-sequence}}
+  \synprd{\textit{universal-character-name}}
+\synsym{escape-sequence}
+  \synprd{\textit{simple-escape-sequence}}
+  \synprd{\textit{octal-escape-sequence}}
+  \synprd{\textit{hexadecimal-escape-sequence}}
+\synsym[one of]{simple-escape-sequence}
+  \synprd{\texttt{\bs\sq\ \bs\dq\ \bs?\ \bs\bs}}
+  \synprd{\texttt{\bs a \bs b \bs f \bs n \bs r \bs t \bs v}}
+\synsym{octal-escape-sequence}
+  \synprd{\texttt{\bs} \textit{octal-digit}}
+  \synprd{\texttt{\bs} \textit{octal-digit octal-digit}}
+  \synprd{\texttt{\bs} \textit{octal-digit octal-digit octal-digit}}
+\synsym{hexadecimal-escape-sequence}
+  \synprd{\texttt{\bs x} \textit{hexadecimal-digit}}
+  \synprd{\textit{hexadecimal-escape-sequence} \textit{hexadecimal-digit}}
+\synsym{floating-literal}
+  \synprd{\textit{decimal-floating-literal}}
+  \synprd{\textit{hexadecimal-floating-literal}}
+\synsym{decimal-floating-literal}
+  \synprd{\textit{fractional-constant exponent-part$_{opt}$
+                  floating-suffix$_{opt}$}}
+  \synprd{\textit{digit-sequence exponent-part floating-suffix$_{opt}$}}
+\synsym{hexadecimal-floating-literal}
+  \synprd{\textit{hexadecimal-prefix hexadecimal-fract-constant
+                  binary-exponent-part floating-suffix$_{opt}$}}
+  \synprd{\textit{hexadecimal-prefix hexadecimal-digit-sequence
+                  binary-exponent-part floating-suffix$_{opt}$}}
+\synsym{fractional-constant}
+  \synprd{\textit{digit-sequence} \texttt{.} \textit{digit-sequence}}
+  \synprd{\textit{digit-sequence} \texttt{.}}
+\synsym{hexadecimal-fract-constant}
+  \synprd{\textit{hexadecimal-digit-sequence} \texttt{.}
+          \textit{hexadecimal-digit-sequence}}
+  \synprd{\textit{hexadecimal-digit-sequence} \texttt{.}}
+\synsym{exponent-part}
+  \synprd{\texttt{e} \textit{sign$_{opt}$} \textit{digit-sequence}}
+  \synprd{\texttt{E} \textit{sign$_{opt}$} \textit{digit-sequence}}
+\synsym[one of]{sign}
+  \synprd{\texttt{+ -}}
+\synsym{digit-sequence}
+  \synprd{\textit{digit}}
+  \synprd{\textit{digit-sequence} \texttt{\sq}\textit{$_{opt}$ digit}}
+\synsym[one of]{floating-suffix}
+  \synprd{\texttt{f l F L}}
+\synsym{string-literal}
+  \synprd{\textit{encoding-prefix$_{opt}$}
+          \texttt{\dq}\textit{s-char-sequence$_{opt}$}\texttt{\dq}}
+  \synprd{\textit{encoding-prefix$_{opt}$} \texttt{R} \textit{raw-string}}
+\synsym{s-char-sequence}
+  \synprd{\textit{s-char}}
+  \synprd{\textit{s-char-sequence s-char}}
+\synsym{s-char}
+  \synprd{除双引号\texttt{\dq}、反斜杠\texttt{\bs}或新行字符以外
+          的源字符集成员}
+  \synprd{\textit{escape-sequence}}
+  \synprd{\textit{universal-character-name}}
+\synsym{raw-string}
+  \synprd{\texttt{\dq} \textit{d-char-sequence$_{opt}$} \texttt{(}
+          \textit{r-char-sequence$_{opt}$} \texttt{)}
+          \textit{d-char-sequence$_{opt}$} \texttt{\dq}}
+\synsym{r-char-sequence}
+  \synprd{\textit{r-char}}
+  \synprd{\textit{r-char-sequence r-char}}
+\synsym{r-char}
+  \synprd{除右括号\texttt{)}后跟初始\textit{d-char-sequence}（可空）再跟上双引号
+          \texttt{\dq}的源字符集成员。}
+\synsym{d-char-sequence}
+  \synprd{\textit{d-char}}
+  \synprd{\textit{d-char-sequence d-char}}
+\synsym{d-char}
+  \synprd{除空格、左括号\texttt{(}、右括号\texttt{)}、反斜杠\texttt{\bs}和表示
+          水平制表、垂直制表、换页和新}
+  \synprd{行的控制字符以外的基本源字符集成员。}
+\synsym{boolean-literal}
+  \synprd{\texttt{true}}
+  \synprd{\texttt{false}}
+\synsym{pointer-literal}
+  \synprd{\texttt{nullptr}}
+\synsym{user-defined-literal}
+  \synprd{\textit{user-defined-integer-literal}}
+  \synprd{\textit{user-defined-floating-literal}}
+  \synprd{\textit{user-defined-string-literal}}
+  \synprd{\textit{user-defined-character-literal}}
+\synsym{user-defined-integer-literal}
+  \synprd{\textit{decimal-literal ud-suffix}}
+  \synprd{\textit{octal-literal ud-suffix}}
+  \synprd{\textit{hexadecimal-literal ud-suffix}}
+  \synprd{\textit{binary-literal ud-suffix}}
+\synsym{user-defined-floating-literal}
+  \synprd{\textit{fractional-constant exponent-part$_{opt}$ ud-suffix}}
+  \synprd{\textit{digit-sequence exponent-part ud-suffix}}
+  \synprd{\textit{hexadecimal-prefix hexadecimal-fract-constant
+                  binary-exponent-part ud-suffix}}
+  \synprd{\textit{hexadecimal-prefix hexadecimal-digit-sequence
+                  binary-exponent-part ud-suffix}}
+\synsym{user-defined-string-literal}
+  \synprd{\textit{string-literal ud-suffix}}
+\synsym{user-defined-character-literal}
+  \synprd{\textit{character-literal ud-suffix}}
+\synsym{ud-suffix}
+  \synprd[]{\textit{identifier}}
 
 \sect{基本概念}{gram.basic}
+\synsym{translation-unit}
+  \synprd[]{\textit{declaration-seq$_{opt}$}}
+
 \sect{表达式}{gram.expr}
+\synsym{primary-expression}
+  \synprd{\textit{literal}}
+  \synprd{\texttt{this}}
+  \synprd{\texttt{(} \textit{expression} \texttt{)}}
+  \synprd{\textit{id-expression}}
+  \synprd{\textit{lambda-expression}}
+  \synprd{\textit{fold-expression}}
+\synsym{id-expression}
+  \synprd{\textit{unqualified-id}}
+  \synprd{\textit{qualified-id}}
+\synsym{unqualified-id}
+  \synprd{\textit{identifier}}
+  \synprd{\textit{operator-function-id}}
+  \synprd{\textit{conversion-function-id}}
+  \synprd{\textit{literal-operator-id}}
+  \synprd{\texttt{\~} \textit{class-name}}
+  \synprd{\texttt{\~} \textit{decltype-specifier}}
+  \synprd{\textit{template-id}}
+\synsym{qualified-id}
+  \synprd{\textit{nested-name-specifier}
+          \texttt{template}\textit{$_{opt}$ unqualified-id}}
+\synsym{nested-name-specifier}
+  \synprd{\texttt{::}}
+  \synprd{\textit{type-name} \texttt{::}}
+  \synprd{\textit{namespace-name} \texttt{::}}
+  \synprd{\textit{decltype-specifier} \texttt{::}}
+  \synprd{\textit{nested-name-specifier identifier} \texttt{::}}
+  \synprd{\textit{nested-name-specifier}
+            \texttt{template}\textit{$_{opt}$ simple-template-id} \texttt{::}}
+\synsym{lambda-expression}
+  \synprd{\textit{lambda-introducer lambda-declarator$_{opt}$ compound-statement}}
+\synsym{lambda-introducer}
+  \synprd{\texttt{[} \textit{lambda-capture$_{opt}$} \texttt{]}}
+\synsym{lambda-declarator}
+  \synprd{\texttt{(} \textit{parameter-declaration-clause} \texttt{)}
+        \textit{decl-specifier-seq$_{opt}$}}
+  \synprd{\qquad \textit{noexcept-specifier$_{opt}$
+            attribute-specifier-seq$_{opt}$ trailing-return-type$_{opt}$}}
+\synsym{lambda-capture}
+  \synprd{\textit{capture-default}}
+  \synprd{\textit{capture-list}}
+  \synprd{\textit{capture-default} \texttt{,} \textit{capture-list}}
+\synsym{capture-default}
+  \synprd{\texttt{\&}}
+  \synprd{\texttt{=}}
+\synsym{capture-list}
+  \synprd{\textit{capture} \texttt{...}\textit{$_{opt}$}}
+  \synprd{\textit{capture-list} \texttt{,} \textit{capture}
+          \texttt{...}\textit{$_{opt}$}}
+\synsym{capture}
+  \synprd{\textit{simple-capture}}
+  \synprd{init-clause}
+\synsym{simple-capture}
+  \synprd{\textit{identifier}}
+  \synprd{\texttt{\&} \textit{identifier}}
+  \synprd{\texttt{this}}
+  \synprd{\texttt{* this}}
+\synsym{init-clause}
+  \synprd{\textit{identifier initializer}}
+  \synprd{\texttt{\&} \textit{identifier initializer}}
+\synsym{fold-expression}
+  \synprd{\tm{(} \nt{cast-expression fold-operator} \tm{... )}}
+  \synprd{\tm{( ...} \nt{fold-operator cast-expression} \tm{)}}
+  \synprd{\tm{(} \nt{cast-expression fold-operator} \tm{...}
+    \nt{fold-operator cast-expression} \tm{)}}
+\synsym[one of]{fold-operator}
+  \synprd{\tm{+\ \ -\ \ *\ \ /\ \ \%\ \ \^\ \ \&\ \ |\ \ \tl{}\tl\ \ \tg{}\tg}}
+  \synprd{\tm{+= -= *= /= \%= \^{}= \&= |= \tl{}\tl= \tg{}\tg= =}}
+  \synprd{\tm{== != \tl\ \ \tg\ \ \tl= \tg= \&\& || ,\ \ \ .*\ \ -\tg*}}
+\synsym{postfix-expression}
+  \synprd{\nt{primary-expression}}
+  \synprd{\nt{postfix-expression} \tm{[} \nt{expr-or-braced-init-list} \tm{]}}
+  \synprd{\nt{postfix-expression} \tm{(} \nt{expression-list\tsub{opt}} \tm{)}}
+  \synprd{\nt{simple-type-specifier} \tm{(} \nt{expression-list\tsub{opt}}
+    \tm{)}}
+  \synprd{\nt{typename-specifier} \tm{(} \nt{expression-list\tsub{opt}} \tm{)}}
+  \synprd{\nt{simple-type-specifier braced-init-list}}
+  \synprd{\nt{typename-specifier braced-init-list}}
+  \synprd{\nt{postfix-expression} \tm{. template}\nt{\tsub{opt}}
+    \nt{id-expression}}
+  \synprd{\nt{postfix-expression} \tm{-\tg template}\nt{\tsub{opt}}
+    \nt{id-expression}}
+  \synprd{\nt{postfix-expression} \tm{.} \nt{pseudo-destructor-name}}
+  \synprd{\nt{postfix-expression} \tm{-\tg} \nt{pseudo-destructor-name}}
+  \synprd{\nt{postfix-expression} \tm{++}}
+  \synprd{\nt{postfix-expression} \tm{-{}-}}
+  \synprd{\tm{dynamic\_cast \tl} \nt{type-id} \tm{\tg (} \nt{expression} \tm{)}}
+  \synprd{\tm{static\_cast \tl} \nt{type-id} \tm{\tg (} \nt{expression} \tm{)}}
+  \synprd{\tm{reinterpret\_cast \tl} \nt{type-id} \tm{\tg (} \nt{expression}
+    \tm{)}}
+  \synprd{\tm{const\_cast \tl} \nt{type-id} \tm{\tg (} \nt{expression} \tm{)}}
+  \synprd{\tm{typeid (} \nt{expression} \tm{)}}
+  \synprd{\tm{typeid (} \nt{type-id} \tm{)}}
+\synsym{expression-list}
+  \synprd{\nt{initializer-list}}
+\synsym{pseudo-destructor-name}
+  \synprd{\nt{nested-name-specifier\tsub{opt} type-name} \tm{::\~{}}
+    \nt{type-name}}
+  \synprd{\nt{nested-name-specifier} \tm{template} \nt{simple-template-id}
+    \tm{::\~} \nt{type-name}}
+  \synprd{\tm{\~} \nt{type-name}}
+  \synprd{\tm{\~} \nt{decltype-specifier}}
+\synsym{unary-expression}
+  \synprd{\nt{postfix-expression}}
+  \synprd{\tm{++} \nt{cast-expression}}
+  \synprd{\tm{\dsh\dsh} \nt{cast-expression}}
+  \synprd{\nt{unary-operator cast-expression}}
+  \synprd{\tm{sizeof} \nt{unary-expression}}
+  \synprd{\tm{sizeof (} \nt{type-id} \tm{)}}
+  \synprd{\tm{sizeof ... (} \nt{identifier} \tm{)}}
+  \synprd{\tm{alignof (} \nt{type-id} \tm{)}}
+  \synprd{\nt{noexcept-expression}}
+  \synprd{\nt{new-expression}}
+  \synprd{\nt{delete-expression}}
+\synsym[one of]{unary-operator}
+  \synprd{\tm{* \& + - ! \~}}
+\synsym{new-expression}
+  \synprd{\tm{::}\nt{\tsub{opt}} \tm{new}
+    \nt{new-placement\tsub{opt} new-type-id new-identifier\tsub{opt}}}
+  \synprd{\tm{::}\nt{\tsub{opt}} \tm{new} \nt{new-placement\tsub{opt}} \tm{(}
+    \nt{type-id} \tm{)} \nt{new-identifier\tsub{opt}}}
+\synsym{new-placement}
+  \synprd{\tm{(} \nt{expression-list} \tm{)}}
+\synsym{new-type-id}
+  \synprd{\nt{type-specifier-seq new-declarator\tsub{opt}}}
+\synsym{new-declarator}
+  \synprd{\nt{ptr-operator new-declarator\tsub{opt}}}
+  \synprd{\nt{noptr-new-declarator}}
+\synsym{noptr-new-declarator}
+  \synprd{\tm{[} \nt{expression} \tm{]} \nt{attribute-specifier-seq\tsub{opt}}}
+  \synprd{\nt{noptr-new-declarator} \tm{[} \nt{constant-expression} \tm{]}
+    \nt{attribute-specifier-seq\tsub{opt}}}
+\synsym{new-initializer}
+  \synprd{\tm{(} \nt{expression-list\tsub{opt}}}
+  \synprd{\nt{braced-init-list}}
+\synsym{delete-expression}
+  \synprd{\tm{::}\nt{\tsub{opt}} \tm{delete} \nt{cast-expression}}
+  \synprd{\tm{::}\nt{\tsub{opt}} \tm{delete [ ]} \nt{cast-expression}}
+\synsym{noexcept-expression}
+  \synprd{\tm{noexcept (} \nt{expression} \tm{)}}
+\synsym{cast-expression}
+  \synprd{\nt{unary-expression}}
+  \synprd{\tm{(} \nt{type-id} \tm{)} \nt{cast-expression}}
+\synsym{pm-expression}
+  \synprd{\nt{cast-expression}}
+  \synprd{\nt{pm-expression} \tm{.*} \nt{cast-expression}}
+  \synprd{\nt{pm-expression} \tm{->*} \nt{cast-expression}}
+\synsym{multiplicative-expression}
+  \synprd{\nt{pm-expression}}
+  \synprd{\nt{multiplicative-expression} \tm{*} \nt{pm-expression}}
+  \synprd{\nt{multiplicative-expression} \tm{/} \nt{pm-expression}}
+  \synprd{\nt{multiplicative-expression} \tm{\%} \nt{pm-expression}}
+\synsym{additive-expression}
+  \synprd{\nt{multiplicative-expression}}
+  \synprd{\nt{additive-expression} \tm{+} \nt{multiplicative-expression}}
+  \synprd{\nt{additive-expression} \tm{-} \nt{multiplicative-expression}}
+\synsym{shift-expression}
+  \synprd{\nt{additive-expression}}
+  \synprd{\nt{shift-expression} \tm{\tl{}\tl} \nt{additive-expression}}
+  \synprd{\nt{shift-expression} \tm{\tg{}\tg} \nt{additive-expression}}
+\synsym{relational-expression}
+  \synprd{\nt{shift-expression}}
+  \synprd{\nt{relational-expression} \tm{<} \nt{shift-expression}}
+  \synprd{\nt{relational-expression} \tm{>} \nt{shift-expression}}
+  \synprd{\nt{relational-expression} \tm{<=} \nt{shift-expression}}
+  \synprd{\nt{relational-expression} \tm{>=} \nt{shift-expression}}
+\synsym{equality-expression}
+  \synprd{\nt{relational-expression}}
+  \synprd{\nt{equality-expression} \tm{==} \nt{relational-expression}}
+  \synprd{\nt{equality-expression} \tm{!=} \nt{relational-expression}}
+\synsym{and-expression}
+  \synprd{\nt{equality-expression}}
+  \synprd{\nt{and-expression} \tm{\&} \nt{equality-expression}}
+\synsym{exclusive-or-expression}
+  \synprd{\nt{and-expression}}
+  \synprd{\nt{exclusive-or-expression} \tm{\^} \nt{and-expression}}
+\synsym{inclusive-or-expression}
+  \synprd{\nt{exclusive-or-expression}}
+  \synprd{\nt{inclusive-or-expression} \tm{|} \nt{exclusive-or-expression}}
+\synsym{logical-and-expression}
+  \synprd{\nt{inclusive-or-expression}}
+  \synprd{\nt{logical-and-expression} \tm{\&\&} \nt{inclusive-or-expression}}
+\synsym{logical-or-expression}
+  \synprd{\nt{logical-and-expression}}
+  \synprd{\nt{logical-or-expression} \tm{||} \nt{logical-and-expression}}
+\synsym{conditional-expression}
+  \synprd{\nt{logical-or-expression}}
+  \synprd{\nt{logical-or-expression} \tm{?} \nt{expression} \tm{:}
+    \nt{assignment-expression}}
+\synsym{throw-expression}
+  \synprd{\tm{throw} \nt{assignment-expression\tsub{opt}}}
+\synsym{assignment-expression}
+  \synprd{\nt{conditional-expression}}
+  \synprd{\nt{logical-or-expression assignment-operator initializer-clause}}
+  \synprd{\nt{throw-expression}}
+\synsym[one of]{assignment-operator}
+  \synprd{\tm{= *= /= \%= += -= \tg{}\tg= \tl{}\tl= \&= \^{}= |=}}
+\synsym{expression}
+  \synprd{\nt{assignment-expression}}
+  \synprd{\nt{expression} \tm{,} \nt{assignment-expression}}
+\synsym{constant-expression}
+  \synprd[]{\nt{conditional-expression}}
+
 \sect{语句}{gram.stmt}
+\synsym{statement}
+  \synprd{\nt{labeled-statement}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} expression-statement}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} compound-statement}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} selection-statement}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} iteration-statement}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} jump-statement}}
+  \synprd{\nt{declaration-statement}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} try-block}}
+\synsym{init-statement}
+  \synprd{\nt{expression-statement}}
+  \synprd{\nt{simple-declaration}}
+\synsym{condition}
+  \synprd{\nt{expression}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} decl-specifier-seq declarator
+    brace-or-equal-initializer}}
+\synsym{labeled-statement}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} identifier} \tm{:}
+    \nt{statement}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt}} \tm{case}
+    \nt{constant-expression} \tm{:} \nt{statement}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt}} \tm{default :}
+    \nt{statement}}
+\synsym{labeled-statement}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} identifier} \tm{:}
+    \nt{statement}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt}} \tm{case}
+    \nt{constant-expression} \tm{:} \nt{statement}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt}} \tm{default :}
+    \nt{statement}}
+\synsym{expression-statement}
+  \synprd{\nt{expression\tsub{opt}} \tm{;}}
+\synsym{compound-statement}
+  \synprd{\tm{\{} \nt{statement-seq\tsub{ope}} \tm{\}}}
+\synsym{statement-seq}
+  \synprd{\nt{statement}}
+  \synprd{\nt{statement-seq statement}}
+\synsym{selection-statement}
+  \synprd{\tm{if constexpr}\nt{\tsub{opt}} \tm{(} \nt{init-statement\tsub{opt}
+    condition} \tm{)} \nt{statement}}
+  \synprd{\tm{if constexpr}\nt{\tsub{opt}} \tm{(} \nt{init-statement\tsub{opt}
+    condition} \tm{)} \nt{statement} \tm{else} \nt{statement}}
+  \synprd{\tm{switch (} \nt{init-statement\tsub{opt} condition} \tm{)}
+    \nt{statement}}
+\synsym{iteration-statement}
+  \synprd{\tm{while (} \nt{condition} \tm{)} \nt{statement}}
+  \synprd{\tm{do} \nt{statement} \tm{while (} \nt{expression}}
+  \synprd{\tm{for (} \nt{init-statement condition\tsub{opt}} \tm{;}
+  \nt{expression\tsub{opt}} \tm{)} \nt{statement}}
+  \synprd{\tm{for (} \nt{for-range-declaration} \tm{:}
+    \nt{for-range-initializer} \tm{)} \nt{statement}}
+\synsym{for-range-declaration}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} decl-specifier-seq declarator}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} decl-specifier-seq
+    ref-qualifier\tsub{opt}} \tm{[} \nt{identifier-list} \tm{]}}
+\synsym{for-range-initializer}
+  \synprd{\nt{expr-or-braced-init-list}}
+\synsym{jump-statement}
+  \synprd{\tm{break ;}}
+  \synprd{\tm{continue ;}}
+  \synprd{\tm{return} \nt{expr-or-braced-init-list\tsub{opt}} \tm{;}}
+  \synprd{\tm{goto} \nt{identifier} \tm{;}}
+\synsym{declaration-statement}
+  \synprd[]{\nt{block-declaration}}
+
 \sect{声明}{gram.dcl}
+\synsym{declaration-seq}
+  \synprd{\nt{declaration}}
+  \synprd{\nt{declaration-seq declaration}}
+\synsym{declaration}
+  \synprd{\nt{block-declaration}}
+  \synprd{\nt{nodeclspec-function-declaration}}
+  \synprd{\nt{function-definition}}
+  \synprd{\nt{template-declaration}}
+  \synprd{\nt{deduction-guide}}
+  \synprd{\nt{explicit-instantiation}}
+  \synprd{\nt{explicit-specialization}}
+  \synprd{\nt{linkage-specification}}
+  \synprd{\nt{namespace-definition}}
+  \synprd{\nt{empty-declaration}}
+  \synprd{\nt{attribute-declaration}}
+\synsym{block-declaration}
+  \synprd{\nt{simple-declaration}}
+  \synprd{\nt{asm-definition}}
+  \synprd{\nt{namespace-alias-definition}}
+  \synprd{\nt{using-declaration}}
+  \synprd{\nt{using-directive}}
+  \synprd{\nt{static\_assert-declaration}}
+  \synprd{\nt{alias-declaration}}
+  \synprd{\nt{opaque-enum-declaration}}
+\synsym{nodeclspec-function-declaration}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} declarator} \tm{;}}
+\synsym{alias-declaration}
+  \synprd{\tm{using} \nt{identifier attribute-specifier-seq\tsub{opt}} \tm{=}
+    \nt{defining-type-id} \tm{;}}
+\synsym{simple-declaration}
+  \synprd{\nt{decl-specifier-seq init-declarator-list\tsub{opt}} \tm{;}}
+  \synprd{\nt{attribute-specifier-seq decl-specifier-seq init-declarator-list}
+    \tm{;}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} decl-specifier-seq
+    ref-qualifier\tsub{opt}} \tm{[} \nt{identifier-list} \tm{]} \nt{initializer}
+    \tm{;}}
+\synsym{static\_assert-declaration}
+  \synprd{\tm{static\_assert (} \nt{constant-expression} \tm{) ;}}
+  \synprd{\tm{static\_assert (} \nt{constant-expression} \tm{,}
+    \nt{string-literal} \tm{) ;}}
+\synsym{empty-declaration}
+  \synprd{\tm{;}}
+\synsym{attribute-declaration}
+  \synprd{\nt{attribute-specifier-seq} \tm{;}}
+\synsym{decl-specifier}
+  \synprd{\nt{storage-class-specifier}}
+  \synprd{\nt{defining-type-specifier}}
+  \synprd{\nt{function-specifier}}
+  \synprd{\tm{friend}}
+  \synprd{\tm{typedef}}
+  \synprd{\tm{constexpr}}
+  \synprd{\tm{inline}}
+\synsym{decl-specifier-seq}
+  \synprd{\nt{decl-specifier attribute-specifier-seq\tsub{opt}}}
+  \synprd{\nt{decl-specifier decl-specifier-seq}}
+\synsym{storage-class-specifier}
+  \synprd{\tm{static}}
+  \synprd{\tm{thread\_local}}
+  \synprd{\tm{extern}}
+  \synprd{\tm{mutable}}
+\synsym{function-specifier}
+  \synprd{\nt{virtual}}
+  \synprd{\nt{explicit}}
+\synsym{typdef-name}
+  \synprd{\nt{identifier}}
+\synsym{type-specifier}
+  \synprd{\nt{simple-type-specifier}}
+  \synprd{\nt{elaborated-type-specifier}}
+  \synprd{\nt{typename-specifier}}
+  \synprd{\nt{cv-qualifier}}
+\synsym{type-specifier-seq}
+  \synprd{\nt{type-specifier attribute-specifier-seq\tsub{opt}}}
+  \synprd{\nt{type-specifier type-specifier-seq}}
+\synsym{defining-type-specifier}
+  \synprd{\nt{type-specifier}}
+  \synprd{\nt{class-specifier}}
+  \synprd{\nt{enum-specifier}}
+\synsym{defining-type-specifier-seq}
+  \synprd{\nt{defining-type-specifier attribute-specifier-seq\tsub{opt}}}
+  \synprd{\nt{defining-type-specifier defining-type-specifier-seq}}
+\synsym{simple-type-specifier}
+  \synprd{\nt{nested-name-specifier\tsub{opt} type-name}}
+  \synprd{\nt{nested-name-specifier} \tm{template} \nt{simple-template-id}}
+  \synprd{\nt{nested-name-specifier\tsub{opt} template-name}}
+  \synprd{\tm{char}}
+  \synprd{\tm{char16\_t}}
+  \synprd{\tm{char32\_t}}
+  \synprd{\tm{wchar\_t}}
+  \synprd{\tm{bool}}
+  \synprd{\tm{short}}
+  \synprd{\tm{int}}
+  \synprd{\tm{long}}
+  \synprd{\tm{signed}}
+  \synprd{\tm{unsigned}}
+  \synprd{\tm{float}}
+  \synprd{\tm{double}}
+  \synprd{\tm{void}}
+  \synprd{\tm{auto}}
+  \synprd{\nt{decltype-specifier}}
+\synsym{type-name}
+  \synprd{\nt{class-name}}
+  \synprd{\nt{enum-name}}
+  \synprd{\nt{typedef-name}}
+  \synprd{\nt{simple-template-id}}
+\synsym{decltype-specifier}
+  \synprd{\tm{decltype (} \nt{expression} \tm{)}}
+  \synprd{\tm{decltype ( auto )}}
+\synsym{elaborated-type-specifier}
+  \synprd{\nt{class-key attribute-specifier-seq\tsub{opt}
+    nested-name-specifier\tsub{opt} identity}}
+  \synprd{\nt{class-key simple-template-id}}
+  \synprd{\nt{class-key nested-name-specifier} \tm{template}\nt{\tsub{opt}
+    simple-template-id}}
+  \synprd{\tm{enum} \nt{nested-name-specifier\tsub{opt} identifier}}
+\synsym{enum-name}
+  \synprd{\nt{identifier}}
+\synsym{enum-specifier}
+  \synprd{\nt{enum-head} \tm{\{} \nt{enumerator-list\tsub{opt}} \tm{\}}}
+  \synprd{\nt{enum-head} \tm{\{} \nt{enumerator-list} \tm{, \}}}
+\synsym{enum-head}
+  \synprd{\nt{enum-key attribute-specifier-seq\tsub{opt}
+    enum-head-name\tsub{opt} enum-base\tsub{opt}}}
+\synsym{enum-head-name}
+  \synprd{\nt{nested-name-specifier\tsub{opt} identifier}}
+\synsym{opaque-enum-declaration}
+  \synprd{\nt{enum-key attribute-specifier-seq\tsub{opt}
+    nested-name-specifier\tsub{opt} identifier enum-base\tsub{opt}} \tm{;}}
+\synsym{enum-key}
+  \synprd{\tm{enum}}
+  \synprd{\tm{enum class}}
+  \synprd{\tm{enum struct}}
+\synsym{enum-base}
+  \synprd{\tm{:} \nt{type-specifier-seq}}
+\synsym{enumerator-list}
+  \synprd{\nt{enumerator-definition}}
+  \synprd{\nt{enumerator-list} \tm{,} \nt{enumerator-definition}}
+\synsym{enumerator-definition}
+  \synprd{\nt{enumerator}}
+  \synprd{\nt{enumerator} \tm{=} \nt{constant-expression}}
+\synsym{enumerator}
+  \synprd{\nt{identifier attribute-specifier-seq\tsub{opt}}}
+\synsym{namespace-name}
+  \synprd{\nt{identifier}}
+  \synprd{\nt{namespace-alias}}
+\synsym{namespace-definition}
+  \synprd{\nt{named-namespace-definition}}
+  \synprd{\nt{unnamed-namespace-definition}}
+  \synprd{\nt{nested-namespace-definition}}
+\synsym{named-namespace-definition}
+  \synprd{\tm{inline}\nt{\tsub{opt}} \tm{namespace}
+    \nt{attribute-specifier-seq\tsub{opt} identifier} \tm{\{}
+    \nt{namespace-body} \tm{\}}}
+\synsym{unnamed-namespace-definition}
+  \synprd{\tm{inline}\nt{\tsub{opt}} \tm{namespace}
+    \nt{attribute-specifier-seq\tsub{opt}} \tm{\{} \nt{namespace-body} \tm{\}}}
+\synsym{nested-namespace-specifier}
+  \synprd{\tm{namespace} \nt{enclosing-namespace-specifier} \tm{::}
+    \nt{identifier} \tm{\{} \nt{namespace-body} \tm{\}}}
+\synsym{enclosing-namespace-specifier}
+  \synprd{\nt{identifier}}
+  \synprd{\nt{enclosing-namespace-specifier} \tm{::} \nt{identifier}}
+\synsym{namespace-body}
+  \synprd{\nt{declaration-seq\tsub{opt}}}
+\synsym{namespace-alias}
+  \synprd{\nt{identifier}}
+\synsym{namespace-alias-definition}
+  \synprd{\tm{namespace} \nt{identifier} \tm{=}
+    \nt{qualified-namespace-specifier} \tm{;}}
+\synsym{qualified-namespace-specifier}
+  \synprd{\nt{nested-name-specifier\tsub{opt} namespace-name}}
+\synsym{using-declaration}
+  \synprd{\tm{using} \nt{using-declarator-list} \tm{;}}
+\synsym{using-declarator-list}
+  \synprd{\nt{using-declarator} \tm{...}\nt{\tsub{opt}}}
+\synsym{using-declarator}
+  \synprd{\tm{typename}\nt{\tsub{opt} nested-name-specifier unqualified-id}}
+\synsym{using-directive}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt}} \tm{using namespace}
+    \nt{nested-name-specifier\tsub{opt} namespace-name} \tm{;}}
+\synsym{asm-definition}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt}} \tm{asm (}
+    \nt{string-literal} \tm{) ;}}
+\synsym{linkage-specification}
+  \synprd{\tm{extern} \nt{string-literal} \tm{\{} \nt{declaration-seq\tsub{opt}}
+    \tm{\}}}
+  \synprd{\tm{extern} \nt{string-literal declaration}}
+\synsym{attribute-specifier-seq}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} attribute-specifier}}
+\synsym{attribute-specifier}
+  \synprd{\tm{[ [} \nt{attribute-using-prefix\tsub{opt} attribute-list} \tm{] ]}}
+  \synprd{\nt{alignment-specifier}}
+\synsym{alignment-specifier}
+  \synprd{\tm{alignas (} \nt{type-id} \tm{...}\nt{\tsub{opt}} \tm{)}}
+  \synprd{\tm{alignas (} \nt{constant-expression} \tm{...}\nt{\tsub{opt}} \tm{)}}
+\synsym{attribute-using-prefix}
+  \synprd{\tm{using} \nt{attribute-namespace} \tm{:}}
+\synsym{attribute-list}
+  \synprd{\nt{attribute\tsub{opt}}}
+  \synprd{\nt{attribute-list} \tm{,} \nt{attribute\tsub{opt}}}
+  \synprd{\nt{attribute} \tm{...}}
+  \synprd{\nt{attribute-list} \tm{,} \nt{attribute} \tm{...}}
+\synsym{attribute}
+  \synprd{\nt{attribute-token attribute-argument-clause\tsub{opt}}}
+\synsym{attribute-token}
+  \synprd{\nt{identifier}}
+  \synprd{\nt{attribute-scoped-token}}
+\synsym{attribute-scoped-token}
+  \synprd{\nt{attribute-namespace} \tm{::} \nt{identifier}}
+\synsym{attribute-namespace}
+  \synprd{\nt{identifier}}
+\synsym{attribute-argument-clause}
+  \synprd{\tm{(} \nt{balanced-token-seq\tsub{opt}} \tm{)}}
+\synsym{balanced-token-seq}
+  \synprd{\nt{balanced-token}}
+  \synprd{\nt{balanced-token-seq balanced-token}}
+\synsym{balanced-token}
+  \synprd{\tm{(} \nt{balanced-token-seq\tsub{opt}} \tm{)}}
+  \synprd{\tm{[} \nt{balanced-token-seq\tsub{opt}} \tm{]}}
+  \synprd{\tm{\{} \nt{balanced-token-seq\tsub{opt}} \tm{\}}}
+  \synprd[]{除圆括号，方括号和花括号之外的任何\nt{token}}
+
 \sect{声明子}{gram.decl}
 \sect{类}{gram.class}
 \sect{派生类}{gram.derived}

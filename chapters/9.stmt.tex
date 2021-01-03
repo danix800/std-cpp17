@@ -117,7 +117,7 @@ case标号与缺省标号应该仅出现在switch语句。
     \nt{statement}}
 
 参见\ref{dcl.meaning}中关于条件中的可选\nt{attribute-specifier-seq}。「注：一个
-\nt{init-statement}以分号结束。」在第\ref{stmt}章中，术语\nt{子语句}引用语法记号
+\nt{init-statement}以分号结束。」在第\ref{stmt.stmt}章中，术语\nt{子语句}引用语法记号
 中包含的\nt{语句}。\nt{selection-statement}中的子语句（\tm{else}形式的\tm{if}语
 句中的每一个子语句）隐式定义了一个块作用域（\ref{basic.scope}）。如果选择语句中
 的子语句是单个语句而不是复合语句，则如同该语句被重写成包含原语句的复合语句。
@@ -572,9 +572,9 @@ switch中跳出，见\tm{break}，\ref{stmt.break}。「注：通常，作为swi
   class T {
     // ...
   public:
-    T() ;
-    T(int) ;
-    T(int, int) ;
+    T();
+    T(int);
+    T(int, int);
   };
   T(a);         // declaration
   T(*b)();      // declaration
@@ -599,7 +599,7 @@ switch中跳出，见\tm{break}，\ref{stmt.break}。「注：通常，作为swi
 
   struct T2 { T2(int) { } };
 
-  int a, (*(*b) (T2) ) (int) , c, d;
+  int a, (*(*b)(T2))(int), c, d;
 
   void f() {
     // disambiguation requires this to be parsed as a declaration:

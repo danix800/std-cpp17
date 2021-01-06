@@ -1,25 +1,698 @@
 %% 19. cpp
 \chptr{预处理指令}{cpp}
+\paragraph{}
+一条\nt{预处理指令}由满足以下约束的预处理标记序列组成：序列中第一个标记为（在翻
+译阶段\ref{tpit4}开始处）源文件的第一个字符（可选地跟在非新行字符的空白之后），
+或跟在含至少一个新行字符的空白之后。序列中最后一个标记为跟在序列中第一个标记后的
+第一个新行字符。\footnote{因此预处理指令通常称为``行''。这些``行''同空白一样，除
+预处理过程中的某些情况外没有其他语法意义（见\ref{cpp.stringize}中关于字符串创建
+运算符\tm{\#}）。}一个新行字符结束一条预处理指令，即使它出现在否则将会是一个函数
+式宏调用的某处。
+
+\synsym{preprocessing-file}
+  \synprd{\nt{group\tsub{opt}}}
+\synsym{group}
+  \synprd{\nt{group-part}}
+  \synprd{\nt{group group-part}}
+\synsym{group-part}
+  \synprd{\nt{control-line}}
+  \synprd{\nt{if-section}}
+  \synprd{\nt{text-line}}
+  \synprd{\tm{\#} \nt{conditionally-supported-directive}}
+\synsym{control-line}
+  \synprd{\tm{\# include \ \ }\nt{pp-tokens new-line}}
+  \synprd{\tm{\# define \ \ \ }\nt{identifier replacement-list new-line}}
+  \synprd{\tm{\# define \ \ \ }\nt{identifier lparen identifier-list\tsub{opt}}
+    \tm{)} \nt{replacement-list new-line}}
+  \synprd{\tm{\# define \ \ \ }\nt{identifier lparen} \tm{... )}
+    \nt{replacement-list new-line}}
+  \synprd{\tm{\# define \ \ \ }\nt{identifier lparen identifier-list}
+    \tm{, ... )} \nt{replacement-list new-line}}
+  \synprd{\tm{\# undef \ \ \ \ }\nt{identifier new-line}}
+  \synprd{\tm{\# line \ \ \ \ \ }\nt{pp-tokens new-line}}
+  \synprd{\tm{\# error \ \ \ \ }\nt{pp-tokens\tsub{opt} new-line}}
+  \synprd{\tm{\# pragma \ \ \ }\nt{pp-tokens\tsub{opt} new-line}}
+  \synprd{\tm{\# \ }\nt{new-line}}
+\synsym{if-section}
+  \synprd{\nt{if-group elif-groups\tsub{opt} else-group\tsub{opt} endif-line}}
+\synsym{if-group}
+  \synprd{\tm{\# if \ \ \ \ \ \ \ }\nt{constant-expression new-line
+    group\tsub{opt}}}
+  \synprd{\tm{\# ifdef \ \ \ \ }\nt{identifier new-line group\tsub{opt}}}
+  \synprd{\tm{\# ifndef \ \ \ }\nt{identifier new-line group\tsub{opt}}}
+\synsym{elif-groups}
+  \synprd{\nt{elif-group}}
+  \synprd{\nt{elif-groups elif-group}}
+\synsym{elif-group}
+  \synprd{\tm{\# elif \ \ \ \ \ }\nt{constant-expression new-line
+    group\tsub{opt}}}
+\synsym{else-group}
+  \synprd{\tm{\# else \ \ \ \ \ }\nt{new-line group\tsub{opt}}}
+\synsym{endif-line}
+  \synprd{\tm{\# endif \ \ \ \ }\nt{new-line}}
+\synsym{text-line}
+  \synprd{\nt{pp-tokens\tsub{opt} new-line}}
+\synsym{conditionally-supported-directive}
+  \synprd{\nt{pp-tokens new-line}}
+\synsym{lparen}
+  \synprd{前面没有直接空白的\tm{(}}
+\synsym{identifier-list}
+  \synprd{\nt{identifier}}
+  \synprd{\nt{identifier-list} \tm{,} \nt{identifier}}
+\synsym{replacement-list}
+  \synprd{\nt{pp-tokens\tsub{opt}}}
+\synsym{pp-tokens}
+  \synprd{\nt{preprocessing-token}}
+  \synprd{\nt{pp-tokens preprocessing-token}}
+\synsym{new-line}
+  \synprd[]{新行字符}
+
+\paragraph{}
+文本行不应该以\tm{\#}预处理标记开始。\nt{conditionally-supported-directive}不应
+该以出现在语法中的任何指令名开始。\nt{conditionally-supported-directive}由实现支
+持，具有实现定义语义。
+
+\paragraph{}
+当处于被跳过的组（\ref{cpp.cond}）中时，指令语法放宽松到允许任何预处理指令出现在
+指令名和随后的新行字符之间。
+
+\paragraph{}
+预处理指令中（从引导预处理标记\tm{\#}之后到终止新行字符之前）唯一可以出现在预处
+理标记之间的空白字符为空格和水平制表符（包含翻译阶段\ref{tpit3}中替换注释的空白
+和其他可能的空白字符）。
+
+\paragraph{}
+实现可以有条件地处理和跳过源文件的一部分，包含其他源文件，并替换宏。这些能力称为
+\nt{预处理}，因概念上来说它们出现在所产生的翻译单元的翻译之前。
+
+\paragraph{}
+预处理指令中的预处理标记除另作说明外不受宏展开限制。
+
+「例：在以下代码段中
+\begin{lstlisting}
+  #define EMPTY
+  EMPTY   #   include <file.h>
+\end{lstlisting}
+第二行的预处理标记序列不是一个预处理指令，因它在翻译阶段\ref{tpit4}的开始处不以
+\tm{\#}开始，即使在宏\tm{EMPTY}被替换后如此。」
 
 \sect{条件包含}{cpp.cond}
+\synsym{defined-macro-expression}
+  \synprd{\tm{defined} \nt{identifier}}
+  \synprd{\tm{defined (} \nt{identifier} \tm{)}}
+\synsym{h-preprocessing-token}
+  \synprd{除\tm{>}之外的任何\nt{preprocessing-token}}
+\synsym{h-pp-tokens}
+  \synprd{\nt{h-preprocessing-token}}
+  \synprd{\nt{h-pp-token h-preprocessing-token}}
+\synsym{has-include-expression}
+  \synprd{\tm{\_\_{}has\_{}include ( <} \nt{h-char-sequence} \tm{> )}}
+  \synprd{\tm{\_\_{}has\_{}include ( "} \nt{q-char-sequence} \tm{" )}}
+  \synprd{\tm{\_\_{}has\_{}include (} \nt{string-literal} \tm{)}}
+  \synprd[]{\tm{\_\_{}has\_{}include ( <} \nt{h-pp-tokens} \tm{> )}}
+
+\paragraph{}
+控制条件包含的表达式应该是整型常量表达式，除了标识符按以下所述\footnote{因控制常
+量表达式在翻译阶段\ref{tpit4}中求值，所有标识符要么是宏名要么不是 -- 根本就没有
+关键字，枚举常量等。}进行解释且可能包含零个或多个\nt{defined-macro-expression}
+和/或\nt{has-include-expression}作为一元运算符表达式。
+
+\paragraph{}
+一个\nt{defined-macro-expression}如果标识符当前被定义为宏名（即如果它是预定义的
+或者它是\tm{\#define}预处理指令的主体而中间没有同主体标识符的\tm{\#undef}指令出
+现过）则求值为\tm{1}，如果不是则求值为\tm{0}。
+
+\paragraph{}
+\nt{has-include-expression}的第三和第四种形式仅当第一种或第二种形式都不匹配的情
+况下才允许考虑，这种情况下预处理标记如正常文本一样进行处理。
+
+\paragraph{}
+在每一个包含的\nt{has-include-expression}中由带括号预处理标记序列所标识的头或源
+文件如果这些预处理标记序列是\tm{\#include}指令的\nt{pp-tokens}一样进行搜索，除了
+不再进行进一步的宏展开。如果这样的指令不满足\tm{\#include}指令的语法要求，则程序
+为病态。如果源文件搜索成功，则\nt{has-include-expression}求值为\tm{1}，如果搜索
+失败则为\tm{0}。
+
+\paragraph{}
+\tm{\#ifdef}和\tm{\#ifndef}以及\tm{defined}条件包含运算符应该将
+\tm{\_\_{}has\_{}include}当作是已定义的宏名一样。标识符\tm{\_\_{}has\_{}include}
+不应该出现在本节未提到的任何上下文中。
+
+\paragraph{}
+在所有宏替换出现之后每一个保留下来的（在将成为控制表达式的预处理标记列表中）预处
+理标记应该具有一个标记的词法形式（\ref{lex.token}）。
+
+\paragraph{}
+形如                                                                          \\
+\mbox{\qquad{\tm{\# if \ \ \ \ \ }\nt{constant-expression new-line
+  group\tsub{opt}}}}                                                          \\
+\mbox{\qquad{\tm{\# elif \ \ \ }\nt{constant-expression new-line
+  group\tsub{opt}}}}                                                          \\
+的预处理指令检查控制常理表达式是否求值为非零。
+
+\paragraph{}
+在求值前，那些将成员控制常量表达式的预处理标记列表中的宏调用像正常文本一样被替换
+（除了那些被\tm{defined}一元运算符所修改的宏名）。如果因该替换过程产生标记
+\tm{defined}或\tm{defined}一元运算符在宏替换之前不匹配两种指定形式之一，则行为未
+定义。
+
+\paragraph{}
+在所有宏展开带来的替换和\nt{defined-macro-expression}与
+\nt{has-include-expression}的求值完成后，所有剩余标识符和关键字，除\tm{true}和
+\tm{false}之外，都使用\nt{pp-number} \tm{0}替换，随后每一个预处理标记转换成一个
+标记。「注：一个备选标记（\ref{lex.digraph}）不是标识符，即使当其拼写完全由字母
+和下划线组成。因此其不受限于此替换。」
+
+\paragraph{}
+所产生的标记构成控制常量表达式，按\ref{expr.const}中规则使用至少具有21.3中所指定
+的算术范围进行求值。为了此标记转换和求值的目的，所有有符号和无符号整型的行为如同
+其分别与\tm{intmax\_t}和\tm{uintmax\_t}（21.4）具有相同表示。「注：因此在一个
+\tm{std::numeric\_limits<int>::max()}为\tm{0x7FFF}和
+\tm{std::numeric\_limits<unsigned int>::max()}为\tm{0xFFFF}的实现中，整型字面值
+\tm{0x8000}在一个\tm{\#if}表达式中为有符号且是正的，即使其在翻译阶段\ref{tpit7}
+（\ref{lex.phases}）中是无符号的。」这包括解释字符字面值，可能涉及转换转义序列到
+执行字符集成员。这些字符字面值的数值是否匹配当等价字符字面值出现在一个表达式中时
+（除了在\tm{\#if}或\tm{\#elif}指令中）所获取的值由实现定义。「注：因此以下的
+\tm{\#if}指令和\tm{if}语句中的常量表达式：                                    \\
+\mbox{\qquad{\tm{\#if 'z' - 'a' ==  25}}}                                     \\
+\mbox{\qquad{\tm{if ('z' - 'a' ==  25)}}}                                     \\
+在这两种上下文中不保证求值到相同值。」同样，单字符的字符字面值是否具有负值由实现
+定义。\tm{bool}类型的每一个子表达式在处理继续之前受制于整型提升。
+
+\paragraph{}
+形如                                                                          \\
+\mbox{\qquad{\tm{\# ifdef \ \ \ }\nt{identifier new-line group\tsub{opt}}}}   \\
+\mbox{\qquad{\tm{\# ifndef \ \ }\nt{identifier new-line group\tsub{opt}}}}    \\
+的预处理指令检查标识符当前是否已经定义为宏名。其条件分别等价于\tm{\#if defined}
+\nt{identifier}和\tm{\#if !defined} \nt{identifier}。
+
+\paragraph{}
+每一条指令的条件按顺序检查。如果求值为假（零），则跳过其所控制的组：指令只处理到
+确定指令的名字以跟踪嵌套条件层级；忽略指令预处理标记的剩余部分，组内其他预处理标
+记也是。只处理控制条件求值为真（非零）的第一组；跳过任何随后的组且其控制指令如同
+被跳过组一样进行处理。如果没有条件求值为真，且存在\tm{\#else}指令，则处理
+\tm{\#else}所控制的组；如缺少\tm{\#else}指令，则所有直到\tm{\#endif}的组都被跳
+过。\footnote{如语法所示，一个预处理标记不应该跟在\tm{\#else}或\tm{\#endif}指令之
+后，终止新行字符之前。但注释可以出现在源文件任何位置，包括在预处理指令中。}
+
+「例：本例展示一种仅在其可用时才包含库\tm{optional}的方法：
+\begin{lstlisting}
+  #if __has_include(<optional>)
+  #  include <optional>
+  #  define have_optional 1
+  #elif __has_include(<experimental/optional>)
+  #  include <experimental/optional>
+  #  define have_optional 1
+  #  define experimental_optional 1
+  #else
+  #  define have_optional 0
+  #endif
+\end{lstlisting}」
 
 \sect{源文件包含}{cpp.include}
+\paragraph{}
+一条\tm{\#include}指令应该标记一个可以被实现处理的头或源文件。
+
+\paragraph{}
+形如                                                                          \\
+\mbox{\qquad{\tm{\# include <} \nt{h-char-sequence} \tm{>} \nt{new-line}}}    \\
+的预处理指令在一系列实现定义的位置搜索分界符\tm{<}和\tm{>}之间所指定序列唯一确定
+的头，且使用整个头的内容来替换该指令。如何指定位置或如何标识头由实现定义。
+
+\paragraph{}
+形如                                                                          \\
+\mbox{\qquad{\tm{\# include "} \nt{q-char-sequence} \tm{"} \nt{new-line}}}    \\
+的预处理指令使用由分界符\tm{"}之间的序列所指定源文件的整个内容来替换该指令。命名
+源文件按实现定义方式进行搜索。如果不支持此搜索，或者搜索失败，则如同读到      \\
+\mbox{\qquad{\tm{\# include <} \nt{h-char-sequence} \tm{>} \nt{new-line}}}    \\
+一样对指令进行重新处理，使用原指令包含的相同序列（包括\tm{>}字符，如果有的话）。
+
+\paragraph{}
+允许形如                                                                      \\
+\mbox{\qquad{\tm{\# include} \nt{pp-tokens new-line}}}                        \\
+的预处理指令（不与以上两种形式之一匹配）。指令中\tm{include}之后的序列像普通文本
+一样进行处理（即当前定义为宏名的标识符由其预处理标记的替换列表所替换）。如果所有
+替换之后产生的指令不匹配之前的两种形式之一，则行为未定义。\footnote{注意相邻字符
+串字面值不会拼接成一个字符串字面值（见\ref{lex.phases}翻译阶段）；因此产生两个字
+符串字面值的展开是一个无效指令。}预处理标记对\tm{<}和\tm{>}或一对\tm{"}字符之间
+的预处理标记序列组合成单个头文件名预处理标记的方法由实现定义。
+
+\paragraph{}
+实现应该提供由一个或多个后跟上句点（\tm{.}）的\nt{nondigit}或\nt{digit}
+（\ref{lex.name}）和单个\nt{nondigit}组成的序列之间的唯一映射。第一个字符不应该
+是\nt{digit}。实现可以忽略字母大小写的不同。
+
+\paragraph{}
+一条\tm{\#include}预处理指令可以出现在因另一个源文件中的\tm{\#include}指令而读进
+来的源文件中，最多可到实现定义的嵌套层次。
+
+\paragraph{}
+「注：尽管实现可以提供一种机制将任意源文件对\tm{< >}搜索都可用，但一般而言，程序
+员应该对由实现提供的头文件使用\tm{< >}形式，对不由实现控制的源文件使用\tm{" "}形
+式。比如：
+\begin{lstlisting}
+  #include <stdio.h>
+  #include <unistd.h>
+  #include "usefullib.h"
+  #include "myprog.h"
+\end{lstlisting}」
+
+\paragraph{}
+「例：本例展示宏替换的\tm{\#include}指令：
+\begin{lstlisting}
+  #if VERSION == 1
+      #define INCFILE "vers1.h"
+  #elif VERSION == 2
+      #define INCFILE "vers2.h"   // and so on
+  #else
+      #define INCFILE "versN.h"
+  #endif
+  #include INCFILE
+\end{lstlisting}」
 
 \sect{宏替换}{cpp.replace}
+\paragraph{}
+两个预处理列表是等价的当且仅当二者中的预处理标记具有相同的数目，顺序，拼写和空白
+分隔，其中所有空白分隔都认为是等价的。
+
+\paragraph{}
+当前定义为对象式宏（见以下）的标识符可由另一个\tm{\#define}预处理指令重新定义，
+如果第二个定义也是一个对象式宏定义且两个替换列表是等价的，否则程序为病态。同样，
+当前定义为函数式宏（见以下）的标识符可由另一个\tm{\#define}预处理指令重新定义，
+如果第二个定义也是一个函数式宏定义，具有相同数目和拼写的参数，且两个替换列表是等
+价的，否则程序为病态。
+
+\paragraph{}
+对象式宏定义的标识符和替换列表间应该有空白。
+
+\paragraph{}
+如果宏定义中的\nt{identifier-list}不以省略号结尾，则函数式宏调用中的实参数目（包
+括无预处理标记的参数）应该等于宏定义中形参的数目。否则，调用中应该具有比宏定义中
+形参（排除掉\tm{...}）更多的实参。应该存在一个终止调用的\tm{)}预处理标记。
+
+\paragraph{}
+标识符\tm{\_\_VA\_ARGS\_\_}应该只出现在其形参中使用省略号记法的函数式宏
+\nt{replacement-list}中。
+
+\paragraph{}
+函数式宏中的形参标识符应该在其作用域中唯一性地声明。
+
+\paragraph{}
+直接跟在\tm{define}之后的标识符称为\nt{宏名}。存在一个宏名的命名空间。对无论哪种
+形式的宏，预处理标记的替换列表之前或之后的空白字符都不作为替换列表的一部分。
+
+\paragraph{}
+如果一个\tm{\#}预处理标记后跟上一个标识符，词法上出现在预处理指令开始的地方，则
+标识符不进行宏替换。
+
+\paragraph{}
+形如                                                                          \\
+\mbox{\qquad{\tm{\# define} \nt{identifier replacement-list new-line}}}       \\
+的预处理指令定义一个\nt{对象式宏}，每一个后续宏名的实例\footnote{因在宏替换时所
+有字符字面值和字符串字面值都是预处理标记，而不是可能包含类似标识符的子序列的序列
+（见\ref{lex.phases}，翻译阶段），不会再对其进行扫描宏名或参数。}都被构成指令剩
+余部分的预处理标记的替换列表所替换。\footnote{一个备选标记（\ref{lex.digraph}）
+不是一个标识符，即使其整个拼写都只包含字符和下划线。因此不可能定义一个与备选标记
+同名的宏。}替换列表随后会按以下所述进行重新扫描。
+
+\paragraph{}
+形如                                                                          \\
+\mbox{\qquad{\tm{\# define} \nt{identifier lparen identifier-list\tsub{opt}}
+  \tm{)} \nt{replacement-list new-line}}}                                     \\
+\mbox{\qquad{\tm{\# define} \nt{identifier lparen} \tm{... )}
+  \nt{replacement-list new-line}}}                                            \\
+\mbox{\qquad{\tm{\# define} \nt{identifier lparen identifier-list\tsub{opt}}
+  \tm{, ... )} \nt{replacement-list new-line}}}                               \\
+的预处理指令定义一个带参数的\nt{函数式宏}，其使用在语法上类似于函数调用。参数由
+标识符可选列表指定，其作用域从其在标识符列表中的声明点开始直到终止\tm{\#define}
+预处理指令的新行字符。函数式宏名后跟上\tm{(}作为下一个预处理标记的每一个实例引入
+被定义中的替换列表所替换的预处理标记序列（宏调用）。所替换的预处理标记序列由匹配
+的\tm{)}预处理标记所终止，跳过中间配对的左右括号预处理标记。在构成函数式宏调用的
+预处理标记序列中，新行当作是正常的空白字符。
+
+\paragraph{}
+由最外层匹配的括号所界定的预处理标记序列形成函数式宏的实参列表。列表中的单个参数
+由逗号预处理标记所分隔，但配对的内层括号中的逗号预处理标记不分隔实参。如果实参列
+表中存在预处理标记序列可作为预处理指令，\footnote{无论实现是否支持，
+\nt{conditionally-supported-directive}都是一个预处理指令。}则行为未定义。
+
+\paragraph{}
+如果函数式宏定义中紧接\tm{)}之前有一个\tm{...}，则结尾实参，包括任何分隔逗号预处
+理标记，被合并起来形成一个单项：\nt{可变参数}。如此绑定的跟在合并参数之后的实参
+的数目比宏定义中形参数目（排除\tm{...}）多一。
+
 \ssect{参数替换}{cpp.subst}
+\paragraph{}
+在函数式宏调用参数识别之后开始参数替换。替换列表中的参数，除非前面有\tm{\#}或
+\tm{\#\#}预处理标记或跟在\tm{\#\#}之后（见以下），在所有包含于其内的宏被展开后使
+用对应实参进行替换。在被替换之前，每一个实参的预处理标记被完整替换如同它们形成预
+处理文件的剩余部分；不再有其他预处理标记。
+
+\paragraph{}
+出现在替换列表中的标识符\tm{\_\_VA\_ARGS\_\_}应该当作如同其是一个形参，且可变实
+参应该形成用来替换它的预处理标记。
+
 \ssect{\#运算符}{cpp.stringize}
+\paragraph{}
+函数式宏的替换列表中的\tm{\#}预处理标记后面应该跟上一个形参作为替换列表中的下一
+个预处理标记。
+
+\paragraph{}
+\nt{字符式字符串字面值}（\nt{character string literal}）指无前缀的
+\nt{string-literal}。如果在替换列表中一个形参前紧跟一个\tm{\#}预处理标记，则二者
+一起被替换为单个字符式字符串字面值预处理标记，包含对应实参的预处理标记序列的拼
+写。实参的预处理标记间每一个空白的出现成为字符式字符串字面值中的单个空格字符。删
+除构成实参的第一个预处理标记之前和最后一个预处理标记之后的空白。否则，实参中的每
+一个预处理标记的原始拼写保留在字符式字符串字面值中，除了生成字符串字面值和字符字
+面值拼写的特殊处理：在字符字面值或字符串字面值的每一个\tm{"}和\tm{\bs}（含分隔的
+\tm{"}字符）之前插入一个\tm{\bs}字符。如果所产生的替换不是一个有效的字符式字符串
+字面值，则行为未定义。对应于空参数的字符式字符串字面值为\tm{""}。\tm{\#}和
+\tm{\#\#}运算符的求值顺序未指定。
+
 \ssect{\#\#运算符}{cpp.concat}
+\paragraph{}
+\tm{\#\#}预处理标记不应该出现在任一种形式宏定义的替换列表的开头或结尾。
+
+\paragraph{}
+如果在函数式替换列表中形参前或后紧跟一个\tm{\#\#}预处理标记，则形参被对应实参预
+处理标记序列替换；但如果实参无预处理标记，则形参被一个占位预处理标记替换。
+\footnote{占位预处理标记不出现在语法中，因其是仅存在于翻译阶段\ref{tpit4}中的临
+时实体。}
+
+\paragraph{}
+对于对象式宏调用和函数式宏调用，在替换列表重新检查更多宏名来替换之前，替换列表中
+（不是实参）的每一个\tm{\#\#}预处理标记实例都被删除，且之前的预处理标记与之后的
+预处理标记相连接。占位预处理标记会特殊处理：连接两个占位标记产生一个占位预处理标
+记，且连接一个占位标记和一个非占位预处理标记产生该非占位预处理标记。如果结果不是
+有效预处理标记，则行为未定义。所产生的标记用于进一步宏替换。\tm{\#\#}运算符的求
+值顺序未指定。
+
+「例：在以下片断中：
+\begin{lstlisting}
+  #define mkstr(a) # a
+  #define in_between(a) mkstr(a)
+  #define join(c, d) in_between(c hash_hash d)
+  char p[] = join(x, y);          // equivalent to char p[] = "x ## y";
+\end{lstlisting}
+展开在各个阶段产生：
+\begin{lstlisting}
+  join(x, y)
+  in_between(x hash_hash y)
+  in_between(x ## y)
+  mkstr(x ## y)
+  "x ## y"
+\end{lstlisting}
+换名话说，展开\tm{hash\_hash}产生一个新的标记，由两个相邻的\tm{\#}组成，但这个新
+的标记不是\tm{\#\#}运算符。」
+
 \ssect{重扫描和进一步替换}{cpp.rescan}
+\paragraph{}
+在替换列表中所有形参都被替换且\tm{\#}和\tm{\#\#}处理完成后，移除所有占位预处理标
+记。随后重新扫描产生的预处理标记序列和源文件中所有后续预处理标记，以替换更多的宏
+名。
+
+\paragraph{}
+如果被替换的宏名在替换列表的该次扫描中（不包括源文件的剩余预处理标记）被找到，则
+不会被替换。进一步，如果任何嵌套替换遇到被替换的宏名，则它不会被替换。这些未替换
+宏名预处理标记不再进行进一步替换，即使在否则这些宏名预处理标记可能会被替换的上下
+文中后续地（再一次）检查。
+
+\paragraph{}
+所产生的完全替换预处理标记序列即使看起来是也不会再当作预处理指令来处理，但其内的
+所有pragma一元运算符表达式按\ref{cpp.pragma.op}中指定进行处理。
+
 \ssect{宏定义作用域}{cpp.scope}
+\paragraph{}
+一个宏定义持续（独立于块结构）直到遇到一个对应的\tm{\#undef}指令或者（如果未遇
+到）直到翻译单元结束。宏定义在翻译阶段\ref{tpit4}之后不再有意义。
+
+\paragraph{}
+形如                                                                          \\
+\mbox{\qquad{\tm{\# undef} \nt{identifier new-line}}}                         \\
+的预处理指令使得指定标识符不再定义为一个宏名。如果所指定标识符当前未被定义为宏名
+则忽略它。
+
+\paragraph{}
+「例：此功能最简单的用途是定义``清单常数''，比如
+\begin{lstlisting}
+  #define TABSIZE 100
+  int table[TABSIZE];
+\end{lstlisting}」
+
+\paragraph{}
+「例：以下例子定义一个函数式宏，其值为其参数中最大的值。其好处是对任意兼容类型都
+能工作且可以生成内联代码而没有函数调用的开销。其缺点是会对其参数之一进行两次求值
+（含副作用）且如果调用多次会生成比函数更多的代码。也不能对其取地址，因为没有。
+\begin{lstlisting}
+  #define max(a, b) ((a) > (b) ? (a) : (b))
+\end{lstlisting}
+括号确保参数和产生的表达式能正确分隔。」
+
+\paragraph{}
+「例：为展示重定义和重检查的规则，序列
+\begin{lstlisting}
+  #define x       3
+  #define f(a)    f(x * (a))
+  #undef  x
+  #define x       2
+  #define g       f
+  #define z       z[0
+  #define h       g(~
+  #define m(a)    a(w)
+  #define w       0,1
+  #define t(a)    a
+  #define p()     int
+  #define q(x)    x
+  #define r(x,y)  x ## y
+  #define str(x)  # x
+
+  f(y+1) + f(f(z)) % t(t(g)(0) + t)(1);
+  g(x+(3,4)-w) | h 5) & m
+      (f)^m(m) ;
+  p() i[q()] = { q(1), r(2,3), r(4,), r(,5), r(,) };
+  char c[2][6] = { str(hello), str() };
+\end{lstlisting}
+产生
+\begin{lstlisting}
+  f(2 * (y+1)) + f(2 * (f(2 * (z[0])))) % f(2 * (0)) + t(1);
+  f(2 * (2+(3,4)-0,1)) | f(2 * (~ 5)) & f(2 * (0,1))^m(0,1);
+  int i[] = { 1, 23, 4, 5, };
+  char c[2][6] = { "hello", "" };
+\end{lstlisting}」
+
+\paragraph{}
+「例：为展示创建字符式字符串字面值和连接标记的规则，序列
+\begin{lstlisting}
+  #define str(s)      # s
+  #define xstr(s)     str(s)
+  #define debug(s, t) printf("x" # s "= %d, x" # t "= %s", \
+                 x ## s, x ## t)
+  #define INCFILE(n)  vers ## n
+  #define glue(a, b)  a ## b
+  #define xglue(a, b) glue(a, b)
+  #define HIGHLOW     "hello"
+  #define LOW         LOW ", world"
+
+  debug(1, 2);
+  fputs(str(strncmp("abc\0d", "abc", ’\4’) // this goes away
+      == 0) str(: @\n), s);
+  #include xstr(INCFILE(2).h)
+  glue(HIGH, LOW) ;
+  xglue(HIGH, LOW)
+\end{lstlisting}
+产生
+\begin{lstlisting}
+  printf("x "1" "= %d, x" "2" "= %s" , x1, x2);
+  fputs("strncmp(\"abc\\0d\", \"abc\", ’\\4’) == 0" ": @\n", s);
+  #include "vers2.h"      (after macro replacement, before file access)
+  "hello";
+  "hello" ", world"
+\end{lstlisting}
+或者在连接字符式字符串字面值之后，
+\begin{lstlisting}
+  printf("x1= %d, x2= %s", x1, x2);
+  fputs("strncmp(\"abc\\0d\", \"abc\", ’\\4’) == 0: @\n", s);
+  #include "vers2.h"      (after macro replacement, before file access)
+  "hello";
+  "hello, world"
+\end{lstlisting}
+宏定义中\tm{\#}和\tm{\#\#}标记周围的空白是可选的。」
+
+\paragraph{}
+「例：为展示占位预处理标记的规则，序列
+\begin{lstlisting}
+  #define t(x,y,z) x ## y ## z
+  int j[] = { t(1,2,3), t(,4,5), t(6,,7), t(8,9,),
+    t(10,,), t(,11,), t(,,12), t(,,) };
+\end{lstlisting}
+产生
+\begin{lstlisting}
+  int j[] = { 123, 45, 67, 89,
+    10, 11, 12, };
+\end{lstlisting}」
+
+\paragraph{}
+「例：为展示重定义规则，以下序列是有效的。
+\begin{lstlisting}
+  #define OBJ_LIKE        (1-1)
+  #define OBJ_LIKE        /* white space */ (1-1) /* other */
+  #define FUNC_LIKE(a)    ( a )
+  #define FUNC_LIKE( a )(     /* note the white space */ \
+                  a /* other stuff on this line
+                    */ )
+\end{lstlisting}
+但以下重定义是无效的：
+\begin{lstlisting}
+  #define OBJ_LIKE      (0)       // different token sequence
+  #define OBJ_LIKE      (1 - 1)   // different white space
+  #define FUNC_LIKE(b)  ( a )     // different parameter usage
+  #define FUNC_LIKE(b)  ( b )     // different parameter spelling
+\end{lstlisting}」
+
+\paragraph{}
+「例：最后展示变参列表宏功能：
+\begin{lstlisting}
+  #define debug(...) fprintf(stderr, __VA_ARGS__)
+  #define showlist(...) puts(#__VA_ARGS__)
+  #define report(test, ...) ((test) ? puts(#test) : printf(__VA_ARGS__))
+  debug("Flag");
+  debug("X = %d\n", x);
+  showlist(The first, second, and third items.);
+  report(x>y, "x is %d but y is %d", x, y);
+\end{lstlisting}
+产生
+\begin{lstlisting}
+  fprintf(stderr, "Flag");
+  fprintf(stderr, "X = %d\n" , x);
+  puts("The first, second, and third items.");
+  ((x>y) ? puts("x>y") : printf("x is %d but y is %d", x, y));
+\end{lstlisting}」
 
 \sect{行控制}{cpp.line}
+\paragraph{}
+一条\tm{\#line}指令的字符串字面值，如果存在的话，应该是字符式字符串字面值。
+
+\paragraph{}
+当前源行的\nt{行号}为当前读进或在处理源文件直到当行标记翻译阶段\ref{tpit1}
+（\ref{lex.phases}）中引入的新字符数加一。
+
+\paragraph{}
+形如                                                                          \\
+\mbox{\qquad{\tm{\# line} \nt{digit-sequence new-line}}}                      \\
+的预处理指令使得实现的行为如同后续的源行序列以具有由数字序列（解释为十进制整数）
+指定的行号的源行开始。如果数字序列零或大于\tm{2147483647}的数字则行为未定义。
+
+\paragraph{}
+形如                                                                          \\
+\mbox{\qquad{\tm{\# line} \nt{digit-sequence} \tm{"}
+  \nt{s-char-sequence\tsub{opt}} \tm{"} \nt{new-line}}}                       \\
+的预处理指令类似的设置假定行号并将假定的源文件名设置为字符式字符串字面值所指定的
+内容。
+
+\paragraph{}
+允许形如                                                                      \\
+\mbox{\qquad{\tm{\# line} \nt{pp-tokens new-line}}}                           \\
+的预处理指令（不匹配以上两种形式之一）。指令中\tm{line}之后的预处理标记如正常文
+本一样进行处理（每一个当前定义为宏名的标识符被其预处理标记替换列表所替换）。如果
+在所有替换之后产生的指令不匹配以上两种形式之一，则行为未定义；否则产生的结果将适
+当地进行处理。
 
 \sect{Error指令}{cpp.error}
+\paragraph{}
+形如                                                                          \\
+\mbox{\qquad{\tm{\# error} \nt{pp-tokens\tsub{opt} new-line}}}                \\
+的预处理指令使得实现产生一条诊断信息，包含所指定的预处理标记，并使程序成员病态。
 
 \sect{Pragma指令}{cpp.pragma}
+\paragraph{}
+形如                                                                          \\
+\mbox{\qquad{\tm{\# pragma} \nt{pp-tokens\tsub{opt} new-line}}}               \\
+的预处理指令使得实现按实现定义的方式进行操作。行为可能使得翻译失败，或使得翻译器
+或产生的程序具有非标准行为。任何实现不能识别的pragma将被忽略。
 
 \sect{空指令}{cpp.null}
+\paragraph{}
+形如                                                                          \\
+\mbox{\qquad{\tm{\#} \nt{new-line}}}                                          \\
+的预处理指令无效果。
 
 \sect{预定义宏}{cpp.predefined}
+\paragraph{}
+以下宏名应该由实现定义：
+\begin{itemize}
+  \newcommand{\itm}[2]{\item[]\tm{#1}\begin{quote}#2\end{quote}}
+  \itm{\_\_cplusplus}{整型字面值\tm{201703L}。\footnote{本国际标准的未来版本将以
+    更大值替换该宏的值。}}
+  \itm{\_\_DATE\_\_}{源文件翻译的日期：字符式字符串字面值，形式为
+    \tm{"Mmm dd yyyy"}，其中月份名与\tm{asctime}函数所生成的一样，且如果值小于10
+    则\tm{dd}的第一个字符为空格。如果翻译的日期不可用，则应该提供一个实现定义的
+    有效日期。}
+  \itm{\_\_FILE\_\_}{当前源文件的假定文件名（一个字符式字符串字面值）。
+    \footnote{假定源文件名可被\tm{\#line}指令更改。}}
+  \itm{\_\_LINE\_\_}{（当前源文件内）当前源行的假定行号（整型字面值）。
+    \footnote{假定行号可被\tm{\#line}指令更改。}}
+  \itm{\_\_STDC\_HOSTED\_\_}{如果实现为宿主式实现则为整型字面值\tm{1},否则为
+    \tm{0}。}
+  \itm{\_\_STDCPP\_DEFAULT\_NEW\_ALIGNMENT\_\_}{\tm{std::size\_t}类型的整型字面
+    值，其值为调用\tm{operator new(std::size\_t)}或
+    \tm{operator new[](std::size\_t)}所保证的对齐值。「注：更大的对齐将被传入
+    \tm{operator new(std::size\_t, std::align\_val\_t)}，等等
+    （\ref{expr.new}）。」}
+  \itm{\_\_TIME\_\_}{翻译源文件的时间：字符式字符串字面值，形式为\tm{"hh:mm:ss"}
+    与\tm{asctime}函数所生成的时间一样。如果翻译时间不可用，则应该提供实现定义的
+    有效时间。}
+\end{itemize}
+
+\paragraph{}
+以下宏名由实现有条件地定义：
+\begin{itemize}
+  \newcommand{\itm}[2]{\item[]\tm{#1}\begin{quote}#2\end{quote}}
+  \itm{\_\_STDC\_\_}{\tm{\_\_STDC\_\_}是否为预定义，如果是，其值由实现定义。}
+  \itm{\_\_STDC\_MB\_MIGHT\_NEQ\_WC\_\_}{整型字面值\tm{1}，用于指明在
+  \tm{wchar\_t}的编码中，基本字符集的成员不需要具有编码值等于其用作普通字符字面
+    值中的长字符时的值。}
+  \itm{\_\_STDC\_VERSION\_\_}{\tm{\_\_STDC\_VERSION\_\_}是否为预定义，如果是，其
+    值由实现定义。}
+  \itm{\_\_STDC\_ISO\_10646\_\_}{形如\tm{yyyymmL}的整型字面值（如\tm{199712L}）
+    。如果该符号被定义了，则Unicode需求集中的每一个，当存储于一个\tm{wchar\_t}类
+    型对象中时，具有与该字符的短标识符相同的值。\nt{Unicode需求集}包含ISO/IEC
+    10646加上所指定年份和月份中所有补充和技术修正中定义的所有字符。}
+  \itm{\_\_STDCPP\_STRICT\_POINTER\_SAFETY\_\_}{当且仅当实现具有严格指针安全性
+    （\ref{basic.stc.dynamic.safety}）时定义且值为整型字面值\tm{1}。}
+  \itm{\_\_STDCPP\_THREADS\_\_}{当且仅当程序可以具有多于一个执行线程
+    （\ref{intro.multithread}）时定义且值为整型字面值\tm{1}。}
+\end{itemize}
+
+\paragraph{}
+预定义宏的值在翻译单元中保持为常量（除\tm{\_\_FILE\_\_}和\tm{\_\_LINE\_\_}）。
+
+\paragraph{}
+如果本节中任一个预定义宏名或标识符\tm{defined}是\tm{\#define}或\tm{\#undef}预处
+理指令的主体，则行为未定义。任何其他预定义宏名应该以下划线开始，跟上大写字母或第
+二个下划线。
 
 \sect{Pragma运算符}{cpp.pragma.op}
+\paragraph{}
+形如                                                                          \\
+\mbox{\qquad{\tm{\_Pragma (} \nt{string-literal} \tm{)}}}                     \\
+的一元运算符表达式按以下处理：字符串字面值通过删除\tm{L}前缀（如果有），删除起始
+和结尾的双引号，替换每一个转换序列\tm{\bs{}"}为一个双引号，替换每一个转换序列
+\tm{\bs\bs}为单个反斜杠来\nt{去字符化}（\nt{destringized}）。所产生的字符序列通
+过翻译阶段\ref{tpit3}来处理以产生预处理标记，这些预处理标记如同其作为一条pragma
+指令的\nt{pp-tokens}一样进行执行。一元运算符表达式中的原有四个预处理标记被删除。
+
+\paragraph{}
+「例：
+\begin{lstlisting}
+  #pragma listing on "..\listing.dir"
+\end{lstlisting}
+也可以表示为：
+\begin{lstlisting}
+  _Pragma ( "listing on \"..\\listing.dir\"" )
+\end{lstlisting}
+后者无论是如示字面地出现还是产生自宏替换都按相同方式进行处理，如：
+\begin{lstlisting}
+  #define LISTING(x) PRAGMA(listing on #x)
+  #define PRAGMA(x) _Pragma(#x)
+  LISTING( ..\listing.dir )
+\end{lstlisting}」

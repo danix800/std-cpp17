@@ -66,6 +66,7 @@
   \setcounter{ssssectcntr}{0} % start from 0
 }
 
+\newcounter{sssssectcntr} % create new counter for \subsubsubsection
 % use paragraph as the next level section
 \newcommand{\ssssect}[2]{{ % two level nesting
   \titleformat{\paragraph}[hang]{\bfseries}
@@ -75,6 +76,20 @@
   \renewcommand{\theparagraph}{\thesubsubsection.\thessssectcntr}
   \stepcounter{ssssectcntr} % step \ssssectcntr
   \paragraph{#1\hfill[#2\label{#2}]}  % the \subsubsubsection
+  \setcounter{paragraph}{0} % restart paragraph
+  \setcounter{sssssectcntr}{0} % start from 0
+}}
+
+% use paragraph as the next level section
+\newcommand{\sssssect}[2]{{ % two level nesting
+  \titleformat{\paragraph}[hang]{\bfseries}
+    {\hspace{-2.45em}\bfseries\color{structurecolor}\theparagraph\enspace}
+    {1pt}{\color{structurecolor}\bfseries\filright}
+  % label = subsubsection + ssssectcntr + sssssectcntr
+  \renewcommand{\theparagraph}
+    {\thesubsubsection.\thessssectcntr.\thesssssectcntr}
+  \stepcounter{sssssectcntr} % step \ssssectcntr
+  \paragraph{#1\hfill[#2\label{#2}]}  % the \subsubsubsubsection
   \setcounter{paragraph}{0} % restart paragraph
 }}
 
@@ -101,29 +116,29 @@
 
 %chapters
 
-\include{chapters/foreword}            % xi  ~ xi
-\include{chapters/1.scope}             % 1   ~ 1
-\include{chapters/2.refs}              % 2   ~ 2
-\include{chapters/3.defs}              % 3   ~ 6
-\include{chapters/4.intro}             % 7   ~ 21
-\include{chapters/5.lex}               % 22  ~ 38
-\include{chapters/6.basic}             % 39  ~ 85
-\include{chapters/7.conv}              % 86  ~ 92
-\include{chapters/8.expr}              % 93  ~ 143
-\include{chapters/9.stmt}              % 144 ~ 154
-\include{chapters/10.dcl.dcl}          % 155 ~ 200
-\include{chapters/11.dcl.decl}         % 201 ~ 236
-\include{chapters/12.class}            % 237 ~ 254
-\include{chapters/13.class.derived}    % 255 ~ 266
-\include{chapters/14.class.access}     % 267 ~ 277
-\include{chapters/15.special}          % 278 ~ 308
-\include{chapters/16.over}             % 309 ~ 341
-\include{chapters/17.temp}             % 342 ~ 421
-\include{chapters/18.except}           % 422 ~ 431
+% \include{chapters/foreword}            % xi  ~ xi
+% \include{chapters/1.scope}             % 1   ~ 1
+% \include{chapters/2.refs}              % 2   ~ 2
+% \include{chapters/3.defs}              % 3   ~ 6
+% \include{chapters/4.intro}             % 7   ~ 21
+% \include{chapters/5.lex}               % 22  ~ 38
+% \include{chapters/6.basic}             % 39  ~ 85
+% \include{chapters/7.conv}              % 86  ~ 92
+% \include{chapters/8.expr}              % 93  ~ 143
+% \include{chapters/9.stmt}              % 144 ~ 154
+% \include{chapters/10.dcl.dcl}          % 155 ~ 200
+% \include{chapters/11.dcl.decl}         % 201 ~ 236
+% \include{chapters/12.class}            % 237 ~ 254
+% \include{chapters/13.class.derived}    % 255 ~ 266
+% \include{chapters/14.class.access}     % 267 ~ 277
+% \include{chapters/15.special}          % 278 ~ 308
+% \include{chapters/16.over}             % 309 ~ 341
+% \include{chapters/17.temp}             % 342 ~ 421
+% \include{chapters/18.except}           % 422 ~ 431
 \include{chapters/19.cpp}              % 432 ~ 444
-\include{chapters/20.library}          % 445 ~ 454
-\include{chapters/21.language.support} % 476 ~ 510
-\include{chapters/22.diagnostics}      % 511 ~ 527
+\include{chapters/20.library}          % 445 ~ 475
+% \include{chapters/21.language.support} % 476 ~ 510
+% \include{chapters/22.diagnostics}      % 511 ~ 527
 
 % annexes
 \setcounter{chapter}{0} % start from 0
@@ -132,7 +147,7 @@
 
 %\include{chapters/annex.a.gram}
 %\include{chapters/annex.b.implimits}
-%\include{chapters/annex.c.diff}
-%\include{chapters/annex.d.depr}
+\include{chapters/annex.c.diff}
+\include{chapters/annex.d.depr}
 
 \end{document}

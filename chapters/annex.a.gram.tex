@@ -1,6 +1,6 @@
 %% annex.a gram
 
-\chptr{（信息）语法汇总}{gram}
+\annex{（信息）语法汇总}{gram}
 \paragraph{}
 此C++语法汇总的目的是为了帮助理解。不是该语言的准确陈述。特别是，此处所述语法接
 受合法C++结构的超集。必须使用去歧义规则（\ref{stmt.ambig}，\ref{dcl.spec}，
@@ -95,7 +95,7 @@
   \synprd{\texttt{0 1 2 3 4 5 6 7 8 9}}
 \synsym[one of]{preprocessing-op-or-punc}
 \begin{table}[h!]
-  \vspace*{-2em}\hspace*{0.5em}
+  \vspace*{-2em} \hspace*{-1.3em}
   \makebox[\textwidth]{
     \begin{tabular}{lllllllll}
       \texttt{\{} & \texttt{\}} & \texttt{[} & \texttt{]} & \texttt{\#} &
@@ -123,6 +123,7 @@
   }
 \end{table}
 
+\vspace*{-1.5em}
 \synsym{literal}
   \synprd{\textit{integer-literal}}
   \synprd{\textit{character-literal}}
@@ -787,10 +788,370 @@
   \synprd[]{除圆括号，方括号和花括号之外的任何\nt{token}}
 
 \sect{声明子}{gram.decl}
+\synsym{init-declarator-list}
+  \synprd{\nt{init-declarator}}
+  \synprd{\nt{init-declarator-list} \tm{,} \nt{init-declarator}}
+\synsym{init-declarator}
+  \synprd{\nt{declarator initializer\tsub{opt}}}
+\synsym{declarator}
+  \synprd{\nt{ptr-declarator}}
+  \synprd{\nt{noptr-declarator parameters-and-qualifiers trailing-return-type}}
+\synsym{ptr-declarator}
+  \synprd{\nt{noptr-declarator}}
+  \synprd{\nt{ptr-operator ptr-declarator}}
+\synsym{noptr-declarator}
+  \synprd{\nt{declarator-id attribute-specifier-seq\tsub{opt}}}
+  \synprd{\nt{noptr-declarator parameters-and-qualifiers}}
+  \synprd{\nt{noptr-declarator} \tm{[} \nt{constant-expression\tsub{opt}} \tm{]}
+    \nt{attribute-specifier-seq\tsub{opt}}}
+  \synprd{\tm{(} \nt{ptr-declarator} \tm{)}}
+\synsym{parameters-and-qualifiers}
+  \synprd{\tm{(} \nt{parameter-declaration-clause} \tm{)}
+    \nt{cv-qualifier-seq\tsub{opt}}}
+  \synprd{\qquad\nt{ref-qualifier\tsub{opt}
+    noexcept-specifier\tsub{opt} attribute-specifier-seq\tsub{opt}}}
+\synsym{trailing-return-type}
+  \synprd{\tm{->} \nt{type-id}}
+\synsym{ptr-operator}
+  \synprd{\tm{*} \nt{attribute-specifier-seq\tsub{opt} cv-qualifier-seq\tsub{opt}}}
+  \synprd{\tm{\&} \nt{attribute-specifier-seq\tsub{opt}}}
+  \synprd{\tm{\&\&} \nt{attribute-specifier-seq\tsub{opt}}}
+  \synprd{\nt{nested-name-specifier} \tm{*} \nt{attribute-specifier-seq\tsub{opt}
+    cv-qualifier-seq\tsub{opt}}}
+\synsym{cv-qualifier-seq}
+  \synprd{\nt{cv-qualifier cv-qualifier-seq\tsub{opt}}}
+\synsym{cv-qualifier}
+  \synprd{\tm{const}}
+  \synprd{\tm{volatile}}
+\synsym{ref-qualifier}
+  \synprd{\tm{\&}}
+  \synprd{\tm{\&\&}}
+\synsym{declarator-id}
+  \synprd{\tm{...}\nt{\tsub{opt} id-expression}}
+\synsym{type-id}
+  \synprd{\nt{type-specifier-seq abstract-declarator\tsub{opt}}}
+\synsym{defining-type-id}
+  \synprd{\nt{defining-type-specifier-seq abstract-declarator\tsub{opt}}}
+\synsym{abstract-declarator}
+  \synprd{\nt{ptr-abstract-declarator}}
+  \synprd{\nt{noptr-abstract-declarator\tsub{opt} parameters-and-qualifier
+    trailing-return-type}}
+  \synprd{\nt{abstract-pack-declarator}}
+\synsym{ptr-abstract-declarator}
+  \synprd{\nt{noptr-abstract-declarator}}
+  \synprd{\nt{ptr-operator ptr-abstract-declarator\tsub{opt}}}
+\synsym{noptr-abstract-declarator}
+  \synprd{\nt{noptr-abstract-declarator\tsub{opt} parameters-and-qualifiers}}
+  \synprd{\nt{noptr-abstract-declarator\tsub{opt}} \tm{[}
+    \nt{constant-expression\tsub{opt}} \tm{]}
+    \nt{attribute-specifier-seq\tsub{opt}}}
+  \synprd{\tm{(} \nt{ptr-abstract-declarator} \tm{)}}
+\synsym{abstract-pack-declarator}
+  \synprd{\nt{noptr-abstract-pack-declarator}}
+  \synprd{\nt{ptr-operator abstract-pack-declarator}}
+\synsym{noptr-abstract-pack-declarator}
+  \synprd{\nt{noptr-abstract-pack-declarator parameters-and-qualifiers}}
+  \synprd{\nt{noptr-abstract-pack-declarator} \tm{[}
+    \nt{constant-expression\tsub{opt}} \tm{]}
+    \nt{attribute-specifier-seq\tsub{opt}}}
+  \synprd{\tm{...}}
+\synsym{parameter-declaration-clause}
+  \synprd{\nt{parameter-declaration-list\tsub{opt}} \tm{...}\nt{\tsub{opt}}}
+  \synprd{\nt{parameter-declaration-list} \tm{, ...}}
+\synsym{parameter-declaration-list}
+  \synprd{\nt{parameter-declaration}}
+  \synprd{\nt{parameter-declaration-list} \tm{,} \nt{parameter-declaration}}
+\synsym{parameter-declaration}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} decl-specifier-seq declarator}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} decl-specifier-seq declarator}
+    \tm{=} \nt{initializer-clause}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} decl-specifier-seq
+    abstract-declarator\tsub{opt}}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} decl-specifier-seq
+    abstract-declarator\tsub{opt}} \tm{=} \nt{initializer-clause}}
+\synsym{function-definition}
+  \synprd{\nt{attribute-specified-seq\tsub{opt} decl-specifier-seq\tsub{opt}
+    declarator virt-specifier-seq\tsub{opt} function-body}}
+\synsym{function-body}
+  \synprd{\nt{ctor-initializer\tsub{opt} compound-statement}}
+  \synprd{\nt{function-try-block}}
+  \synprd{\tm{= default ;}}
+  \synprd{\tm{= delete ;}}
+\synsym{initializer}
+  \synprd{\nt{brace-or-equal-initializer}}
+  \synprd{\tm{(} \nt{expression-list} \tm{)}}
+\synsym{brace-or-equal-initializer}
+  \synprd{\tm{=} \nt{initializer-clause}}
+  \synprd{\nt{brace-init-list}}
+\synsym{initializer-clause}
+  \synprd{\nt{assignment-expression}}
+  \synprd{\nt{braced-init-list}}
+\synsym{initializer-list}
+  \synprd{\nt{initializer-clause} \tm{...}\nt{\tsub{opt}}}
+  \synprd{\nt{initializer-list} \tm{,} \nt{initializer-clause}
+    \tm{...}\nt{\tsub{opt}}}
+\synsym{braced-init-list}
+  \synprd{\tm{\{} \nt{initializer-list} \tm{,}\nt{\tsub{opt}} \tm{\}}}
+  \synprd{\tm{\{} \tm{\}}}
+\synsym{expr-or-braced-init-list}
+  \synprd{\nt{expression}}
+  \synprd[]{\nt{braced-init-list}}
+
 \sect{类}{gram.class}
+\synsym{class-name}
+  \synprd{\nt{identifier}}
+  \synprd{\nt{simple-template-id}}
+\synsym{class-specifier}
+  \synprd{\nt{class-head} \tm{\{} \nt{member-specification\tsub{opt}} \tm{\}}}
+\synsym{class-head}
+  \synprd{\nt{class-key attribute-specifier-seq\tsub{opt} class-head-name
+    class-virt-specifier\tsub{opt} base-clause\tsub{opt}}}
+  \synprd{\nt{class-key attribute-specifier-seq\tsub{opt}
+    base-clause\tsub{opt}}}
+\synsym{class-head-name}
+  \synprd{\nt{nested-name-specifier\tsub{opt} class-name}}
+\synsym{class-virt-specifier}
+  \synprd{\tm{final}}
+\synsym{class-key}
+  \synprd{\tm{class}}
+  \synprd{\tm{struct}}
+  \synprd{\tm{union}}
+\synsym{member-specification}
+  \synprd{\nt{member-declaration member-specification\tsub{opt}}}
+  \synprd{\nt{access-specifier} \tm{:} \nt{member-specification\tsub{opt}}}
+\synsym{member-declaration}
+  \synprd{\nt{attribute specifier-seq\tsub{opt} decl-specifier-seq\tsub{opt}
+    member-declarator-list\tsub{opt}} \tm{;}}
+  \synprd{\nt{function-definition}}
+  \synprd{\nt{using-declaration}}
+  \synprd{\nt{static\_assert-declaration}}
+  \synprd{\nt{template-declaration}}
+  \synprd{\nt{deduction-guide}}
+  \synprd{\nt{alias-declaration}}
+  \synprd{\nt{empty-declaration}}
+\synsym{member-declarator-list}
+  \synprd{\nt{member-declarator}}
+  \synprd{\nt{member-declarator-list} \tm{,} \nt{member-declarator}}
+\synsym{member-declarator}
+  \synprd{\nt{declarator virt-specifier-seq\tsub{opt} pure-specifier\tsub{opt}}}
+  \synprd{\nt{declarator brace-or-equal-initializer\tsub{opt}}}
+  \synprd{\nt{identifier\tsub{opt} attribute-specifier-seq\tsub{opt}} \tm{:}
+    \nt{constant-expression}}
+\synsym{virt-specifier-seq}
+  \synprd{\nt{virt-specifier}}
+  \synprd{\nt{virt-specifier-seq virt-specifier}}
+\synsym{virt-specifier}
+  \synprd{\tm{override}}
+  \synprd{\tm{final}}
+\synsym{pure-specifier}
+  \synprd[]{\tm{= 0}}
+
 \sect{派生类}{gram.derived}
+\synsym{base-clause}
+  \synprd{\tm{:} \nt{base-specifier-list}}
+\synsym{base-specifier-list}
+  \synprd{\nt{base-specifier} \tm{...}\nt{\tsub{opt}}}
+  \synprd{\nt{base-specifier-list} \tm{,} \nt{base-specifier}
+    \tm{...}\nt{\tsub{opt}}}
+\synsym{base-specifier}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt}} \nt{class-or-decltype}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt}} \tm{virtual}
+    \nt{access-specifier\tsub{opt} class-or-decltype}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt}} \nt{access-specifier}
+    \tm{virtual}\nt{\tsub{opt} class-or-decltype}}
+\synsym{class-or-decltype}
+  \synprd{\nt{nested-class-specifier\tsub{opt} class-name}}
+  \synprd{\nt{nested-class-specifier} \tm{template} \nt{simple-template-id}}
+  \synprd{\nt{decltype-specifier}}
+\synsym{access-specifier}
+  \synprd{\tm{private}}
+  \synprd{\tm{protected}}
+  \synprd[]{\tm{public}}
+
 \sect{特殊成员函数}{gram.special}
+\synsym{conversion-function-id}
+  \synprd{\tm{operator} \nt{conversion-type-id}}
+\synsym{conversion-type-id}
+  \synprd{\nt{type-specifier-seq conversion-declarator\tsub{opt}}}
+\synsym{conversion-declarator}
+  \synprd{\nt{ptr-operator conversion-declarator\tsub{opt}}}
+\synsym{ctor-initializer}
+  \synprd{\tm{:} \nt{mem-initializer-list}}
+\synsym{mem-initializer-list}
+  \synprd{\nt{mem-initializer} \tm{...}\nt{\tsub{opt}}}
+  \synprd{\nt{mem-initializer-list} \tm{,} \nt{mem-initializer}
+    \tm{...}\nt{\tsub{opt}}}
+\synsym{mem-initializer}
+  \synprd{\nt{mem-initializer-id} \tm{(} \nt{expression-list\tsub{opt}} \tm{)}}
+  \synprd{\nt{mem-initializer-id} \nt{braced-init-list}}
+\synsym{mem-initializer-id}
+  \synprd{\nt{class-or-decltype}}
+  \synprd[]{\nt{identifier}}
+
 \sect{重载}{gram.over}
+\synsym{postfix-expression}
+  \synprd{\nt{postfix-expression} \tm{,} \nt{id-expression}}
+  \synprd{\nt{postfix-expression} \tm{->} \nt{id-expression}}
+  \synprd{\nt{primary-expression}}
+\synsym{operator-function-id}
+  \synprd{\tm{operator} \nt{operator}}
+\synsym[one of]{operator} { % for \newcommand
+  \newcommand{\cir}{\textasciicircum}
+  \newcommand{\til}{\textasciitilde}
+  \newcommand{\ttl}{\textless}
+  \newcommand{\ttg}{\textgreater}
+  \synprd{\tm{new \ delete new[] delete[]}}
+  \synprd{\tm{+ \ \ \ - \ \ \ \ \ * \ \ \ \ / \ \ \ \ \ \ \ \% \ \ \ \ \cir \ \
+              \ \ \ \& \ \ \ \ | \ \ \ \ \til}}
+  \synprd{\tm{! \ \ = \ \ \ \ \ < \ \ \ \ > \ \ \ \ \ \ \ += \ \ \ -= \ \ \ *= \
+              \ \ /= \ \ \ \%=}}
+  \synprd{\tm{\cir= \ \ \&= \ \ \ \ |= \ \ \ \ttl{}\ttl \ \ \ \ \ \ \ \ttg{}\ttg
+              \ \ \ \ \ttg{}\ttg= \ \ \ttl{}\ttl= \ \ == \ \ \ !=}}
+  \synprd{\tm{\ttl= \ \ \ttg= \ \ \ \ \&\& \ \ \ || \ \ \ \ \ \ ++ \ \ \ -- \ \
+              \ \ , \ \ \ \ ->* \ \ ->}}
+  \synprd{\tm{() \ \ []}}
+} % for \newcommand
+\synsym{literal-operator-id}
+  \synprd{\tm{operator} \nt{string-literal identifier}}
+  \synprd[]{\tm{operator} \nt{user-defined-string-literal}}
+
 \sect{模板}{gram.temp}
+\synsym{template-declaration}
+  \synprd{\tm{template <} \nt{template-parameter-list} \tm{>} \nt{declaration}}
+\synsym{template-parameter-list}
+  \synprd{\nt{template-parameter}}
+  \synprd{\nt{template-parameter-list} \tm{,} \nt{template-parameter}}
+\synsym{template-parameter}
+  \synprd{\nt{type-parameter}}
+  \synprd{\nt{parameter-declaration}}
+\synsym{type-parameter}
+  \synprd{\nt{type-parameter-key} \tm{...}\nt{\tsub{opt} identifier\tsub{opt}}}
+  \synprd{\nt{type-parameter-key identifier\tsub{opt}} \tm{=} \nt{type-id}}
+  \synprd{\tm{template <} \nt{template-parameter-list} \tm{>}
+    \nt{type-parameter-key} \tm{...}\nt{\tsub{opt} identifier\tsub{opt}}}
+  \synprd{\tm{template <} \nt{template-parameter-list} \tm{>}
+    \nt{type-parameter-key identifier\tsub{opt}} \tm{=} \nt{id-expression}}
+\synsym{type-parameter-key}
+  \synprd{\tm{class}}
+  \synprd{\tm{typename}}
+\synsym{simple-template-id}
+  \synprd{\nt{template-name} \tm{<} \nt{template-argument-list\tsub{opt}}
+    \tm{>}}
+\synsym{template-id}
+  \synprd{\nt{simple-template-id}}
+  \synprd{\nt{operator-function-id} \tm{<} \nt{template-argument-list\tsub{opt}}
+    \tm{>}}
+  \synprd{\nt{literal-operator-id} \tm{<} \nt{template-argument-list\tsub{opt}}
+    \tm{>}}
+\synsym{template-name}
+  \synprd{\nt{template-argument} \tm{...}\nt{\tsub{opt}}}
+  \synprd{\nt{template-argument-list} \tm{,} \nt{template-argument}
+    \tm{...}\tsub{opt}}
+\synsym{template-argument}
+  \synprd{\nt{constant-exression}}
+  \synprd{\nt{type-id}}
+  \synprd{\nt{id-expression}}
+\synsym{typename-specifier}
+  \synprd{\tm{typename} \nt{nested-name-specifier identifier}}
+  \synprd{\tm{typename} \nt{nested-name-specifier} \tm{template}\nt{\tsub{opt}
+    simple-template-id}}
+\synsym{explicit-instantiation}
+  \synprd{\tm{extern}\nt{\tsub{opt}} \tm{template} \nt{declaration}}
+\synsym{explicit-specialization}
+  \synprd{\tm{template < >} \nt{declaration}}
+\synsym{deduction-guide}
+  \synprd[]{\tm{explicit}\nt{\tsub{opt} template-name} \tm{(}
+    \nt{parameter-declaration-clause} \tm{) ->} \nt{simple-template-id} \tm{;}}
+
 \sect{异常处理}{gram.except}
+\synsym{try-block}
+  \synprd{\tm{try} \nt{compound-statement handler-seq}}
+\synsym{function-try-block}
+  \synprd{\tm{try} \nt{ctor-initializer\tsub{opt} compound-statement
+    handler-seq}}
+\synsym{handler-seq}
+  \synprd{\nt{handler handler-seq\tsub{opt}}}
+\synsym{handler}
+  \synprd{\tm{catch (} \nt{exception-declaration} \tm{)}
+    \nt{compound-statement}}
+\synsym{exception-declaration}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} type-specifier-seq declarator}}
+  \synprd{\nt{attribute-specifier-seq\tsub{opt} type-specifier-seq
+    abstract-declarator\tsub{opt}}}
+  \synprd{\tm{...}}
+\synsym{noexcept-specifier}
+  \synprd{\tm{noexcept (} \nt{constant-expression} \tm{)}}
+  \synprd{\tm{noexcept}}
+  \synprd[]{\tm{throw ( )}}
+
 \sect{预处理指令}{gram.cpp}
+\synsym{preprocessing-file}
+  \synprd{\nt{group\tsub{opt}}}
+\synsym{group}
+  \synprd{\nt{group-part}}
+  \synprd{\nt{group group-part}}
+\synsym{group-part}
+  \synprd{\nt{control-line}}
+  \synprd{\nt{if-section}}
+  \synprd{\nt{text-line}}
+  \synprd{\tm{\#} \nt{conditionally-supported-directive}}
+\synsym{control-line}
+  \synprd{\tm{\# include \ \ }\nt{pp-tokens new-line}}
+  \synprd{\tm{\# define \ \ \ }\nt{identifier replacement-list new-line}}
+  \synprd{\tm{\# define \ \ \ }\nt{identifier lparen identifier-list\tsub{opt}}
+    \tm{)} \nt{replacement-list new-line}}
+  \synprd{\tm{\# define \ \ \ }\nt{identifier lparen} \tm{... )}
+    \nt{replacement-list new-line}}
+  \synprd{\tm{\# define \ \ \ }\nt{identifier lparen identifier-list}
+    \tm{, ... )} \nt{replacement-list new-line}}
+  \synprd{\tm{\# undef \ \ \ \ }\nt{identifier new-line}}
+  \synprd{\tm{\# line \ \ \ \ \ }\nt{pp-tokens new-line}}
+  \synprd{\tm{\# error \ \ \ \ }\nt{pp-tokens\tsub{opt} new-line}}
+  \synprd{\tm{\# pragma \ \ \ }\nt{pp-tokens\tsub{opt} new-line}}
+  \synprd{\tm{\# \ }\nt{new-line}}
+\synsym{if-section}
+  \synprd{\nt{if-group elif-groups\tsub{opt} else-group\tsub{opt} endif-line}}
+\synsym{if-group}
+  \synprd{\tm{\# if \ \ \ \ \ \ \ }\nt{constant-expression new-line
+    group\tsub{opt}}}
+  \synprd{\tm{\# ifdef \ \ \ \ }\nt{identifier new-line group\tsub{opt}}}
+  \synprd{\tm{\# ifndef \ \ \ }\nt{identifier new-line group\tsub{opt}}}
+\synsym{elif-groups}
+  \synprd{\nt{elif-group}}
+  \synprd{\nt{elif-groups elif-group}}
+\synsym{elif-group}
+  \synprd{\tm{\# elif \ \ \ \ \ }\nt{constant-expression new-line
+    group\tsub{opt}}}
+\synsym{else-group}
+  \synprd{\tm{\# else \ \ \ \ \ }\nt{new-line group\tsub{opt}}}
+\synsym{endif-line}
+  \synprd{\tm{\# endif \ \ \ \ }\nt{new-line}}
+\synsym{text-line}
+  \synprd{\nt{pp-tokens\tsub{opt} new-line}}
+\synsym{conditionally-supported-directive}
+  \synprd{\nt{pp-tokens new-line}}
+\synsym{lparen}
+  \synprd{前面没有直接空白的\tm{(}}
+\synsym{identifier-list}
+  \synprd{\nt{identifier}}
+  \synprd{\nt{identifier-list} \tm{,} \nt{identifier}}
+\synsym{replacement-list}
+  \synprd{\nt{pp-tokens\tsub{opt}}}
+\synsym{pp-tokens}
+  \synprd{\nt{preprocessing-token}}
+  \synprd{\nt{pp-tokens preprocessing-token}}
+\synsym{new-line}
+  \synprd{新行字符}
+\synsym{defined-macro-expression}
+  \synprd{\tm{defined} \nt{identifier}}
+  \synprd{\tm{defined (} \nt{identifier} \tm{)}}
+\synsym{h-preprocessing-token}
+  \synprd{除\tm{>}之外的任何\nt{preprocessing-token}}
+\synsym{h-pp-tokens}
+  \synprd{\nt{h-preprocessing-token}}
+  \synprd{\nt{h-pp-token h-preprocessing-token}}
+\synsym{has-include-expression}
+  \synprd{\tm{\_\_{}has\_{}include ( <} \nt{h-char-sequence} \tm{> )}}
+  \synprd{\tm{\_\_{}has\_{}include ( "} \nt{q-char-sequence} \tm{" )}}
+  \synprd{\tm{\_\_{}has\_{}include (} \nt{string-literal} \tm{)}}
+  \synprd[]{\tm{\_\_{}has\_{}include ( <} \nt{h-pp-tokens} \tm{> )}}

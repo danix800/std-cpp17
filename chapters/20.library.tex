@@ -17,7 +17,7 @@
 \begin{table}[h!]
   \centering
   \caption{库范围}
-  \begin{tabular}{|ll|}
+  \begin{tabular}{|p{0.12\textwidth}p{0.30\textwidth}|}
     \hline
     \tb{章节} & \tb{范围}                                                     \\
     \hline \hline
@@ -96,6 +96,7 @@ ISO C \tm{restrict}限定符的使用所蕴含的前置条件）除另作说明�
 
 { % for \defns
 
+\addtocontents{toc}{\protect\setcounter{tocdepth}{0}}
 \newcommand{\defns}[4]{\ssect{#1}{#2} \tb{#3}\par #4}
 
 \defns{任意位置流}{defns.arbitrary.stream}{arbitrary-positional stream}{一种可寻
@@ -218,6 +219,7 @@ POD（\ref{basic.types}）类型。」
 以调用。」
 }
 
+\addtocontents{toc}{\protect\setcounter{tocdepth}{2}}
 } % for \defns
 
 \sect{描述方法（信息）}{description}
@@ -528,435 +530,1395 @@ NTBS。}
 
 \sssect{私有成员}{objects.within.classes}
 \paragraph{}
-<++>
+第21章到第33章和附录\ref{depr}中不指定类的表示，并刻意省略类成员规范
+（\ref{class.mem}）。实现按第21章到第33章及附录\ref{depr}所指定实现成员函数语义
+的需要可能定义静态或非静态类成员，或二者兼有。
 
 \paragraph{}
-<++>
+为展示的目的，某些子章节为满足类外部规范的类私有成员提供代表性声明和语义需求。此
+类成员的声明跟上注释\nt{仅展示}（\nt{exposition only}），如：
+\begin{lstlisting}
+  streambuf* sb;    // exposition only
+\end{lstlisting}
 
 \paragraph{}
-<++>
+实现可以使用提供等价可观测行为的任何技巧。
 
 \sect{库范围需求}{requirements}
 \paragraph{}
-<++>
+本节指定适用于整个C++标准库的需求。第21章到第33章和附录\ref{depr}指定标准库内独
+立实体的需求。
 
 \paragraph{}
-<++>
+线程间交互中指定的需求对仅有一个线程的程序不适用。
 
 \paragraph{}
-<++>
+在本节中，\ref{organization}描述库的内容和组织，\ref{using}描述合法C++程序如何访
+问标准库实体，\ref{utility.requirements}描述C++标准库所使用类型和函数上的约束，
+\ref{constraints}描述合法C++程序的约束，\ref{conforming}描述合规实现的约束。
 
 \ssect{标准库内容与组织}{organization}
 \paragraph{}
-<++>
+\ref{contents}描述定义于C++标准库中的实体和宏。\ref{headers}列出了标准库头和这些
+头的某些约束。\ref{compliance}列出C++标准库自由式实现的需求。
 
 \sssect{标准库内容}{contents}
 \paragraph{}
-<++>
+C++标准库定义了C++标准库头（\ref{headers}）的概要中所描述的实体和宏。
 
 \paragraph{}
-<++>
+除\tm{operator new}和\tm{operator delete}外的所有库实体都定义于命名空间\tm{std}
+或嵌套于\tm{std}中的命名空间中。\footnote{C标准库头（附录\ref{depr.c.headers}）
+也在全局命名空间中定义名字，而C功能的C++头（\ref{headers}）也可能在全局命名空间
+中定义名字。}特定命名空间中声明的名字是直接声明于该命名空间中还是该命名空间内的
+内联命名空间是未指明的。\footnote{这给予了实现自由度，以使用内联命名空间来支持库
+的多个配置。}
 
 \paragraph{}
-<++>
+当提到标准库中的名字\tm{x}时，名字\tm{x}假定为全限定的\tm{::std::x}，显式描述的
+除外。比如，如果库函数的\nt{效果：}章节描述为调用库函数\tm{G}，则指的是函数
+\tm{::std::G}。
 
 \sssect{头}{headers}
 \paragraph{}
-<++>
+C++标准库的每一个元素声明或定义（如合适）于一个\nt{头}中。\footnote{头不一定是源
+文件，头名中\tm{<}和\tm{>}所分隔的序列也不一定是一个有效的源文件名
+（\ref{cpp.include}）。}
 
 \paragraph{}
-<++>
+C++标准库提供了\nt{C++标准库头}，如表\ref{tab:headers}所示。
+
+\begin{table}[h!]
+  \centering
+  \caption{C++库头}
+  \begin{tabular}{|llll|}
+    \hline
+    \tm{<algorithm>} & \tm{<future>} & \tm{<numeric>} & \tm{<strstream>}      \\
+    \tm{<any>} & \tm{<initializer\_list>} & \tm{<optional>} &
+      \tm{<system\_error>}                                                    \\
+    \tm{<array>} & \tm{<iomanip>} & \tm{<ostream>} & \tm{<thread>}            \\
+    \tm{<atomic>} & \tm{<ios>} & \tm{<queue>} & \tm{<tuple>}                  \\
+    \tm{<bitset>} & \tm{<iosfwd>} & \tm{<random>} & \tm{<type\_traits>}       \\
+    \tm{<chrono>} & \tm{<iostream>} & \tm{<ratio>} & \tm{<typeindex>}         \\
+    \tm{<codecvt>} & \tm{<istream>} & \tm{<regex>} & \tm{<typeinfo>}          \\
+    \tm{<complex>} & \tm{<iterator>} & \tm{<scoped\_allocator>} &
+      \tm{<unordered\_map>}                                                   \\
+    \tm{<condition\_variable>} & \tm{<limits>} & \tm{<set>} &
+      \tm{<unordered\_set>}                                                   \\
+    \tm{<deque>} & \tm{<list>} & \tm{<shared\_mutex>} & \tm{<utility>}        \\
+    \tm{<exception>} & \tm{<locale>} & \tm{<sstream>} & \tm{<valarray>}       \\
+    \tm{<execution>} & \tm{<map>} & \tm{<stack>} & \tm{<variant>}             \\
+    \tm{<filesystem>} & \tm{<memory>} & \tm{<stdexcept>} & \tm{<vector>}      \\
+    \tm{<forward\_list>} & \tm{<memory\_resource>} & \tm{<streambuf>} &       \\
+    \tm{<fstream>} & \tm{<mutex>} & \tm{<string>} &                           \\
+    \tm{<functional>} & \tm{<new>} & \tm{<string\_view>} &                    \\
+    \hline
+  \end{tabular}
+  \label{tab:headers}
+\end{table}
 
 \paragraph{}
-<++>
+C标准库功能由表\ref{tab:libc:headers}中所示的额外的头提供。\footnote{这些C头没有
+对应的C++头：\tm{stdatomic.h}，\tm{stdnoreturn.h}，\tm{threads.h}。}
+
+\begin{table}[h!]
+  \centering
+  \caption{C库功能的C++库头}
+  \begin{tabular}{|lllll|}
+    \hline
+    \tm{<cassert>}  & \tm{<cinttypes>} & \tm{<csignal>}   & \tm{<cstdio>}  &
+      \tm{<cwchar>}                                                           \\
+    \tm{<ccomplex>} & \tm{<ciso646>}   & \tm{<cstdalign>} & \tm{<cstdlib>} &
+      \tm{<cwctype>}                                                          \\
+    \tm{<cctype>}   & \tm{<climits>}   & \tm{<cstdarg>}   & \tm{<cstring>} &  \\
+    \tm{<cerrno>}   & \tm{<clocale>}   & \tm{<cstdbool>}  & \tm{<ctgmath>} &  \\
+    \tm{<cfenv>}    & \tm{<cmath>}     & \tm{<cstddef>}   & \tm{<ctime>}   &  \\
+    \tm{<cfloat>}   & \tm{<csetjmp>}   & \tm{<cstdint>}   & \tm{<cuchar>}  &  \\
+    \hline
+  \end{tabular}
+  \label{tab:libc:headers}
+\end{table}
 
 \paragraph{}
-<++>
+除第20章到第33章和附录\ref{depr}中所注明的以外，每一个头\tm{\nt{cname}}中的内容
+与C标准库（第\ref{intro.refs}章）中指定的对应头\tm{\nt{name}.h}的内容一样。但在
+C++标准库中，声明（除在C中定义为宏的名字外）处于命名空间\tm{std}命名空间作用域中
+（\ref{basic.scope.namespace}）。未指明这些名字（含第21章到第33章和附录
+\ref{depr}中所加进来的任何重载）是否先声明于全局命名空间作用域中然后使用
+\nt{using-declaration}（\ref{namespace.udecl}）显式注入到命名空间\tm{std}中。
 
 \paragraph{}
-<++>
+C中定义为宏的名字在C++标准库中应该定义为宏，即使C授权实现为函数。「注：C中定义为
+宏的名字有：\tm{assert}，\tm{offsetof}，\tm{setjmp}，\tm{va\_arg}，\tm{va\_end}
+和\tm{va\_start}。」
 
 \paragraph{}
-<++>
+C中定义为函数的名字在C++标准库中应该定义为函数。\footnote{这禁止了C中允许的为函
+数原型提供屏蔽宏的实践。C++中唯一能实现等价内联行为的方式是提供一个定义作为外部
+内联函数。}
 
 \paragraph{}
-<++>
+C++中关键字或运算符的标识符在C++标准库中不应该定义为宏。\footnote{特别的，包含标
+准头\tm{<iso646.h>}或\tm{ciso646}无效果。}
 
 \paragraph{}
-<++>
+\ref{depr.c.headers}，C标准库头，描述在C++程序中使用\tm{\nt{name}.h}（C头）的效
+果。\footnote{\tm{".h"}头导出其名字到全局命名空间中，而新式头保持其名字在
+\tm{std}命名空间中。因此，新式头为所有使用的首选形式，除非有意要严格兼容于C的C++
+程序。}
 
 \paragraph{}
-<++>
+C标准的附录K描述了大量的函数，及关联的类型和宏，相比许多传统的C标准库，“促进更安
+全更可靠的编程”。这些函数的名字具有后缀\tm{\_s}；大部分提供与无后缀的C库函数相同
+的服务，但一般会取一个额外参数，其值为结果数组的大小。如果包含了任何C++头，则这
+些名字是否声明于全局命名空间中由实现定义。（这些名字都不会在声明于\tm{std}命名空
+间中。）
 
 \paragraph{}
-<++>
+表\ref{tab:c:annex:k:names}列出可能声明于某些头中的附录K的名字。这些名字受
+\ref{macro.names}约束。
+
+\begin{table}[h!]
+  \centering
+  \caption{C标准附录K中的名字}
+  \begin{tabular}{|llll|}
+    \hline
+    \tm{abort\_handler\_s}      & \tm{mbstowcs\_s}                 & \tm{strncat\_s}    & \tm{vswscanf\_s}  \\
+    \tm{asctime\_s}             & \tm{memcpy\_s}                   & \tm{strncpy\_s}    & \tm{vwprintf\_s}  \\
+    \tm{bsearch\_s}             & \tm{memmove\_s}                  & \tm{strtok\_s}     & \tm{vwscanf\_s}   \\
+    \tm{constraint\_handler\_t} & \tm{memset\_s}                   & \tm{swprintf\_s}   & \tm{wcrtomb\_s}   \\
+    \tm{ctime\_s}               & \tm{printf\_s}                   & \tm{swscanf\_s}    & \tm{wcscat\_s}    \\
+    \tm{errno\_t}               & \tm{qsort\_s}                    & \tm{tmpfile\_s}    & \tm{wcscpy\_s}    \\
+    \tm{fopen\_s}               & \tm{RSIZE\_MAX}                  & \tm{TMP\_MAX\_S}   & \tm{wcsncat\_s}   \\
+    \tm{fprintf\_s}             & \tm{rsize\_t}                    & \tm{tmpnam\_s}     & \tm{wcsncpy\_s}   \\
+    \tm{freopen\_s}             & \tm{scanf\_s}                    & \tm{vfprintf\_s}   & \tm{wcsnlen\_s}   \\
+    \tm{fscanf\_s}              & \tm{set\_constraint\_handler\_s} & \tm{vfscanf\_s}    & \tm{wcsrtombs\_s} \\
+    \tm{fwprintf\_s}            & \tm{snprintf\_s}                 & \tm{vfwprintf\_s}  & \tm{wcstok\_s}    \\
+    \tm{fwscanf\_s}             & \tm{snwprintf\_s}                & \tm{vfwscanf\_s}   & \tm{wcstombs\_s}  \\
+    \tm{getenv\_s}              & \tm{sprintf\_s}                  & \tm{vprintf\_s}    & \tm{wcstomb\_s}   \\
+    \tm{gets\_s}                & \tm{sscanf\_s}                   & \tm{vscanf\_s}     & \tm{wmemcpy\_s}   \\
+    \tm{gmtime\_s}              & \tm{strcat\_s}                   & \tm{vsnprintf\_s}  & \tm{wmemmove\_s}  \\
+    \tm{ignore\_handler\_s}     & \tm{strcpy\_s}                   & \tm{vsnwprintf\_s} & \tm{wmemcpy\_s}   \\
+    \tm{L\_tmpnam\_s}           & \tm{strerror\_s}                 & \tm{vsprintf\_s}   & \tm{wscanf\_s}    \\
+    \tm{localtime\_s}           & \tm{strerrorlen\_s}              & \tm{vsscanf\_s}    &                   \\
+    \tm{mbsrtowcs\_s}           & \tm{strlen\_s}                   & \tm{vswprintf\_s}  &                   \\
+    \hline
+  \end{tabular}
+  \label{tab:c:annex:k:names}
+\end{table}
 
 \sssect{自由式实现}{compliance}
 \paragraph{}
-<++>
+定义两种类型的实现：\nt{宿主式}和\nt{自由式}（\ref{intro.compliance}）。对于宿主
+式实现，本文档描述可用头集合。
 
 \paragraph{}
-<++>
+自由式实现具有实现定义头集合。但应该至少包含表\ref{tab:free:impl:headers}中所列
+的头。
+
+\begin{table}[h!]
+  \centering
+  \caption{自由式实现的C++头}
+  \begin{tabular}{|lll|}
+    \hline
+                 & \tb{子章节}     & \tb{头}                                  \\
+    \hline
+    \hline       &                 & \tm{<ciso646>}                           \\
+    \hline 21.2  & 类型            & \tm{<cstddef>}                           \\
+    \hline 21.3  & 实现属性        & \tm{<cfloat> <limits> <climits>}         \\
+    \hline 21.4  & 整型            & \tm{<cstdint>}                           \\
+    \hline 21.5  & 启动和终止      & \tm{<cstdlib>}                           \\
+    \hline 21.6  & 动态内存管理    & \tm{<new>}                               \\
+    \hline 21.7  & 类型识别        & \tm{<typeinfo>}                          \\
+    \hline 21.8  & 异常处理        & \tm{<exception>}                         \\
+    \hline 21.9  & 初始化列表      & \tm{<initializer\_list>}                 \\
+    \hline 21.10 & 其他运行时支持  & \tm{<cstdarg>}                           \\
+    \hline 23.15 & 类型特质        & \tm{<type\_traits>}                      \\
+    \hline 32    & 原子            & \tm{<atomic>}                            \\
+    \hline
+    \ref{depr.cstdalign.syn}，
+    \ref{depr.cstdbool.syn}
+                 & 已废弃头        & \tm{<cstdalign> <cstdbool>}              \\
+    \hline
+  \end{tabular}
+  \label{tab:free:impl:headers}
+\end{table}
 
 \paragraph{}
-<++>
+头\tm{<cstdlib>}所提供的版本应该至少声明函数\tm{abort}，\tm{atexit}，
+\tm{at\_quick\_exit}，\tm{exit}和\tm{quick\_exit}（21.5）。该表中列出的其他头应
+该满足与宿主实现一样的需求。
 
 \ssect{使用标准库}{using}
-\sssect{概览}{using.overview}
+\sssect{概述}{using.overview}
 \paragraph{}
-<++>
+本节描述C++程序如何访问C++标准库功能。\ref{using.headers}描述翻译阶段\ref{tpit4}
+过程中的效果，而\ref{using.linkage}描述翻译阶段\ref{tpit8}过程中的效果
+（\ref{lex.phases}）。
 
 \sssect{头}{using.headers}
 \paragraph{}
-<++>
+C++标准库中的实体定义于头中，其内容在翻译单元包含合适的\tm{\#include}预处理指令
+（\ref{cpp.include}）时对翻译单元可用。
 
 \paragraph{}
-<++>
+翻译单元可能按任意顺序包含头（第\ref{lex}章）。每一个都可能被包含多次，与包含一
+次效果相同，除了每一次包含\tm{<cassert>}或\tm{<assert.h>}依赖于\tm{NDEBUG}词法上
+的当前定义。\footnote{这与C标准库一致。}
 
 \paragraph{}
-<++>
+翻译单元应该包含只在任何声明或定义之外包含头，且应该在该翻译中引用该头中所声明的
+任何实体首次引用的词法之前包含该头。无需诊断。
 
 \sssect{链接}{using.linkage}
 \paragraph{}
-<++>
+C++标准库中的实体具有外部链接（\ref{basic.link}）。除另有指明，对象和函数具有缺
+省的\tm{extern "C++"}链接（\ref{dcl.link}）。
 
 \paragraph{}
-<++>
+C标准库中具有外部链接声明的名字具有\tm{extern "C"}还是\tm{extern "C++"}链接由实
+现定义。推荐实现使用\tm{extern "C++"}链接。\footnote{声明C标准库中的对象或函数签
+名唯一的可靠方式是通过包含声明它的头，尽管C标准7.1.4中给出了自由度。}
 
 \paragraph{}
-<++>
+C++程序所需要的定义于标准库中的对象和函数在程序启动之前包含进来。
 
 \paragraph{}
-<++>
+参见替换函数（\ref{replacement.functions}），运行时变更
+（\ref{handler.functions}）。
 
 \ssect{类型和表达式需求}{utility.requirements}
 \paragraph{}
-<++>
+\ref{utility.arg.requirements}描述了用于实例化定义于C++标准库中的模板所需要的类
+型和表达式。\ref{swappable.requirements}描述了可替换类型和可替换表达式的需求。
+\ref{nullablepointer.requirements}描述了支持空值的指针式类型的需求。
+\ref{hash.requirements}描述了哈希函数对象的需求。\ref{allocator.requirements}描
+述了存储分配器的需求。
 
 \sssect{模板参数需求}{utility.arg.requirements}
 \paragraph{}
-<++>
+C++标准库中模板的定义引用多个命名需求，其细节罗列于表
+\ref{tab:namedreq:eq}-\ref{tab:namedreq:destr}中。在这些表中，\tm{T}是一个对象或
+引用类型，由C++程序实例化模板来提供；\tm{a}，\tm{b}和\tm{c}是
+（可能有\tm{const}）类型\tm{T}的值；\tm{s}和\tm{t}为类型\tm{T}的可修改左值；
+\tm{u}表示标识符；\tm{rv}表示类型\tm{T}的右值；\tm{v}是（可能有\tm{const}）类型
+\tm{T}的左值或\tm{const T}的右值。
 
 \paragraph{}
-<++>
+一般地不需要缺省构造函数。某些容器类成员函数签名指定\tm{T()}为缺省参数。如果这些
+签名之一使用缺省参数来调用的话（\ref{dcl.fct.default}），\tm{T()}应该是合法表达
+式（\ref{dcl.init}）。
+
+\begin{table}[h!]
+  \centering
+  \caption{\tm{EqualityComparable}需求}
+  \begin{tabular}{|p{0.12\textwidth}p{0.1\textwidth}p{0.45\textwidth}|}
+    \hline
+    \tb{表达式} & \tb{返回类型} & \tb{需求}                                   \\
+    \hline \hline
+    \tm{a == b} & 可转换成  & \tm{==}为相等关系，即其具有                     \\
+                & \tm{bool} & 以下属性：                                      \\
+                &           & \begin{minipage}[t]{0.45\textwidth}
+                                \begin{itemize}
+                                  \item[---]{对所有\tm{a}，\tm{a == a}。}
+                                  \item[---]{如果\tm{a == b}，则\tm{b == a}。}
+                                  \item[---]{如果\tm{a == b}且\tm{b == c}，
+                                    则\tm{a == c}。}
+                                \end{itemize}
+                              \end{minipage}                                  \\
+    \hline
+  \end{tabular}
+  \label{tab:namedreq:eq}
+\end{table}
+
+\begin{table}[h!]
+  \centering
+  \caption{\tm{LessThenComparable}需求}
+  \begin{tabular}{|p{0.12\textwidth}p{0.1\textwidth}p{0.45\textwidth}|}
+    \hline
+    \tb{表达式} & \tb{返回类型} & \tb{需求}                                   \\
+    \hline \hline
+    \tm{a == b} & 可转换成  & \tm{<}为严格弱序关系（28.7）                    \\
+                & \tm{bool} &                                                 \\
+    \hline
+  \end{tabular}
+  \label{tab:namedreq:lt}
+\end{table}
+
+\begin{table}[h!]
+  \centering
+  \caption{\tm{DefaultConstructible}需求}
+  \begin{tabular}{|p{0.12\textwidth}p{0.1\textwidth}p{0.45\textwidth}|}
+    \hline
+    \tb{表达式}   & & \tb{后置条件}                                           \\
+    \hline \hline
+    \tm{T t;}     & & 对象\tm{t}为缺省初始化                                  \\
+    \hline
+    \tm{T u\{\};} & & 对象\tm{u}为值初始化或聚合初始化                        \\
+    \hline
+    \tm{T()}      & & \tm{T}类型对象为值初始化或聚合初                        \\
+    \tm{T\{\}}    & & 始化                                                    \\
+    \hline
+  \end{tabular}
+  \label{tab:namedreq:dflt:constr}
+\end{table}
+
+\begin{table}[h!]
+  \centering
+  \caption{\tm{MoveConstructible}需求}
+  \begin{tabular}{|p{0.12\textwidth}p{0.1\textwidth}p{0.45\textwidth}|}
+    \hline
+    \tb{表达式}   & & \tb{后置条件}                                           \\
+    \hline \hline
+    \tm{T u = rv;} & & 构建前\tm{u}等价于\tm{rv}的值                          \\
+    \hline
+    \tm{T(rv)} & & 构建前\tm{T(rv)}等价于\tm{rv}的值                          \\
+    \hline
+    \multicolumn{3}{|l|}{
+      \begin{minipage}[t]{0.72\textwidth}
+        \tm{rv}的状态未指明「注：\tm{rv}仍必须满足使用它的库组件要求。这些需求中
+        列出的操作无论\tm{rv}是否移动都必须按指定的工作。」
+    \end{minipage}}                                                           \\
+    \hline
+  \end{tabular}
+  \label{tab:namedreq:move:constr}
+\end{table}
+
+\begin{table}[h!]
+  \centering
+  \caption{\tm{CopyConstructible}需求}
+  \begin{tabular}{|p{0.12\textwidth}p{0.1\textwidth}p{0.45\textwidth}|}
+    \hline
+    \tb{表达式}   & & \tb{后置条件}                                           \\
+    \hline \hline
+    \tm{T u = v;} & & \tm{v}的值不变且等于\tm{u}                              \\
+    \hline
+    \tm{T(v)}     & & \tm{v}的值不变且等于\tm{T(v)}                           \\
+    \hline
+  \end{tabular}
+  \label{tab:namedreq:copy:constr}
+\end{table}
+
+\begin{table}[h!]
+  \centering
+  \caption{\tm{MoveAssignable}需求}
+  \begin{tabular}
+    {|p{0.09\textwidth}p{0.1\textwidth}p{0.09\textwidth}p{0.36\textwidth}|}
+    \hline
+    \tb{表达式}   & \tb{返回类型} & \tb{返回值} & \tb{后置条件}               \\
+    \hline \hline
+    \tm{t = rv;} & \tm{T\&} & \tm{t} & 如果\tm{t}和\tm{rv}不引用相同的对象，则在
+      赋值前\tm{t}等于\tm{rv}的值                                             \\
+    \hline
+    \multicolumn{4}{|l|}{
+      \begin{minipage}[t]{0.72\textwidth}
+        \tm{rv}的状态未指明「注：\tm{rv}仍必须满足使用它的库组件要求，无论
+        \tm{t}和\tm{rv}是否引用相同对象。这些需求中列出的操作无论\tm{rv}是否移
+        动都必须按指定的工作。」
+      \end{minipage}}                                                         \\
+    \hline
+  \end{tabular}
+  \label{tab:namedreq:move:assign}
+\end{table}
+
+\begin{table}[h!]
+  \centering
+  \caption{\tm{CopyAssignable}需求（附加于\tm{MoveAssignable}）}
+  \begin{tabular}
+    {|p{0.09\textwidth}p{0.1\textwidth}p{0.09\textwidth}p{0.36\textwidth}|}
+    \hline
+    \tb{表达式}   & \tb{返回类型} & \tb{返回值} & \tb{后置条件}               \\
+    \hline \hline
+    \tm{t = v;} & \tm{T\&} & \tm{t} & \tm{t}等于\tm{v}，\tm{v}的值不变        \\
+    \hline
+  \end{tabular}
+  \label{tab:namedreq:copy:assign}
+\end{table}
+
+\begin{table}[h!]
+  \centering
+  \caption{\tm{Destructible}需求}
+  \begin{tabular}{|p{0.12\textwidth}p{0.1\textwidth}p{0.45\textwidth}|}
+    \hline
+    \tb{表达式}   & & \tb{后置条件}                                           \\
+    \hline \hline
+    \tm{u.\textasciitilde{}T()} & & 回收\tm{u}所拥有的所有资源，不传播异常。  \\
+    \hline
+  \end{tabular}
+  \label{tab:namedreq:destr}
+\end{table}
 
 \sssect{Swappable需求}{swappable.requirements}
 \paragraph{}
-<++>
+这个子章节提供可交换类型和表达式的定义。在这些定义中，设\tm{t}表示一个类型\tm{T}
+的表达式，\tm{u}表示一个类型\tm{U}的表达式。
 
 \paragraph{}
-<++>
+对象\tm{t}与对象\tm{u}为可替换的，当且仅当：
+\begin{enumerate}
+  \item{表达式\tm{swap(t, u)}和\tm{swap(u, t)}在以下所述上下文中求值时是有效的，
+    并且}
+  \item{这些表达式具有以下效果：
+    \begin{enumerate}
+      \item{\tm{t}所引用的对象具有原\tm{u}的值并且}
+      \item{\tm{u}所引用的对象具有原\tm{t}的值。}
+    \end{enumerate}}
+\end{enumerate}
 
 \paragraph{}
-<++>
+\tm{swap(t, u)}和\tm{swap(u, t)}求值所在的上下文应该确保一个二元非成员函数“swap”
+被重载解析（\ref{over.match}）在一组候选集合中选中，该集合包括：
+\begin{enumerate}
+  \item{定义于\tm{<utility>}（23.2）中的两个\tm{swap}函数模板，以及}
+  \item{参数依赖查询（\ref{basic.lookup.argdep}）所产生的查询集合。}
+\end{enumerate}
+「注：如果\tm{T}和\tm{U}都是基本类型或基本类型的数组，并且\tm{<utility>}中的声明
+处于作用域中，则上述的整体查询集合等价于在合适的情况下应用限定名查询到表达式
+\tm{std::swap(t,u)}或\tm{std::swap(u,t)}上的查询集合。」
+
+「注：未指明具有可交换需求的库组件是否包含头\tm{<utility>}以确保一个合适的求值上
+下文。」
 
 \paragraph{}
-<++>
+一个左值或右值\tm{t}是\nt{可交换的}，当且仅当\tm{t}与类型\tm{T}的对应任意左值或
+右值是可交换的。
 
 \paragraph{}
-<++>
+满足迭代器需求（27.2）的任何类型\tm{X}满足\tm{ValueSwappable}的需求，如果对类型
+\tm{X}的任何可解引用对象\tm{x}，\tm{*x}是可交换的。
+
+「例：用户代码可以确保\tm{swap}调用的求值在多个条件下于合适的上下文进行，如下：
+\begin{lstlisting}
+  #include <utility>
+
+  // Requires: std::forward<T>(t) shall be swappable with std::forward<U>(u).
+  template <class T, class U>
+  void value_swap(T&& t, U&& u) {
+    using std::swap;
+    swap(std::forward<T>(t), std::forward<U>(u)); // OK: uses “swappable with” conditions
+                                                  // for rvalues and lvalues
+  }
+
+  // Requires: lvalues of T shall be swappable.
+  template <class T>
+  void lv_swap(T& t1, T& t2) {
+    using std::swap;
+    swap(t1, t2);                                 // OK: uses swappable conditions for
+  }                                               // lvalues of type T
+
+  namespace N {
+    struct A { int m; };
+    struct Proxy { A* a; };
+    Proxy proxy(A& a) { return Proxy{ &a }; }
+
+    void swap(A& x, Proxy p) {
+      std::swap(x.m, p.a->m);                     // OK: uses context equivalent to swappable
+                                                  // conditions for fundamental types
+    }
+    void swap(Proxy p, A& x) { swap(x, p); }      // satisfy symmetry constraint
+  }
+
+  int main() {
+    int i = 1, j = 2;
+    lv_swap(i, j);
+    assert(i == 2 && j == 1);
+    N::A a1 = { 5 }, a2 = { -5 };
+    value_swap(a1, proxy(a2));
+    assert(a1.m == -5 && a2.m == 5);
+  }
+\end{lstlisting}」
 
 \sssect{NullablePointer需求}{nullablepointer.requirements}
 \paragraph{}
-<++>
+\tm{NullablePointer}类型指支持空值的指针式类型。如果：
+\begin{enumerate}
+  \item{\tm{P}满足\tm{EqualityComparable}，\tm{DefaultConstructible}，
+    \tm{CopyConstructible}，                                                  \\
+    \tm{CopyAssignable}和\tm{Destructible}需求，}
+  \item{类型\tm{P}的左值是可交换的（\ref{swappable.requirements}），}
+  \item{表\ref{tab:nullptr:req}中的表达式为有效的且具有所指定的语义，且}
+  \item{\tm{P}满足本节中所有其他需求，}
+\end{enumerate}
+则类型\tm{P}满足\tm{NullablePointer}需求。
 
 \paragraph{}
-<++>
+类型\tm{P}的值初始化对象产生该类型的空值。空值应该只与其自身等价。类型\tm{P}的缺
+省初始化对象可以具有直接值。「注：涉及直接值的操作可能产生未定义行为。」
 
 \paragraph{}
-<++>
+类型\tm{P}的对象\tm{p}可按上下文转换到\tm{bool}（第\ref{conv}章）。其效果应该如
+\tm{p != nullptr}代替了\tm{p}来求值。
 
 \paragraph{}
-<++>
+\tm{NullablePointer}需求部分中的操作不应该以异常来结束。
 
 \paragraph{}
-<++>
+在表\ref{tab:nullptr:req}中，\tm{u}表示标识符，\tm{t}表示类型\tm{P}的非
+\tm{const}左值，\tm{a}和\tm{b}表示（可能加\tm{const}）类型\tm{P}的值，\tm{np}表
+示（可能加\tm{const}）\tm{std::nullptr\_t}类型的值。
+
+\begin{table}[h!]
+  \centering
+  \caption{\tm{NullablePointer}需求}
+  \begin{tabular}{|p{0.12\textwidth}p{0.24\textwidth}p{0.33\textwidth}|}
+    \hline
+    \tb{表达式}    & \tb{返回类型} & \tb{操作语义}                            \\
+    \hline \hline
+    \tm{P u(np);}  &               & \nt{后置条件：} \tm{u ==  nullptr}       \\
+    \tm{P u = np;} &               &                                          \\
+    \hline
+    \tm{P(np)}     &               & \nt{后置条件：} \tm{P(np) == nullptr}    \\
+    \hline
+    \tm{t = np}    & \tm{P\&}      & \nt{后置条件：} \tm{P(np) == nullptr}    \\
+    \hline
+    \tm{a != b}    & 上下文可转换至\tm{bool} & \tm{!(a == b)}                 \\
+    \hline
+    \tm{a == np}   & 上下文可转换至\tm{bool} & \tm{a == P()}                  \\
+    \tm{np == a}   &                         &                                \\
+    \hline
+    \tm{a != np}   & 上下文可转换至\tm{bool} & \tm{!(a == np)}                \\
+    \tm{np != a}   &                         &                                \\
+    \hline
+  \end{tabular}
+  \label{tab:nullptr:req}
+\end{table}
 
 \sssect{Hash需求}{hash.requirements}
 \paragraph{}
-<++>
+如果类型\tm{H}：
+\begin{enumerate}
+  \item{是一个函数对象类型（23.14），}
+  \item{满足\tm{CopyConstructible}和\tm{Destructible}
+    （\ref{utility.arg.requirements}），且}
+  \item{表\ref{tab:hash:req}中的表达式有效且具有指定语义，}
+\end{enumerate}
+则类型\tm{H}满足\tm{Hash}需求。
 
 \paragraph{}
-<++>
+给定\tm{Key}为类型\tm{H}的函数对象的参数类型，在表\ref{tab:hash:req}中\tm{h}是一
+个（可能加\tm{const}）类型\tm{H}的值，\tm{u}是类型\tm{Key}的左值，且\tm{k}是一个
+可转换到（可能加\tm{const}）\tm{Key}的类型的值。
+
+\begin{table}[h!]
+  \centering
+  \caption{\tm{Hash}需求}
+  \begin{tabular}{|p{0.12\textwidth}p{0.1\textwidth}p{0.45\textwidth}|}
+    \hline
+    \tb{表达式}   & \tb{返回类型} & \tb{需求}                                 \\
+    \hline \hline
+    \tm{h(k)} & \tm{size\_t} & 所返回值在程序周期内应该仅依赖于参数\tm{k}。
+    「注：因此表达式\tm{h(k)}的具有相同值\tm{k}的所有求值在一个给定程序同产生相
+    同结果。」「注：对两个不同的值\tm{t1}和\tm{t2}，\tm{h(t1)}和\tm{h(t2)}的概率
+    应该非常小，接近于\tm{1.0 / numeric\_limits<size\_t>::max()}。」          \\
+    \hline
+    \tm{h(u)} & \tm{size\_t} & 不应该修改\tm{u}。                             \\
+    \hline
+  \end{tabular}
+  \label{tab:hash:req}
+\end{table}
 
 \sssect{Allocator需求}{allocator.requirements}
 \paragraph{}
-<++>
+标准库描述了\nt{分配器}的标准需求集合，分配器指封装分配模型信息的类类型对象。这
+些信息包括指针类型知识，其差值的类型，该分配模型中对象大小的类型，以及其内存分配
+与释放原语。所有字符串类型（第24章），容器（第26章）（数组除外），字符串缓存和字
+符串流（第30章）以及\tm{match\_results}（第31章）对分配器进行了参数化。
 
 \paragraph{}
-<++>
+类模板\tm{allocator\_traits}（23.10.8）提供所有分配器类型的一致性接口。表
+\ref{tab:desc:var:defn}描述了分配器所操作的类型。表\ref{tab:alloc:req}描述了分配
+器类型的需求，因此也是用于实例化\tm{allocator\_traits}的类型需求。如果表
+\ref{tab:alloc:req}的最后一列为给定的表达式指定了一个缺省的值则需求是可选的。在
+标准库的\tm{allocator\_traits}模板中，不是分配器所提供的可选需求被指定的缺省表达
+式所替换。\tm{allocator\_traits}的用户特例化可能提供不同的缺省值且可能为与主模板
+不同的需求提供缺省值。在表\ref{tab:desc:var:defn}和表\ref{tab:alloc:req}中，
+\tm{move}和\tm{forward}的使用总是分别引用\tm{std::move}和\tm{std::forward}。
+
+\begin{table}[h!]
+  \centering
+  \caption{描述性变量定义}
+  \begin{tabular}{|p{0.12\textwidth}p{0.55\textwidth}|}
+    \hline
+    \tb{变量} & \tb{定义}                                                     \\
+    \hline \hline
+    \tm{T, U, C} & 任何cv非限定对象类型（\ref{basic.types}）                  \\
+    \hline
+    \tm{X} & 类型\tm{T}的分配器类                                             \\
+    \hline
+    \tm{Y} & 类型\tm{U}的对应分配器类                                         \\
+    \hline
+    \tm{XX} & 类型\tm{allocator\_traits<X>}                                   \\
+    \hline
+    \tm{YY} & 类型\tm{allocator\_traits<Y>}                                   \\
+    \hline
+    \tm{a, a1, a2} & 类型\tm{X}的左值                                         \\
+    \hline
+    \tm{u} & 所声明变量的名字                                                 \\
+    \hline
+    \tm{b} & 类型\tm{Y}的值                                                   \\
+    \hline
+    \tm{c} & 类型\tm{C*}的指针，其解引用是合法的                              \\
+    \hline
+    \tm{p} & 类型\tm{XX::pointer}的值，通过调用\tm{a1.allocate}来获得，其中
+             \tm{a1 == a}                                                     \\
+    \hline
+    \tm{q} & 类型\tm{XX::const\_pointer}的值，转换自值\tm{p}                  \\
+    \hline
+    \tm{w} & 类型\tm{XX::void\_pointer}的值，转换自值\tm{p}                   \\
+    \hline
+    \tm{x} & 类型\tm{XX::const\_void\_pointer}的值，转换自值\tm{q}或值\tm{w}  \\
+    \hline
+    \tm{y} & 类型\tm{XX::const\_void\_pointer}的值，转换自\tm{YY::allocate}的结
+             果值，或者是（可能加\tm{const}）类型\tm{std::nullptr\_t}的值     \\
+    \hline
+    \tm{n} & 类型\tm{XX::size\_type}的值                                      \\
+    \hline
+    \tm{Args} & 模板参数包                                                    \\
+    \hline
+    \tm{args} & 函数参数包，模式为\tm{Args\&\&}                               \\
+    \hline
+  \end{tabular}
+  \label{tab:desc:var:defn}
+\end{table}
+
+\begin{table}[h!]
+  \centering
+  \caption{分配器需求}
+  \begin{tabular}
+    {|p{0.21\textwidth}p{0.1\textwidth}p{0.34\textwidth}p{0.23\textwidth}|}
+    \hline
+    \tb{表达式} & \tb{返回类型} & \tb{断言/注/前置/后置条件} & \tb{缺省}      \\
+    \hline \hline
+    \tm{X::pointer} & & & \tm{T*}                                             \\
+    \hline
+    \tm{X::const\_pointer} & & \tm{X::pointer}可转换成 & \tm{pointer\_traits} \\
+                           & & \tm{X::const\_pointer}  & \tm{<X::pointer>::}  \\
+                           & &                         & \tm{rebind<const T>} \\
+    \hline
+    \tm{X::void\_pointer} & & \tm{X::pointer}可转换成 & \tm{pointer\_traits}  \\
+    \tm{Y::void\_pointer} & & \tm{X::void\_pointer}。 & \tm{<X::pointer>::}   \\
+                          & & \tm{X::void\_pointer}和 & \tm{rebind<void>}     \\
+                          & & \tm{Y::void\_pointer}为 &                       \\
+                          & & 相同类型 &                                      \\
+    \hline
+    \tm{X::} & & \tm{X::pointer}，\tm{X::const\_pointer} &
+      \tm{pointer\_traits}                                                    \\
+    \tm{const\_void\_pointer} & & 和\tm{X::void\_pointer}可转换至 &
+      \tm{<X::pointer>::}                                                     \\
+    \tm{Y::} & & \tm{X::const\_void\_pointer}。 & \tm{rebind<void>}           \\
+    \tm{const\_void\_pointer} & & \tm{X::const\_void\_pointer}，&             \\
+                          & & \tm{Y::const\_void\_pointer}为 &                \\
+                          & & 相同类型。&                                     \\
+    \hline
+    \tm{X::value\_type} & 等价于\tm{T} & &                                    \\
+    \hline
+    \tm{X::size\_type} & 无符号 & 分配模型中可表示最大对象大小 &
+      \tm{make\_unsigned\_t<X::}                                              \\
+                       & 整型 & 的类型 & \tm{difference\_type>}               \\
+    \hline
+    \tm{X::} & 有符号 & 分配模型中可表示任意两个指针 & \tm{pointer\_traits}   \\
+    \tm{difference\_type} & 整型   & 差值的类型 & \tm{X::pointer>::}          \\
+             &        &            & \tm{difference\_type}                    \\
+    \hline
+    \tm{typename} & \tm{Y} & 对所有\tm{U}（含\tm{T}），\tm{Y::template} &
+                                           见下文注\hyperref[lab:note:a]{A}。 \\
+    \tm{X::template} &  & \tm{rebind<T>::other}为\tm{X}。 &                   \\
+    \tm{rebind<U>::other} & & &                                               \\
+    \hline
+    \tm{*p} & \tm{T\&} & &                                                    \\
+    \hline
+    \tm{*q} & \tm{const T\&} & \tm{*q}与\tm{*p}引用相同对象 &                 \\
+    \hline
+  \end{tabular}
+  \label{tab:alloc:req}
+\end{table}
+
+\begin{table}[h!]
+  \addtocounter{table}{-1}
+  \centering
+  \caption{分配器需求（续）}
+  \begin{tabular}
+    {|p{0.23\textwidth}p{0.1\textwidth}p{0.34\textwidth}p{0.23\textwidth}|}
+    \hline
+    \tb{表达式} & \tb{返回类型} & \tb{断言/注/前置/后置条件} & \tb{缺省}      \\
+    \hline \hline
+    \tm{p->m} & \tm{T::m}的 & \nt{需求：}\tm{(*p).m}合法。 &                  \\
+              & 类型        & 等价于\tm{(*p).m}。 &                           \\
+    \hline
+    \tm{q->m} & \tm{T::m}的 & \nt{需求：}\tm{(*q).m}合法。 &                  \\
+              & 类型        & 等价于\tm{(*q).m}。 &                           \\
+    \tm{q->m} & \tm{T::m}的 &  &                                              \\
+    \hline
+    \tm{static\_cast} & \tm{X::} & \tm{static\_cast} &                        \\
+    \tm{<X::pointer>(w)} & \tm{pointer} & \tm{<X::pointer>(w) == p} &         \\
+    \hline
+    \tm{static\_cast<X::} & \tm{X::const\_} & \tm{static\_cast<} &            \\
+    \tm{<const\_pointer>(w)} & \tm{pointer} & \tm{X::const\_pointer>(w) == p} &
+                                                                              \\
+    \hline
+    \tm{pointer\_traits} & \tm{X::} &  &                                      \\
+    \tm{<X::pointer>::} & \tm{pointer} &  &                                   \\
+    \tm{pointer\_to(r)} & & &                                                 \\
+    \hline
+    \tm{a.allocate(n)} & \tm{X::} & 为\tm{n}个\tm{T}类型对象所分配内存 &      \\
+     & \tm{pointer} & 但对象未构建。\tm{allocate}可以抛 &                     \\
+     &              & 出合适的异常。\tablefootnote{旨在\tm{a.allocate}成为分配单
+                      个\tm{T}类型对象的有效方式，即使当\tm{sizeof(T)}很小。
+                      即容器无需维护其自己的可用列表。}「注：如果 &           \\
+     &              & \tm{n == 0}则返回值未指定。」 &                         \\
+    \hline
+    \tm{a.allocate(n,y)} & \tm{X::} & 与\tm{a.allocate(n)}相同。\tm{y}的使 &
+     \tm{a.allocate(n)}                                                       \\
+    & \tm{pointer} & 用未指定，但其旨在辅助局部性 &                           \\
+    & & 提示。 &                                                              \\
+    \hline
+    \tm{a.deallocate(p,n)} & （未使用） & \nt{需求：}\tm{p}应该是之前调用 &   \\
+                           & & \tm{allocate}所返回且没有被中间 &              \\
+                           & & 的\tm{deallocate}调用作废的值。\tm{n} &        \\
+                           & & 应该匹配传递给\tm{allocate}以获 &              \\
+                           & & 取该内存的值。 &                               \\
+                           & & \nt{抛出：}无。 &                              \\
+    \hline
+    \tm{a.max\_size()} & \tm{X::} & 可以传递给\tm{X::allocate()}的 &
+      \tm{numeric\_limits}                                                    \\
+     & \tm{size\_type} & 有意义的最大值 & \tm{<size\_type>::max()}            \\
+     & & & \tm{/sizeof(value\_type)}                                          \\
+    \hline
+    \tm{a1 == a2} & \tm{bool} & 仅当从每一个所分配的存储可由 &                \\
+     & & 另一个释放。\tm{operator==}应该是反射，对称和传递的，且不应该 &      \\
+                  & & 因异常而终止。 &                                        \\
+    \hline
+    \tm{a1 != a2} & \tm{bool} & 同\tm{!(a1 == a2)} &                          \\
+    \hline
+    \tm{a == b} & \tm{bool} & 同 &                                            \\
+                & & \tm{a == Y::rebind<T>::other(b)} &                        \\
+    \hline
+    \tm{a != b} & \tm{bool} & 同\tm{!(a == b)} &                              \\
+    \hline
+    \tm{X u(a);} & & 不应该因异常而终止。 &                                   \\
+    \tm{X u = a;} & & \nt{后置条件：}\tm{u == a} &                            \\
+    \hline
+    \tm{X u(b);} & & 不应该因异常而终止。 &                                   \\
+                 & & \nt{后置条件：}\tm{Y(u) == b}， &                        \\
+                 & & \tm{u == X(b)} &                                         \\
+    \hline
+    \tm{X u(std::move(a));} &  & 不应该因异常而终止。 &                       \\
+    \tm{X u =} & & \nt{后置条件：}\tm{u}等于\tm{a}之前的值。 &                \\
+    \tm{std::move(a);} & & &                                                  \\
+    \hline
+    \tm{X u(std::move(b));} &  & 不应该因异常而终止。 &                       \\
+                            & & \nt{后置条件：}\tm{u}等于\tm{X(b)}之前的 &    \\
+     & & 值。 &                                                               \\
+    \hline
+    \tm{a.construct(c,args)} & （未使用） & \nt{效果：}在\tm{c}上创建\tm{C}类型
+      对象 & \tm{new::((void*)c)}                                             \\
+                             & & & \tm{C(forward<Args>}                       \\
+                             & & & \tm{(args)...)}                            \\
+    \hline
+    \tm{a.destroy(c)} & （未使用） & \nt{效果：}销毁\tm{c}处对象 &
+                                                \tm{c->\textasciitilde{}C()}  \\
+    & & &                                                                     \\
+    \hline
+  \end{tabular}
+  \label{tab:alloc:req:cont:1}
+\end{table}
+
+\begin{table}[h!]
+  \addtocounter{table}{-1}
+  \centering
+  \caption{分配器需求（续）}
+  \begin{tabular}
+    {|p{0.23\textwidth}p{0.15\textwidth}p{0.30\textwidth}p{0.20\textwidth}|}
+    \hline
+    \tb{表达式} & \tb{返回类型} & \tb{断言/注/前置/后置条件} & \tb{缺省}      \\
+    \hline \hline
+    \tm{a.select\_on\_} & \tm{X} & 通常返回\tm{a}或\tm{X()} & \tm{return a;}  \\
+    \tm{container\_copy\_} & & &                                              \\
+    \tm{construction()} & & &                                                 \\
+    \hline
+    \tm{X::propagate\_on\_} & 等价或派生于 & 当客户端容器为拷贝赋值时 &
+      \tm{false\_type}                                                        \\
+    \tm{container\_copy\_} & \tm{true\_type}或 & 仅当类型\tm{X}的分配器应该拷 &
+                                                                              \\
+    \tm{assignment} & \tm{false\_type} & 贝时为\tm{true\_type}。见下文 &      \\
+                    & & 注\hyperref[lab:note:b]{B}。 &                        \\
+    \hline
+    \tm{X::propagate\_on\_} & 等价或派生于 & 当客户端容器为移动赋值时 &
+      \tm{false\_type}                                                        \\
+    \tm{container\_move\_} & \tm{true\_type}或 & 仅当类型\tm{X}的分配器应该移 &
+                                                                              \\
+    \tm{assignment} & \tm{false\_type} & 动时为\tm{true\_type}。见下文 &      \\
+                    & & 注\hyperref[lab:note:b]{B}。 &                        \\
+    \hline
+    \tm{X::propagate\_on\_} & 等价或派生于 & 当客户端容器被交换时仅当 &
+      \tm{false\_type}                                                        \\
+    \tm{container\_swap} & \tm{true\_type}或 & 类型\tm{X}的分配器应该被交换 & \\
+                         & \tm{false\_type} & 时为\tm{true\_type}。见下文 &   \\
+                    & & 注\hyperref[lab:note:b]{B}。 &                        \\
+    \hline
+    \tm{X::is\_always\_equal} & 等价或派生于 & 仅当对类型\tm{X}的任意两个 &
+      \tm{is\_empty<X>}                                                       \\
+      & \tm{true\_type}或 & （可能为\tm{const}）值\tm{a1}，\tm{a2} &
+        \tm{::type}                                                           \\
+      & \tm{false\_type} & 表达式\tm{a1 == a2}保证为 &                        \\
+      & & \tm{true}时为\tm{true\_type}。 &                                    \\
+    \hline
+  \end{tabular}
+  \label{tab:alloc:req:cont:2}
+\end{table}
+
+\newpage
 
 \paragraph{}
-<++>
+注A\label{lab:note:a}：上表中成员类模板\tm{rebind}实际上是一个typedef模板。
+「注：一般地，如果名字\tm{Allocator}绑定到\hspace{-0.05em}\tm{SomeAllocator<T>}
+则\tm{Allocator::rebind<U>::other}与\hspace{-0.05em}\tm{SomeAllocator<U>}是同一
+个类型，其中\tm{SomeAllocator<T>::value\_type}是\tm{T}，
+\tm{SomeAllocator<U>::value\_type}是\tm{U}。」如果\tm{Allocator}是形如
+\tm{SomeAllocator<T, Args>}的类模板实例化，其中\tm{Args}为零或多个类型参数，且
+\tm{Allocator}不适用于个一个\tm{rebind}成员模板，标准的\tm{allocator\_traits}模
+板缺省的使用\tm{SomeAllocator<U, Args>}代表\tm{Allocator::rebind<U>::other}。对
+不是以上形式的模板实例化的分配器类型，则不提供缺省。
 
 \paragraph{}
-<++>
+注B\label{lab:note:b}：如果
+\tm{X::propagate\_on\_container\_copy\_assignment::value}的值为\tm{true}，
+则\tm{X}应该满足\tm{CopyAssignable}的需求（表\ref{tab:namedreq:copy:assign}），
+并且拷贝操作也不应该抛出异常。如果\tm{X::propagate\_}-
+\tm{on\_container\_move\_assignment::value}的值为\tm{true}，则\tm{X}应该满足
+\tm{MoveAssignable}需求（表\ref{tab:namedreq:move:assign}且移动操作不应该
+抛出异常。如果\tm{X::propagate\_on\_container\_swap::value}为\tm{true}，则类型
+\tm{X}的左值应该是可交换的（\ref{swappable.requirements}）且\tm{swap}操作不应该
+抛出异常。
 
 \paragraph{}
-<++>
+分配器类型\tm{X}应该满足\tm{CopyConstructible}（\ref{utility.arg.requirements}）
+的需求。\tm{X::pointer}，\tm{X::const\_}- \tm{pointer}，\tm{X::void\_pointer}和
+\tm{X::const\_void\_pointer}类型应该满足\tm{NullablePointer}需求
+（\ref{nullablepointer.requirements}）。这些指针类型中的构造函数，比较函数，拷贝
+操作，移动操作或交换操作都不应该以异常结束。\tm{X::pointer}和
+\tm{X::const\_pointer}也应该满足随机访问迭代器（27.2.7）和连续迭代器（27.2.1）的
+需求。
 
 \paragraph{}
-<++>
+设\tm{x1}和\tm{X2}代表（可能不同）\tm{X::void\_pointer}，
+\tm{X::const\_void\_pointer}，\tm{X::pointer}或\tm{X::const\_pointer}类型的对
+象。则\tm{x1}和\tm{x2}为\nt{等值的}指针值，当且仅当\tm{x1}和\tm{x2}都可以使用仅
+有这四个类型的\tm{static\_cast}序列显式转换到两个对应的\tm{X::const\_pointer}类
+型的对象\tm{px1}和\tm{px2}，且表达式\tm{px1 == px2}求值为\tm{true}。
 
 \paragraph{}
-<++>
+设\tm{w1}和\tm{w2}表示类型\tm{X::void\_pointer}的对象。则对于表达式           \\
+\mbox{\qquad{\tm{w1 == w2}}}                                                  \\
+\mbox{\qquad{\tm{w1 != w2}}}                                                  \\
+任一个或二者均可能由类型\tm{X::const\_void\_pointer}的等值对象所代替而不改变语
+义。
 
 \paragraph{}
-<++>
+设\tm{p1}和\tm{p2}表示类型\tm{X::pointer}的对象。则对于表达式                 \\
+\mbox{\qquad{\tm{p1 == p2}}}                                                  \\
+\mbox{\qquad{\tm{p1 != p2}}}                                                  \\
+\mbox{\qquad{\tm{p1 < \ p2}}}                                                 \\
+\mbox{\qquad{\tm{p1 <= p2}}}                                                  \\
+\mbox{\qquad{\tm{p1 >= p2}}}                                                  \\
+\mbox{\qquad{\tm{p1 > \ p2}}}                                                 \\
+\mbox{\qquad{\tm{p1 - \ p2}}}                                                 \\
+任一个或二者均可能由类型\tm{X::const\_pointer}的等值对象所代替而不改变语义。
 
 \paragraph{}
-<++>
+分配器可以限制其可实例化的类型和其\tm{construct}或\tm{destroy}成员可以调用的参
+数。如果类型不能用于某个特定的分配器，则分配器类或调用\tm{construct}或
+\tm{destroy}可能不能实例化。
+
+「例：以下是一个分配器类模板，支持满足表\ref{tab:alloc:req}需求的最小接口：
+\begin{lstlisting}
+  template <class Tp>
+  struct SimpleAllocator {
+    typedef Tp value_type;
+    SimpleAllocator( ctor args );
+
+    template <class T> SimpleAllocator(const SimpleAllocator<T>& other);
+
+    Tp* allocate(std::size_t n);
+    void deallocate(Tp* p, std::size_t n);
+  };
+
+  template <class T, class U>
+  bool operator==(const SimpleAllocator<T>&, const SimpleAllocator<U>&);
+  template <class T, class U>
+  bool operator!=(const SimpleAllocator<T>&, const SimpleAllocator<U>&);
+\end{lstlisting}」
 
 \paragraph{}
-<++>
+如果关联于一个特定的过度对齐类型的赋值不被某个分配器支持，则使用该类型对分配器的
+实例化可能失败。分配器也可能静默地忽略所请求的对齐。「注：此外，该类型的成员函数
+可能通过抛出一个\tm{bad\_alloc}类型对象来表示失败。」
 
 \ssssect{Allocator完整性需求}{allocator.requirements.completeness}
 \paragraph{}
-<++>
+如果\tm{X}是类型\tm{T}的分配器类，无论\tm{T}是否是完整类型，如果：
+\begin{enumerate}
+  \item{\tm{X}是完整类型，且}
+  \item{\tm{allocator\_traits<X>}（23.10.8）的所有成员类型（除\tm{value\_type}）
+    都是完整类型，}
+\end{enumerate}
+则\tm{X}额外的满足分配器完整性需求。
 
 \ssect{程序约束}{constraints}
 \sssect{概述}{constraints.overview}
 \paragraph{}
-<++>
+本节描述使用C++标准库功能的程序上的限制。以下子章节指定程序对命名空间的使用
+（\ref{namespace.std}），对多个保留名（\ref{reserved.names}）的使用，对头的使用
+（\ref{alt.headers}），其以标准库类作为基类（\ref{derived.classes}）来使用，其替
+换函数定义（\ref{replacement.functions}），以及在执行过程中
+（\ref{handler.functions}）处理函数安装的约束。
 
 \sssect{命名空间使用}{namespace.constraints}
-\ssssect{命名空间std}{namespace.std}
+\ssssect{\tm{std}命名空间}{namespace.std}
 \paragraph{}
-<++>
+除另有说明，如果一个C++程序向\tm{std}命名空间或\tm{std}命名空间内的命名空间中添
+加声明或定义，则行为未定义。仅当声明依赖于用户定义类型且特例化满足原始模板的需
+求，并且没有被显式禁止时，程序才可以向命名空间\tm{std}中添加任何标准库模板的模板
+特例化。\footnote{任何实例化其他库模板的库代码必须准备好与满足本文档最小需求的任
+何用户提供特例化恰当地一起工作。}
 
 \paragraph{}
-<++>
+如果一个C++程序声明了
+\begin{enumerate}
+  \item{一个标准库类模板的任何成员函数的显式特例化，或者}
+  \item{一个标准库类或类模板的任何成员函数模板的显式特例化，或者}
+  \item{一个标准库类或类模板的任何成员类模板的显式或部分特例化，或者}
+  \item{任何标准库类模板的推导指南，}
+\end{enumerate}
+则行为未定义。仅当声明依赖于用户定义类型名且实例化满足原始模板的标准库需求时一个
+程序才能显式实例化定义于标准库中的模板。
 
 \paragraph{}
-<++>
+一个翻译单元不应该声明\tm{std}命名空间为内联命名空间（\ref{namespace.def}）。
 
-\ssssect{命名空间posix}{namespace.posix}
+\ssssect{\tm{posix}命名空间}{namespace.posix}
 \paragraph{}
-<++>
+除另有说明，如果一个C++程序向\tm{posix}命名空间或\tm{posix}命名空间内的命名空间
+中添加声明或定义，则行为未定义。\tm{posix}命名空间保留用于ISO/IEC 9945和其他
+POSIX标准。
 
-\ssssect{命名空间未来标准化}{namespace.future}
+\ssssect{将来标准化的命名空间}{namespace.future}
 \paragraph{}
-<++>
+名字以\tm{std}开始后跟着非空数字序列的顶层命名空间保留用于将来标准化。如果一个
+C++程序向这种命名空间中添加声明或定义则行为未定义。「例：顶层命名空间\tm{std2}保
+留用于本国际标准的未来修正。」
 
 \sssect{保留名}{reserved.names}
 \paragraph{}
-<++>
+C++标准库保留以下类型的名字：
+\begin{enumerate}
+  \item{宏}
+  \item{全局名字}
+  \item{具有外部链接的名字}
+\end{enumerate}
 
 \paragraph{}
-<++>
+如果程序在其保留的上下文中声明或定义一个名字，除本章显式允许以外，其行为未定义。
 
 \ssssect{僵尸名}{zombie.names}
 \paragraph{}
-<++>
+在\tm{std}命名空间中，以下名字保留用于之前的标准化：
+\begin{enumerate}
+  \item{\tm{auto\_ptr}，}
+  \item{\tm{binary\_function}，}
+  \item{\tm{bind1st}，}
+  \item{\tm{bind2nd}，}
+  \item{\tm{binder1st}，}
+  \item{\tm{binder2nd}，}
+  \item{\tm{const\_mem\_fun1\_ref\_t}，}
+  \item{\tm{const\_mem\_fun1\_t}，}
+  \item{\tm{const\_mem\_fun\_ref\_t}，}
+  \item{\tm{const\_mem\_fun\_t}，}
+  \item{\tm{get\_unexpected}，}
+  \item{\tm{mem\_fun1\_ref\_t}，}
+  \item{\tm{mem\_fun1\_t}，}
+  \item{\tm{mem\_fun\_ref\_t}，}
+  \item{\tm{mem\_fun\_ref}，}
+  \item{\tm{mem\_fun\_t}，}
+  \item{\tm{mem\_fun}，}
+  \item{\tm{pointer\_to\_binary\_function}，}
+  \item{\tm{pointer\_to\_unary\_function}，}
+  \item{\tm{ptr\_fun}，}
+  \item{\tm{random\_shuffle}，}
+  \item{\tm{set\_unexpected}，}
+  \item{\tm{unary\_function}，}
+  \item{\tm{unexpected}，以及}
+  \item{\tm{unexpected\_handler}。}
+\end{enumerate}
 
 \ssssect{宏名}{macro.names}
 \paragraph{}
-<++>
+包含标准库头的翻译单元不应该\tm{\#define}或\tm{\#undef}声明于任何标准库中的名
+字。
 
 \paragraph{}
-<++>
+翻译单元不应该\tm{\#define}或\tm{\#undef}词法上等价于关键字，表
+\ref{tab:special-ids}中所列标识符，或\ref{dcl.attr}中所列的
+\nt{attribute-token}。
 
 \ssssect{外部链接}{extern.names}
 \paragraph{}
-<++>
+在\tm{std}命名空间和全局命名空间中，一个头中声明为具有外部链接对象的名字保留给实
+现以代表具有外部链接的该库对象。\footnote{这种保留名列表包含声明或定义于
+\tm{<cerrno>}中的\tm{errno}。}
 
 \paragraph{}
-<++>
+一个头中声明为具有外部链接的每一个全部函数签名保留给实现以代表具有外部链接的该函
+数签名。\footnote{这种保留外部链接函数签名列表包括声明或定义于\tm{<csetjmp>}中的
+\tm{setjmp(jmp\_buf)}或者声明或定义于\tm{<cstdarg>}中的\tm{va\_end(va\_list)}。}
 
 \paragraph{}
-<++>
+在\tm{std}命名空间和全局命名空间中，C标准库中声明为具有外部链接的每一个名字保留
+给实现用作带有\tm{extern "C"}链接的名字。
 
 \paragraph{}
-<++>
+C标准库中声明为具有外部链接的每一个函数签名保留给实现用作带有\tm{extern "C"}链接
+或\tm{extern "C++"}链接的函数签名，\footnote{声明于\tm{<cuchar>}，\tm{<cwchar>}
+和\tm{<cwctype>}中的函数签名总是保留的，尽管C标准修正1的4.5.1节对这些头做了限
+制。}或用作全局命名空间中的命名空间作用域名。
 
 \ssssect{类型}{extern.types}
 \paragraph{}
-<++>
+对C标准库中的每一个类型\tm{T}，\footnote{这些类型指\tm{clock\_t}，\tm{div\_t}，
+\tm{FILE}，\tm{fpos\_t}，\tm{lconv}，\tm{ldiv\_t}，\tm{mbstate\_t}，
+\tm{ptrdiff\_t}，\tm{sig\_atomic\_t}，\tm{size\_t}，\tm{time\_t}，\tm{tm}，
+\tm{va\_list}，\tm{wctrans\_t}，\tm{wctype\_t}和\tm{wint\_t}。}类型\tm{::T}和
+\tm{std::T}保留给实现，且如果定义的话，\tm{::T}应该等价于\tm{std::T}。
 
 \ssssect{自定义字面值后缀}{usrlit.suffix}
 \paragraph{}
-<++>
+不以下划线开头的字面值后缀标识符（\ref{over.literal}）保留作将来标准化。
 
 \sssect{头}{alt.headers}
 \paragraph{}
-<++>
+如果一个其名字等价于C++标准库头之一的派生文件名的文件未作为实现的一部分提供，且
+该名字的文件被置于待包含源文件的标准位置（\ref{cpp.include}），则行为未定义。
 
 \sssect{派生类}{derived.classes}
 \paragraph{}
-<++>
+C++标准库中为基类所定义的虚成员函数签名可以被声明于程序中的派生类所重写
+（\ref{class.virtual}）。
 
 \sssect{替换函数}{replacement.functions}
 \paragraph{}
-<++>
+第21章到第33章以及附录\ref{depr}描述定义于C++标准库中的多个函数行为。但在某些情
+况下，这些函数描述中的某些对定义于程序中的替换函数也适用（\ref{definitions}）。
 
 \paragraph{}
-<++>
+一个C++程序可以为声明于头\tm{<new>}（\ref{basic.stc.dynamic}，21.6）中的以下动态
+内存分配函数中任一个提供定义：                                                \\
+\mbox{\qquad{\tm{operator new(std::size\_t)}}}                                \\
+\mbox{\qquad{\tm{operator new(std::size\_t, std::align\_val\_t)}}}            \\
+\mbox{\qquad{\tm{operator new(std::size\_t, const std::nothrow\_t\&)}}}       \\
+\mbox{\qquad{\tm{operator new(std::size\_t, std::align\_val\_t,
+  const std::nothrow\_t\&)}}}                                                 \\
+                                                                              \\
+\mbox{\qquad{\tm{operator delete(void*)}}}                                    \\
+\mbox{\qquad{\tm{operator delete(void*, std::size\_t)}}}                      \\
+\mbox{\qquad{\tm{operator delete(void*, std::align\_val\_t)}}}                \\
+\mbox{\qquad{\tm{operator delete(void*, std::size\_t, std::align\_val\_t)}}}  \\
+\mbox{\qquad{\tm{operator delete(void*, const std::nothrow\_t\&)}}}           \\
+\mbox{\qquad{\tm{operator delete(void*, std::align\_val\_t,
+  const std::nothrow\_t\&)}}}                                                 \\
+                                                                              \\
+\mbox{\qquad{\tm{operator new[](std::size\_t)}}}                              \\
+\mbox{\qquad{\tm{operator new[](std::size\_t, std::align\_val\_t)}}}          \\
+\mbox{\qquad{\tm{operator new[](std::size\_t, const std::nothrow\_t\&)}}}     \\
+\mbox{\qquad{\tm{operator new[](std::size\_t, std::align\_val\_t,
+  const std::nothrow\_t\&)}}}                                                 \\
+                                                                              \\
+\mbox{\qquad{\tm{operator delete[](void*)}}}                                  \\
+\mbox{\qquad{\tm{operator delete[](void*, std::size\_t)}}}                    \\
+\mbox{\qquad{\tm{operator delete[](void*, std::align\_val\_t)}}}              \\
+\mbox{\qquad{\tm{operator delete[](void*, std::size\_t, std::align\_val\_t)}}}\\
+\mbox{\qquad{\tm{operator delete[](void*, const std::nothrow\_t\&)}}}         \\
+\mbox{\qquad{\tm{operator delete[](void*, std::align\_val\_t,
+  const std::nothrow\_t\&)}}}
 
 \paragraph{}
-<++>
+使用程序的定义而不是实现提供的缺省版本（21.6）。这样的替换出现在程序启动前
+（\ref{basic.def.odr}，\ref{basic.start}）。程序的声明不应该指定为\tm{inline}。
+无需诊断。
 
 \sssect{处理函数}{handler.functions}
 \paragraph{}
-<++>
+C++标准库提供了以下处理函数的缺省版本（第21章）：
+\begin{enumerate}
+  \item{\tm{terminate\_handler}}
+\end{enumerate}
 
 \paragraph{}
-<++>
+一个C++程序可能在执行过程中安装不同版本的处理函数，通过提供定义于程序或库中的函
+数指针（对应地）作为：
+\begin{enumerate}
+  \item{\tm{set\_new\_handler}}
+  \item{\tm{set\_terminate}}
+\end{enumerate}
+的参数。见21.6.3节存储分配错误，以及21.8节异常处理。
 
 \paragraph{}
-<++>
+C++程序可以通过调用以下函数获取当前处理函数指针：
+\begin{enumerate}
+  \item{\tm{get\_new\_handler}}
+  \item{\tm{get\_terminate}}
+\end{enumerate}
 
 \paragraph{}
-<++>
+调用\tm{get\_*}和\tm{set\_*}函数不应该导致数据竞争。调用任何\tm{set\_*}函数应该
+与后续调用相同的\tm{set\_*}函数和对应的\tm{get\_*}函数同步。
 
 \sssect{其他函数}{res.on.functions}
 \paragraph{}
-<++>
+某些情况下（替换函数，处理函数，用于实例化标准库模板组件的类型上的操作），C++标
+准库依赖于C++程序所提供的组件。如果这些组件不满足其需求，则本文档不对实现作要
+求。
 
 \paragraph{}
-<++>
+特别地，以下情况的效果未定义：
+\begin{enumerate}
+  \item{对于替换函数（21.6.2），如果所安装替换函数未实现适用的\nt{必要行为：}段
+    落的语义。}
+  \item{对于处理函数（21.6.3.3，21.8.4.1），如果所安装处理函数未实现适用的\nt{必
+    要行为：}语义。}
+  \item{对于实例化模板组件时用作模板参数的类型，如果类型上的操作未实现适用的
+    \nt{需求：}章节的语义（\ref{allocator.requirements}，26.2，27.2，28.3，
+    29.3）。除另作说明外，这种类型上的操作可以通过抛出异常来报告错误。}
+  \item{如果任何替换函数或处理函数或析构操作因异常而终止，适用的\nt{必要行为：}
+    段落所明确允许的除外。}
+  \item{如果一个不完整类型（\ref{basic.types}）在实例化模板组件时用作模板参数，
+    该组件明确允许的除外。}
+\end{enumerate}
 
 \sssect{函数参数}{res.on.arguments}
 \paragraph{}
-<++>
+除显式说明之外，以下每一条适用定义于C++标准库中函数的所有参数。
+\begin{enumerate}
+  \item{如果函数参数具有无效值（比如函数定义域之外的值或对预期用作无效的指针），
+    则行为未定义。}
+  \item{如果函数参数描述为数组，则实际传递给函数的指针应该具有其所有地址计算和对
+    象访问（如果指针曾指向此类数组的第一个元素则为有效）都真实有效的值。}
+  \item{如果函数实参绑定右值引用形参，则实现假定该形参唯一绑定到该实参。「注：如
+    果形参是一个形如\tm{T\&\&}的普通形参，且绑定了类型\tm{A}的左值，则实参绑定到
+    一个左值引用（\ref{temp.deduct.call}），因此不包含于前句中。」「注：如果在传
+    递一个左值到库函数时程序将左值转换成一个亡值（比如通过使用参数
+    \tm{std::move(x)}来调用函数），则程序实际上是要求该函数将该左值当作是临时对
+    象。实现可以自由地优化掉左值实参所需要的别名检查。」}
+\end{enumerate}
 
 \sssect{库对象访问}{res.on.objects}
 \paragraph{}
-<++>
+如果从不同线程调用标准库函数可能引入数据竞争则程序行为未定义。其可能出现的条件在
+\ref{res.on.data.races}中指定。「注：修改线程间共享的标准库类型的对象可能导致未
+定义行为，除了显式指定为无数据竞争可共享的该类型对象或用户提供了锁机制。」
 
 \paragraph{}
-<++>
+如果访问了标准库类型的对象，且对象生命期（\ref{basic.life}）的开始未在访问之前，
+或者访问不在对象生命期结束之前，则除另有指定外行为未定义。「注：即使对用于线程同
+步的对象比如互斥信号也适用。」
 
-\sssect{要求段落}{res.on.required}
+\sssect{需求段落}{res.on.required}
 \paragraph{}
-<++>
+违反函数的\nt{需求：}段落所指定的前置条件会导致未定义行为，除非函数的\nt{抛出：}
+段落指定了前置条件违反时抛出异常。
 
 \ssect{合规实现}{conforming}
 \sssect{概述}{conforming.overview}
 \paragraph{}
-<++>
+本节描述了C++标准库实现的约束和自由度。
 
 \paragraph{}
-<++>
+实现对头的使用在\ref{res.on.headers}在讨论，宏的使用在
+\ref{res.on.macro.definitions}中讨论，非成员函数在\ref{global.functions}中讨论，
+成员函数在\ref{member.functions}中讨论，数据竞争避免在\ref{res.on.data.races}中
+讨论，访问说明符在\ref{protection.within.classes}中讨论，类派生在
+\ref{derivation}中讨论，异常在\ref{res.on.exception.handling}中讨论。
 
 \sssect{头}{res.on.headers}
 \paragraph{}
-<++>
+一个C++头可以包含另一个C++头。C++头应该提供出现在其大纲中的声明和定义。大纲中显
+示为包括其他C++头的C++头应提供出现在那些其他头的大纲中的声明和定义。
 
 \paragraph{}
-<++>
+某些类型和宏定义于多个头中。每一个这样的实体应被定义为使得定义它的任何头可以被包
+含在也定义它的任何其他头之后（\ref{basic.def.odr}）。
 
 \paragraph{}
-<++>
+按\ref{headers}中所述，C标准头（\ref{depr.c.headers}）应该只包含其对应的C++标准
+头。
 
 \sssect{宏定义约束}{res.on.macro.definitions}
 \paragraph{}
-<++>
+\ref{contents}中所述的名字和全局函数签名保留给实现。
 
 \paragraph{}
-<++>
+除了显式说明之外，定义于C标准库中和本章中描述为扩展整型常量表达式的所有对象式宏
+也适用于\tm{\#if}预处理指令。
 
 \sssect{非成员函数}{global.functions}
 \paragraph{}
-<++>
+C++标准库中的非成员函数未指定是否定义为\tm{inline}（\ref{dcl.inline}）。
 
 \paragraph{}
-<++>
+调用第21章到第33章和附录\ref{depr}中所述非成员函数签名应该表现的如同实现未声明额
+外非成员函数签名。\footnote{一个有效C++程序总是调用期望的库非成员函数。实现也可
+以定义否则不会被有效C++程序调用的其他非成员函数。}
 
 \paragraph{}
-<++>
+实现不应该声明具有额外缺省参数的非成员函数签名。
 
 \paragraph{}
-<++>
+除另有指定，标准库中的函数对非运算符、非成员函数的调用不使用另一命名空间中通过
+\nt{参数依赖名查询}（\ref{basic.lookup.argdep}）所找到的函数。「注：“除另有指定”
+适用于比如带有需求的可交换（\ref{swappable.requirements}）。重载运算符的异常允许
+例如\tm{ostream\_iterator::operator=}的情况下的参数依赖查询：                 \\
+\nt{效果：}
+\begin{lstlisting}
+  *out_stream << value;
+  if (delim != 0)
+    *out_stream << delim;
+  return *this;
+\end{lstlisting}」
 
 \sssect{成员函数}{member.functions}
 \paragraph{}
-<++>
+未指定C++标准库中任何成员函数是否声明为\tm{inline}（\ref{dcl.inline}）。
 
 \paragraph{}
-<++>
+对于C++标准库中所述的非虚成员函数，实现可以声明不同的成员函数签名集合，假定对将
+从本文档所述声明集中选择一个重载的成员函数的任何调用都表现为选择了该重载。「注：
+比如，实现可以添加具有缺省值的参数，或使用两个或更多的具有等价行为的成员函数来替
+换一个具有缺省参数的成员函数，或为成员函数名添加额外签名。」
 
 \sssect{Constexpr函数和构造函数}{constexpr.functions}
 \paragraph{}
-<++>
+本文档显式要求某些标准库函数为\tm{constexpr}（\ref{dcl.constexpr}）。除显式要求
+的地方外，实现不应该声明任何标准库函数签名为\tm{constexpr}。在提供constexpr函数
+或构造函数的任何非定义性声明的头中，实现应该提供对应的定义。
 
-\sssect{稳定算法需求}{algorithms.stable}
+\sssect{稳定算法需求}{algorithm.stable}
 \paragraph{}
-<++>
+当算法的需求声称其为“稳定的”而无需进一步阐述时，则表示：
+\begin{enumerate}
+  \item{对\nt{排序}算法，保持相等元素的相对位置。}
+  \item{对\nt{删除}和\nt{拷贝}算法，保持未被删除元素的相对位置。}
+  \item{对\nt{合并}算法的两个原范围中相等的元素，第一个范围中的元素（保持其原有
+    顺序）处于第二个范围中的元素（保持其原有顺序）之前。}
+\end{enumerate}
 
-\sssect{重入}{reentrancy}
+\sssect{可重入}{reentrancy}
 \paragraph{}
-<++>
+除本文档中显式指定之外，C++标准库中哪些函数可以递归可重入由实现定义。
 
 \sssect{避免数据竞争}{res.on.data.races}
 \paragraph{}
-<++>
+本节指定实现应该满足避免数据竞争（\ref{intro.multithread}）的需求。除另有说明外
+每一个标准库函数应该满足每一个需求。实现可以在除以下指定的情况之外避免数据竞争。
 
 \paragraph{}
-<++>
+除通过函数参数（包括\tm{this}）进行直接或间接访问的对象外，一个C++标准库函数不应
+该直接或间接访问非当前线程可访问的对象（\ref{intro.multithread}）。
 
 \paragraph{}
-<++>
+除通过函数非常量参数（包括\tm{this}）进行直接或间接访问的对象外，一个C++标准库函
+数不应该直接或间接修改非当前线程可访问的对象（\ref{intro.multithread}）。
 
 \paragraph{}
-<++>
+「注：这意味着比如实现不能因内部目的无同步地使用静态对象，因为即使没有在线程间显
+式共享对象也会引用数据竞争。」
 
 \paragraph{}
-<++>
+C++标准库函数不应该访问经其参数或经其容器参数的元素可访问的对象，除非在这些容器
+元素上通过调用其规范所要求函数。
 
 \paragraph{}
-<++>
+通过调用标准库容器或字符串成员函数所获得的迭代器上的操作可以访问底层容器，但不应
+该修改它。「注：特别的，使迭代器失效的容器操作与关联于该容器的迭代器上的操作相冲
+突。」
 
 \paragraph{}
-<++>
+如果对象对用户不可见且受保护于数据竞争则实现可以在线程间共享其内部对象。
 
 \paragraph{}
-<++>
+除另有说明，如果操作具有用户可见的效果（\ref{intro.multithread}），则C++标准库函
+数应该仅在当前线程中完成所有操作。
 
 \paragraph{}
-<++>
+「注：这允许实现在没有可见副作用时并行化操作。」
 
 \sssect{类内保护}{protection.within.classes}
 \paragraph{}
-<++>
+未指明第21章到第33章和附录\ref{depr}中所描述的任何函数签名或类是标准库中另一个类
+的友元。
 
 \sssect{派生类}{derivation}
 \paragraph{}
-<++>
+在C++标准库中实现可以从保留给实现的名字的类派生任何类。
 
 \paragraph{}
-<++>
+定义于C++标准库中的某些类必须派生自C++标准库中的其他类。实现可以从所需的基类直接
+派生此类或或从保留给实现的名字的基类层次间接派生此类。
 
 \paragraph{}
-<++>
+在任何情况下：
+\begin{enumerate}
+  \item{每一个描述为\tm{virtual}的基类应该是虚基类；}
+  \item{第一个未描述为\tm{virtual}的基类不应该是虚基类；}
+  \item{除显式说明外，不同名字的类型应该是不同类型。\footnote{对描述为同义词的基
+    本整型本规则有一个隐式例外，比如\tm{size\_t}（21.2）和\tm{streamoff}
+    （30.5.2）。}}
+\end{enumerate}
 
 \paragraph{}
-<++>
+除另有说明，C++标准库中所指定的所有类型应该是非\tm{final}类型。
 
 \sssect{异常处理限制}{res.on.exception.handling}
 \paragraph{}
-<++>
+定义于C++标准库中的任何函数可以通过抛出\nt{抛出：}段落中所描述类型或者
+\nt{抛出：}段落中所确定类型派生出的类型（这些异常可被基类的异常处理程序所捕获）
+的异常来报告失败。
 
 \paragraph{}
-<++>
+C标准库函数不应该抛出异常，\footnote{即C库函数都可以当作标记了\nt{noexcept}。这
+允许实现基于运行时无异常进行优化。}除了当这样的函数调用了程序提供的会抛出异常的
+函数时。\footnote{函数\tm{qsort()}和\tm{bsearch()}（28.8）满足这一条件。}
 
 \paragraph{}
-<++>
+定义于C++标准库中的析构函数操作不应该抛出异常。C++标准库中的每一个析构函数应该表
+现的如同其具有不抛出异常规范。
 
 \paragraph{}
-<++>
+定义于C++标准库中没有\nt{抛出：}段落但有潜在抛出异常规范的函数可以抛出实现定义异
+常。\footnote{特别的，它们可以通过抛出\nt{bad\_alloc}类型或派生自\tm{bad\_alloc}
+类型的异常来报告存储分配失败（21.6.3.1）。}实现应该通过抛出标准异常类或派生自标
+准异常类的异常来报告错误（21.6.3.1，21.8，22.2）。
 
 \paragraph{}
-<++>
+实现可以通过添加不抛出异常规范来为非虚函数加强异常规范。
 
 \sssect{指针存储限制}{res.on.pointer.storage}
 \paragraph{}
-<++>
+标准库所构建可能存储用户提供指针值或\tm{std::intptr\_t}类型整数的对象应该在可追
+踪指针位置存储这样的值（\ref{basic.stc.dynamic.safety}）。「注：其他库也强烈推荐
+这样做，因为不这样做可能导致非安全派生指针的意外使用。在用户地址空间外存储指针值
+的库应该使其看起来像是存储或检索自可追踪指针位置。」
 
 \sssect{错误码的值}{value.error.codes}
 \paragraph{}
-<++>
+C++标准库中的某些函数通过\tm{std::error\_code}对象（22.5.3.1）来执行错误。对于源
+自操作系统的错误，该对象的\tm{category()}成员应该返回
+\tm{std::system\_category()}，对源自其他地方的错误应该返回实现定义
+\tm{error\_category}对象的引用。实现应该为每一种错误范畴定义\tm{value()}的可能
+值。「例：对基于POSIX的操作系统，实现应该定义\tm{std::system\_category()}值等价
+于POSIX的\tm{errno}值，以及操作系统文档所定义的额外值。非基于POSIX操作系统的实现
+应该定义等价于操作系统的值。对于非源自操作系统的错误，实现可以提供关联值的枚
+举。」
 
 \sssect{库类型moved-from状态}{lib.types.movedfrom}
 \paragraph{}
-<++>
-
+定义于C++标准库中的对象可以移动过来（\ref{class.copy}）。移动操作可以显式指定或
+隐式生成。除非另有说明，这样的“移自”对象应该处于有效但未指明状态。

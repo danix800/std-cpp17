@@ -1,3 +1,1061 @@
 %% annex.c diff
 
-\chptr{（信息）兼容性}{diff}
+\annex{（信息）兼容性}{diff}
+\sect{\cpp{}与\isoc{}}{diff.iso}
+\paragraph{}
+本节按本文档的章节列出\cpp{}和\isoc{}之间的差别。
+
+\newcommand{\diffref}[2][\par]{\ref{#2} #1}
+\newcommand{\diffrref}[2][参见]{「#1\ref{#2}」\par}
+\newcommand{\diffchng}[2][\par]{\tb{变更：} #2 #1}
+\newcommand{\diffrat}{\par\tb{理由：}}
+\newcommand{\diffeff}{\par\tb{对原特性的影响：}}
+\newcommand{\diffdiff}{\par\tb{转换难度：}}
+\newcommand{\diffuse}{\par\tb{使用范围：}}
+
+% commonly used phrase
+\newcommand{\semdel}{语义合法特性的删除。}
+\newcommand{\semtrans}{语义变换。}
+\newcommand{\semchg}{合法特性的语义变更。}
+\newcommand{\semsurp}{非意料语义特性。}
+\newcommand{\syntrans}{语法变换。}
+\newcommand{\simple}{简单。}
+\newcommand{\common}{常用。}
+\newcommand{\seldom}{很少。}
+\newcommand{\rare}{极少。}
+\newcommand{\aut}{可自动化。}
+\newcommand{\obsol}{逐步废弃}
+\newcommand{\newfeat}{新特性。}
+\newcommand{\featreq}{新特性所要求。}
+
+\ssect{第\ref{lex}章：词法惯例}{diff.lex}
+
+\diffref{lex.key}
+\diffchng{新关键字} \cpp{}添加了新关键字；见\ref{lex.key}。
+\diffrat 添加这些关键字是为了实现\cpp{}的新语义。
+\diffeff \semchg 任何使用这些关键字作为标识符的\isoc{}程序不是合法\cpp{}程序。
+\diffdiff \syntrans 转换一个特定程序是容易的。转换大的相关程序集需要更多工作。
+\diffuse \common
+
+\diffref{lex.ccon}
+\diffchng{字符字面值类型从\tm{int}变更为\tm{char}。}
+\diffrat 这是改进重载函数参数类型匹配所必需的。比如：
+\begin{lstlisting}
+  int function( int i );
+  int function( char c );
+
+  function( 'x' );
+\end{lstlisting}
+该调用首选匹配函数的第二个版本而不是第一个。
+\diffeff \semchg 依赖于
+\begin{lstlisting}
+  sizeof('x') == sizeof(int)
+\end{lstlisting}
+的\isoc{}程序与\cpp{}程序行为不一致。
+\diffdiff \simple
+\diffuse 依赖于\tm{sizeof('x')}的程序可能极少。
+
+\diffref{lex.string}
+\diffchng{字符串字面值成为常量。}
+字符串字面值的类型从“\tm{char}的数组”变更为“\tm{const char}的数组”。
+\tm{char16\_t}字符串字面值的类型从“\nt{某些整型}的数组”变更为
+“\tm{const char16\_t}的数组”。\tm{char32\_t}字符串字面值的类型从“\nt{某些整型}的
+数组”变更为“\tm{const char32\_t}的数组”。宽字符串字面值的类型从“\tm{wchar\_t}的
+数组”变更为“\tm{const wchar\_t}的数组”。
+\diffrat 这避免了调用不合适的重载函数，这些重载函数可能期望修改其参数。
+\diffeff \semchg
+\diffdiff \syntrans 其修正即加上强制转换：
+\begin{lstlisting}
+  char* p = "abc";            // valid in C, invalid in C++
+  void f(char*) {
+    char* p = (char*)"abc";   // OK: cast added
+    f(p);
+    f((char*)"def");          // OK: cast added
+  }
+\end{lstlisting}
+\diffuse 具有合法理由将字符串字面值当作潜在可修改内存指针的程序可能极少。
+
+\ssect{第\ref{basic}章：基本概念}{diff.basic}
+
+\diffref{basic.def}
+\diffchng{\cpp{}没有\c{}中的“尝试性声明”。}
+比如，在文件作用域，
+\begin{lstlisting}
+  int i;
+  int i;
+\end{lstlisting}
+在\c{}中是合法的，在\cpp{}中是不合法的。这使得不可能定义互相引用的文件局部静态对
+象，如果初始化限制为\c{}的语法形式。比如：
+\begin{lstlisting}
+  struct X { int i; struct X* next; };
+
+  static struct X a;
+  static struct X b = { 0, &a };
+  static struct X a = { 1, &b };
+\end{lstlisting}
+\diffrat 这避免了基本类型和用户定义类型具有不同初始化规则。
+\diffeff \semdel
+\diffdiff \semtrans 在\cpp{}中，一组互相引用文件局部静态对象之一的初始化必须调用
+函数来完成初始化。
+\diffuse \seldom
+
+\diffref{basic.scope}
+\diffchng{\tm{struct}在\cpp{}中是一个作用域，在\c{}中不是。}
+\diffrat 类作用域对\cpp{}是至关重要的，且一个结构体是一个类。
+\diffeff \semchg
+\diffdiff \semtrans
+\diffuse \c{}程序极其频繁地使用\tm{struct}，但只在\tm{struct}之外引用
+\tm{struct}，枚举或枚举子时该变更才会明显。后者可能极少。
+
+\diffref[]{basic.link}\diffrref[以及]{dcl.type}
+\diffchng{显式声明为\tm{const}，未显式声明为\tm{extern}的文件作用域名字具有内部
+链接，而在\c{}中具有外部链接。}
+\diffrat 因\cpp{}中\tm{const}对象可用于翻译过程中的值，该特性促使程序员显式为每
+一个\tm{const}对象提供初始化。该特性允许用户将\tm{const}对象放到包含于多个翻译单
+元的源文件中。
+\diffeff \semchg
+\diffdiff \semtrans
+\diffuse \seldom
+
+\diffref{basic.start.main}
+\diffchng{\tm{main}函数不能递归调用且不能取其地址。}
+\diffrat \tm{main}函数可能需要特殊行为。
+\diffeff \semdel
+\diffdiff 细微：创建一个中间函数，比如\tm{mymain(argc, argv)}。
+\diffuse \seldom
+
+\diffref{basic.types}
+\diffchng{\c{}在多处允许“兼容类型”，而\cpp{}不允许。}
+比如，除标记名不同外等价的\tm{struct}在\c{}中是“兼容的”，但在\cpp{}中是完全不同
+的类型。
+\diffrat 更严格的类型检查对\cpp{}来说是必须的。
+\diffeff \semdel
+\diffdiff \semtrans “类型安全链接”机制可以找到许多但不是所有这些问题。未被类型安
+全链接找到的那些问题根据本文档的“布局兼容规则”将继续正常工作。
+\diffuse \common
+
+\ssect{第\ref{conv}章：标准转换}{diff.conv}
+
+\diffref{conv.lval}
+\diffchng[]{转换\tm{void*}到对象类型指针需要强制转换。}
+\begin{lstlisting}
+  char a[10];
+  void* b = a;
+  void foo() {
+    char* c = b;
+  }
+\end{lstlisting}
+\isoc{}可以接受这种指向\tm{void}的指针赋值给指向对象类型指针的用法。而\cpp{}不允
+许。
+\diffrat \cpp{}比\c{}更注重编译时类型安全。
+\diffeff \semdel
+\diffdiff \aut \cpp{}翻译器将诊断这种违反情形。其修正即添加强制转换。比如：
+\begin{lstlisting}
+  char* c = (char*) b;
+\end{lstlisting}
+\diffuse 相当广泛地使用但在赋指向\tm{void}的指针给指向对象的指针时使用强制转换是
+一个好的编程习惯。某些\isoc{}翻译器对未使用强制转换的情形会给出警告。
+
+\ssect{第\ref{expr}章：表达式}{diff.expr}
+\diffref{expr.call}
+\diffchng{不允许函数隐式声明。}
+\diffrat \cpp{}的类型安全特性。
+\diffeff \semdel 注：原有特性在\isoc{}中被标记了“\obsol”。
+\diffdiff \syntrans 生成显式函数声明的工具在商业上相当普遍。
+\diffuse \common
+
+\diffref[]{expr.post.incr}，\diffref{expr.pre.incr}
+\diffchng{自减运算符不允许用于\tm{bool}操作数。}
+\diffrat \semsurp
+\diffeff 在\tm{bool}左值上使用自减运算符的合法\isoc{}表达式（比如通过
+\tm{<stdbool.h>}中的类型定义）在本标准中是病态的。
+
+\diffref[]{expr.sizeof}，\diffref{expr.cast}
+\diffchng{类型必须在声明而不是表达式中定义。}
+在\c{}中，一个\tm{sizeof}表达式或转换表达式可以定义一个新类型。比如：
+\begin{lstlisting}
+  p = (void*)(struct x {int i;} *)0;
+\end{lstlisting}
+定义了一个新类型\tm{struct x}。
+\diffrat 禁止这一特性可以澄清源代码中的声明点。
+\diffeff \semdel
+\diffdiff \syntrans
+\diffuse \seldom
+
+\diffref[]{expr.cond}，\diffref[]{expr.ass}，\diffref{expr.comma}
+\diffchng{条件表达式、赋值表达式或逗号表达式的结果可能是一个左值。}
+\diffrat \cpp{}是面向对象语言，相对更强制左值。比如函数可以返回左值。
+\diffeff \semchg 某些显式依赖左值到右值转换的\c{}表达式将产生不同结果。比如，
+\begin{lstlisting}
+  char arr[100];
+  sizeof(0, arr)
+\end{lstlisting}
+在\cpp{}中产生\tm{100}而在\c{}中产生\tm{sizeof(char*)}。
+\diffdiff 程序必须对合适的右值添加显式强制转换。
+\diffuse \rare
+
+\ssect{第\ref{stmt.stmt}章：语句}{diff.stat}
+\diffref[]{stmt.switch}，\diffref{stmt.goto}
+\diffchng{使用显式或隐式初始化跳过声明现在是非法的（除了跨未进入的整个块）。}
+\diffrat 初始化中使用的构造函数可能分配在离开块时需要释放的资源。允许跳过初始化
+将需要复杂的运行时分配判定。此外，任何未初始化对象的使用都可能是一个灾难。使用这
+一简单的编译时规则，\cpp{}假定如果初始化过的变量处于作用域中，则可以肯定其被初始
+化过。
+\diffeff \semdel
+\diffdiff \semtrans
+\diffuse \seldom
+
+\diffref{stmt.return}
+\diffchng{从声明了要返回一个值的函数（显式或隐式地）返回但未实际返回一个值现在是
+非法的。}
+\diffrat 调用者和被调用者可能假定相当复杂的返回值机制来返回类对象。如果某些路径
+执行了未指定任何值的返回，则实现必须体现更多的复杂性。此外，承诺返回给定类型的值
+却没有返回这样的值总是一种有问题的习惯，只能因一些非常老的\c{}不能区分\tm{void}
+函数和\tm{int}函数才能容忍。
+\diffeff \semdel
+\diffdiff \semtrans 源码中添加适合的返回值，比如零。
+\diffuse \seldom 多年来，很多已有\c{}实现会对此情形给出警告。
+
+\ssect{第\ref{dcl.dcl}章：声明}{diff.dcl}
+\diffref{dcl.stc}
+\diffchng{在\cpp{}中，\tm{static}和\tm{extern}说明符只能用于对象或函数名。}
+在\cpp{}中这些说明符用于类型声明是非法的。在\c{}中，这些说明符用于类型声明则被忽
+略。
+
+例：
+\begin{lstlisting}
+  static struct S {       // valid C, invalid in C++
+    int i;
+  };
+\end{lstlisting}
+\diffrat 当关联于类型时存储类说明符无意义。在\cpp{}中，类成员可以使用\tm{static}
+存储类说明符来声明。允许类型上的存储类说明符可能引起用户对代码的困惑。
+\diffeff \semdel
+\diffdiff \syntrans
+\diffuse \seldom
+
+\diffref{dcl.stc}
+\diffchng{在\cpp{}中，\tm{register}不是一个存储类说明符。}
+\diffrat 该存储类说明符在\cpp{}中无效果。
+\diffeff \semdel
+\diffdiff \syntrans
+\diffuse \common
+
+\diffref{dcl.typedef}
+\diffchng{一个\cpp{}类型定义名必须不同于同一作用域中声明的任何类类型名（除了如果
+类型定义是同名类名的同义词）。在\c{}中，声明于同一作用域中的类型定义名和结构体标
+记名可以同名（因它们具有不同的名字空间）。}
+
+例：
+\begin{lstlisting}
+  typedef struct name1 { /* ... */ } name1;   // valid C and C ++
+  struct name { /* ... */ };
+  typedef int name;                           // valid C, invalid C ++
+\end{lstlisting}
+\diffrat 为了易于使用，当用于对象声明或类型转换时，\cpp{}不要求类型名前加关键字
+\tm{class}，\tm{struct}或\tm{enum}。
+
+例：
+\begin{lstlisting}
+  class name { /* ... */ };
+  name i;                                     // i has type class name
+\end{lstlisting}
+\diffeff \semdel
+\diffdiff \semtrans 两个类型中的一个必须重命名。
+\diffuse \seldom
+
+\diffref[]{dcl.type}\diffrref{basic.link}
+\diffchng{\tm{const}对象在\cpp{}中必须初始化，但在\c{}中可以不初始化。}
+\diffrat 一个\tm{const}对象不能赋值因此必须初始化来存储一个有用值。
+\diffeff \semdel
+\diffdiff \semtrans
+\diffuse \seldom
+
+\diffref{dcl.type}
+\diffchng{禁止隐式的\tm{int}。}
+在\cpp{}中一个\nt{decl-specifier-seq}必须包含一个\nt{type-specifier}，除非其后跟
+上构造函数，析构函数或转换函数的声明子。在下例中，左列展示合法的\c{}；右列展示等
+价的\cpp{}：
+\begin{lstlisting}
+  void f(const parm);         void f(const int parm);
+  const n = 3;                const int n = 3;
+  main()                      int main()
+    /* ... */                   /* ... */
+\end{lstlisting}
+\diffrat 在\cpp{}中，隐式\tm{int}在涉及函数式转换的表达式和声明之间会引起多处歧
+义。显式声明越来越被认为是一种合适的风格。与WG14(\c{})的联络表明在\c{}的下一个修
+正中支持（至少）弃用隐式\tm{int}。
+\diffeff \semdel
+\diffdiff \syntrans \aut
+\diffuse \common
+
+\diffref{dcl.spec.auto}
+\diffchng[]{关键字\tm{auto}不能用作存储类说明符。}
+\begin{lstlisting}
+  void f() {
+    auto int x;     // valid C, invalid C++
+  }
+\end{lstlisting}
+\diffrat 允许\tm{auto}的使用从其初始化来推导变量类型在某些上下文中会产生作为存储
+说明符的\tm{auto}的非期望解释。
+\diffeff \semdel
+\diffdiff \syntrans
+\diffuse \rare
+
+\diffref{dcl.enum}
+\diffchng{在\cpp{}中，枚举子的类型为其枚举。在\c{}中，枚举子的类型是\tm{int}。}
+例：
+\begin{lstlisting}
+  enum e { A };
+  sizeof(A) == sizeof(int);       // in C
+  sizeof(A) == sizeof(e);         // in C++
+  /* and sizeof(int) is not necessarily equal to sizeof(e) */
+\end{lstlisting}
+\diffrat 在\cpp{}中，一个枚举是一个不同的类型。
+\diffeff \semchg
+\diffdiff \semtrans
+\diffuse \seldom 唯一会影响已有\c{}代码的是在取枚举子大小的时候。取枚举子大小不
+是一个常见的\c{}编码实践。
+
+\ssect{第\ref{dcl.decl}章：声明子}{diff.decl}
+\diffref{dcl.fct}
+\diffchng{在\cpp{}中，使用空参数列表声明的函数不取实参。在\c{}中，空参数列表意味
+着函数参数和类型未知。}
+例：
+\begin{lstlisting}
+  int f();          // means int f(void) in C++
+                    // int f( unknown ) in C
+\end{lstlisting}
+\diffrat 这是为了避免错误的函数调用（即错误的参数个数和类型的函数调用）。
+\diffeff \semchg 该特性在\c{}中已被标记为“\obsol”。
+\diffdiff \syntrans 使用\c{}的不完整声明风格的函数声明必须补全为完整原型声明。如
+果同一（非原型）函数的不同调用具有不同参数个数或者对应参数类型不同，则程序可能需
+要进一步升级。
+\diffuse \common
+
+\diffref[]{dcl.fct}\diffrref{expr.delete}
+\diffchng{在\cpp{}中，不能在返回或参数类型中定义类型。在\c{}中，这些类型是允许
+的。}
+例：
+\begin{lstlisting}
+  void f( struct S { int a; } arg ) {}    // valid C, invalid C++
+  enum E { A, B, C } f() {}               // valid C, invalid C++
+\end{lstlisting}
+\diffrat 在不同翻译单元中比较类型时，\cpp{}依赖于名字等价，而\c{}依赖于结构等
+价。考虑参数类型：因参数列表中定义的类型将处于函数作用域中，在\cpp{}中唯一合法的
+是函数本身内部的调用。
+\diffeff \semdel
+\diffdiff \semtrans 类型定义必须移到文件作用域中，或者头文件中。
+\diffuse \seldom 该类型定义方式被认为是一种不好的编码风格。
+
+\diffref{dcl.fct.def}
+\diffchng{在\cpp{}中，函数定义语法排除了“老式的”\c{}函数。在\c{}中允许“老式的”语
+法，但已被“\obsol”。}
+\diffrat 原型对类型安全是必需的。
+\diffeff \semdel
+\diffdiff \syntrans
+\diffuse 常见于旧程序，但已\obsol{}。
+
+\diffref{dcl.init.string}
+\diffchng{在\cpp{}中，当使用字符串初始化字符数组时，字符串中的字符数（含结尾的
+\tm{'\bs{}0'}）必须不超过数组元素的数目。在\c{}中，即使不够包含字符串结尾
+\tm{'\bs{}0'}，字符数组也可以使用字符串来初始化。}
+例：
+\begin{lstlisting}
+  char array[4] = "abcd";   // valid C, invalid C++
+\end{lstlisting}
+\diffrat 当这些未终止数组被标准字符串函数操作时可能发生大灾难。
+\diffeff \semdel
+\diffdiff \semtrans 数组必须多声明一个元素以包含字符串终止\tm{'\bs{}0'}。
+\diffuse \seldom 这种数组初始化方式被认为是一种不好的编码风格。
+
+\ssect{第\ref{class}章：类}{diff.class}
+\diffref[]{class.name}\diffrref{dcl.typedef}
+\diffchng{在\cpp{}中，类声明向其所在作用域中引入类名并隐藏包含作用域中该名字的任
+何对象，函数或其他声明。在\c{}中，结构体标记名的内部作用域声明不会隐藏外层作用域
+中的对象或函数。}
+例：
+\begin{lstlisting}
+  int x[99];
+  void f() {
+    struct x { int a; };
+    sizeof(x);  /* size of the array in C */
+                /* size of the struct in C++ */
+  }
+\end{lstlisting}
+\diffrat 这是少数几个\c{}和\cpp{}之间可归因于新\cpp{}名字空间定义的不兼容性之
+一，在新的\cpp{}名字空间定义中，名字可以在单个作用域中声明为类型和非类型，从而导
+致非类型名隐藏类型名，并要求使用关键字\tm{class}，\tm{struct}，\tm{union}或
+\tm{enum}来引用类型名。这一新的名字空间定义为\cpp{}程序员提供了重要的写法上的便
+利，且使得用户定义类型的使用尽可能和基本类型相似。据评，新名称空间定义的优点远远
+超过了与上述\c{}的不兼容性。
+\diffeff \semchg
+\diffdiff \semchg 如果需要访问的隐藏的名字处于全局作用域中，可以使用\cpp{}的
+\tm{::}运算符。如果隐藏的名字处于块作用域，则要么类型要么结构体标记必须重命名。
+\diffuse \seldom
+
+\diffref{class.bit}
+\diffchng{普通\tm{int}类型的位域为有符号。}
+\diffrat 将符号选择留给实现可能导致模板特例化定义的不一致性。为保证一致性，针对
+非依赖类型的实现自由度也被去掉了。
+\diffeff 在\c{}中选择由实现定义，但在\cpp{}中不是。
+\diffdiff \syntrans
+\diffuse \seldom
+
+\diffref{class.nest}
+\diffchng{在\cpp{}中，嵌套类的名字局部于其包含类。在\c{}中，嵌套类的名字属于与最
+外层包含类名相同的作用域。}
+例：
+\begin{lstlisting}
+  struct X {
+    struct Y { /* ... */ } y;
+  };
+  struct Y yy;                    // valid C, invalid C++
+\end{lstlisting}
+\diffrat \cpp{}类具有成员函数，需要类建立作用域。\c{}规则会将类保留为不完整的作
+用域机制，这会阻止\cpp{}程序员维护类中的局部性。基于\c{}规则的\cpp{}作用域规则的
+连贯集合将非常复杂，并且\cpp{}程序员将无法可靠地预测涉及嵌套或局部函数的非平凡示
+例的含义。
+\diffeff \semchg
+\diffdiff \semtrans 为了使结构体类型名在包含结构体作用域中可见，结构体标记可以声
+明于包含结构体作用域中，处于包含结构体定义之前。例：
+\begin{lstlisting}
+  struct Y;                     // struct Y and struct X are at the same scope
+  struct X {
+    struct Y { /* ... */ } y;
+  };
+\end{lstlisting}
+包含于其他结构体定义中和在包含结构体作用域之外访问的所有\c{}结构体类型的定义可以
+导出到包含结构体作用域中。注：这是作用域规则的差异的结果，在\ref{basic.scope}中
+文档化。
+\diffuse \seldom
+
+\diffref{class.nested.type}
+\diffchng{在\cpp{}中，当一个typedef名字用于类定义中之后可能无法在该类定义中重新
+声明它。}
+例：
+\begin{lstlisting}
+  typedef int I;
+  struct S {
+    I i;
+    int I;                // valid C, invalid C++
+  };
+\end{lstlisting}
+\diffrat 当类变得复杂后，允许在使用类型之后重定义可能给\cpp{}程序员造成困惑，比
+如\tm{I}的真正意义是什么。
+\diffeff \semdel
+\diffdiff \semtrans 要么类型要么结构体成员必须重命名。
+\diffuse \seldom
+
+\ssect{第\ref{special}章：特殊成员函数}{diff.special}
+\diffref{class.copy}
+\diffchng{拷贝易失对象。}
+隐式声明的拷贝构造函数和隐式声明的拷贝赋值运算符不能拷贝易失性左值。比如以下例子
+在\isoc{}中有效：
+\begin{lstlisting}
+  struct X { int i; };
+  volatile struct X x1 = {0};
+  struct X x2 = x1;             // invalid C ++
+  struct X x3;
+  x3 = x1;                      // also invalid C ++
+\end{lstlisting}
+\diffrat 针对多个选择进行了详细的讨论。将参数更改为\tm{volatile const X\&}将使类
+对象的有效代码生成极大的复杂化。针对为这些隐式定义操作提供两个替代签名的讨论引起
+了对产生歧义和使根据基类和成员指定这些操作符形成规则更加复杂化的未解之忧。
+\diffeff \semdel
+\diffdiff \semtrans 如果拷贝需要易失性语义，则必须提供用户声明的构造函数或赋值。
+如果需要非易失性语义，则可以使用显式的\tm{const\_cast}。
+\diffuse \seldom
+
+\ssect{第\ref{cpp}章：预处理指令}{diff.cpp}
+\diffref{cpp.predefined}
+\diffchng{是否定义\tm{\_\_STDC\_\_}和如果定义则其值是什么，由实现定义。}
+\diffrat \cpp{}不等价于\c{}。强制定义\tm{\_\_STDC\_\_}需要翻译器做出错误的声明。
+每一个实现必须选择对其市场最有用的行为。
+\diffeff \semchg
+\diffdiff \semtrans
+\diffuse 引用\tm{\_\_STDC\_\_}的程序和头很常见。
+
+\sect{\cpp{}与\isocppthr}{diff.cpp03}
+\paragraph{}
+本节按本文档的章节列出\cpp{}和\isocppthr（ISO/IEC 14882:2003，\nt{Programming
+Languages -- \cpp{}}）之间的差别。
+
+\ssect{第\ref{lex}章：词法惯例}{diff.cpp03.lex}
+\diffref{lex.pptoken}
+\diffchng{新字符串字面值种类。}
+\diffrat \featreq
+\diffeff 有效的\cpp{} 2003代码在本国际标准下可能不能编译或者产生不同结果。确切地
+说当与字符串字面值相邻时宏名\tm{R}，\tm{u8}，\tm{u8R}，\tm{u}，\tm{uR}，\tm{U}，
+\tm{UR}或\tm{LR}不会展开而是解释为字符串字面值的一部分。比如，
+\begin{lstlisting}
+  #define u8 "abc"
+  const char* s = u8"def";    // Previously "abcdef", "def"
+\end{lstlisting}
+
+\diffref{lex.pptoken}
+\diffchng{支持用户定义字面值字符串。}
+\diffrat \featreq
+\diffeff 有效的\cpp{} 2003代码在本国际标准下可能不能编译或者产生不同结果，如下例
+所示。
+\begin{lstlisting}
+  #define _x "there"
+  "hello"_x         // #1
+\end{lstlisting}
+之前，\#1由两个独立预处理标记组成，宏\tm{\_x}会被展开。在本标准中，\#1由单个预处
+理标记组成，因此宏不会展开。
+
+\diffref{lex.key}
+\diffchng{新关键字。}
+\diffrat \featreq
+\diffeff 以下标识符添加到表\ref{tab:keywords}中：\tm{alignas}，\tm{alignof}，
+\tm{char16\_t}，\tm{char32\_t}，\tm{constexpr}，\tm{decltype}，\tm{noexcept}，
+\tm{nullptr}，\tm{static\_assert}和\tm{thread\_local}。使用这些标识符的有效
+\cpp{} 2003代码在本标准中是无效的。
+
+\diffref{lex.icon}
+\diffchng{整型字面值类型。}
+\diffrat C99兼容。
+\diffeff 某些比\tm{long}可表示的更大整型字面值可能从无符号整型变成\tm{signed
+long long}。
+
+\ssect{第\ref{conv}章：标准转换}{diff.cpp03.conv}
+\diffref{conv.ptr}
+\diffchng{只有字面值为整型空指针常量。}
+\diffrat 去除与模板和常量表达式的非预料交互。
+\diffeff 有效的\cpp{} 2003代码在本标准下可能不能正常编译或产生不同结果，如下例所
+示：
+\begin{lstlisting}
+  void f(void *);   // #1
+  void f(...);      // #2
+  template<int N> void g() {
+    f(0*N);         // calls #2; used to call #1
+  }
+\end{lstlisting}
+
+\ssect{第\ref{expr}章：表达式}{diff.cpp03.expr}
+\diffref{expr.mul}
+\diffchng{指定了整数\tm{/}和\tm{\%}结果的环绕。}
+\diffrat 提供可移植性，C99兼容性。
+\diffeff 使用整数除法的有效\cpp{} 2003代码其结果向0或负无穷环绕，而本标准中总是
+向0环绕。
+
+\diffref{expr.log.and}
+\diffchng{\&\&在一个\tm{type-name}中是合法的。}
+\diffrat \featreq
+\diffeff 有效的\cpp{} 2003代码在本标准下可能不能正常编译或产生不同结果，如下例所
+示：
+\begin{lstlisting}
+  bool b1 = new int && false;           // previously false, now ill-formed
+  struct S { operator int(); }
+  bool b2 = &S::operator int && false;  // previously false, now ill-formed
+\end{lstlisting}
+
+\ssect{第\ref{dcl.dcl}章：声明}{diff.cpp03.dcl.dcl}
+\diffref{dcl.spec}
+\diffchng{去除\tm{auto}作为存储类说明符。}
+\diffrat \newfeat
+\diffeff 使用关键字\tm{auto}作为存储类说明符的有效\cpp{} 2003代码在本标准下可能
+无效。在本标准中，\tm{auto}表示变量的类型从其初始化表达式推导而来。
+
+\ssect{第\ref{dcl.decl}章：声明子}{diff.cpp03.dcl.decl}
+\diffref{dcl.init.list}
+\diffchng{收紧聚合初始化的限制。}
+\diffrat 捕获bug。
+\diffeff 有效\cpp{} 2003代码在本标准下可能不能正常编译。比如，以下代码为有效
+\cpp{} 2003代码但在本标准下是无效的，因为\tm{double}到\tm{int}是收窄转换：
+\begin{lstlisting}
+  int x[] = { 2.0 };
+\end{lstlisting}
+
+\ssect{第\ref{special}章：特殊成员函数}{diff.cpp03.special}
+\diffref[]{class.ctor}，\diffref[]{class.dtor}，\diffref{class.copy}
+\diffchng{当隐式定义为病态时隐式声明的特殊成员函数被定义为删除的。}
+\diffrat 改进模板参数推导失败。
+\diffeff 一个在不需要这些定义的上下文中（即在一个非潜在求值表达式中）使用这些特
+殊成员函数之一的有效\cpp{} 2003程序成为病态程序。
+
+\diffref[]{class.dtor}（析构函数）\par
+\diffchng{用户声明的析构函数具有隐式异常规范。}
+\diffrat 澄清析构函数需求。
+\diffeff 有效\cpp{} 2003代码在本标准下可能有执行差别。特别的，如果异常规范为不抛
+出异常，则抛出异常的析构函数将调用\tm{std::terminate}（不调用
+\tm{std::unexpected}）。
+
+\ssect{第\ref{temp}章：模板}{diff.cpp03.temp}
+\diffref{temp.param}
+\diffchng{移除\tm{export}。}
+\diffrat 无实现共识。
+\diffeff 含\tm{export}的有效\cpp{} 2003代码在本标准下是\illformed{}。
+
+\diffref{temp.arg}
+\diffchng{删除嵌套结束模板的右角括号空白的要求。}
+\diffrat 一个持久但轻微的麻烦。表示非类类型的模板会恶化空白的问题。
+\diffeff \semchg 含右角括号（“\tm{>}”）后跟另一个右角括号的有效\cpp{} 2003表达式
+现在可能被当作结束两个模板。比如，以下代码在\cpp{} 2003中是有效的，因为
+“\tm{>{}>}”是一个右移位运算符，但在本标准中是无效的，因为“\tm{>{}>}”结束两个模
+板。
+\begin{lstlisting}
+  template <class T> struct X { };
+  template <int N> struct Y { };
+  X< Y< 1 >> 2 > > x;
+\end{lstlisting}
+
+\diffref{temp.dep.candidate}
+\diffchng{允许内部链接函数的依赖调用。}
+\diffrat 过度限制，简化重载解析规则。
+\diffeff 一个有效\cpp{} 2003程序可能得出与本标准不同的结果。
+
+\ssect{第\ref{library}章：标准库介绍}{diff.cpp03.library}
+\diffref[]{library} -- 33 \par
+\diffchng{新的保留标识符。}
+\diffrat \featreq
+\diffeff 使用由本标准添加到\cpp{}标准库中的任何标识符的有效\cpp{} 2003代码在本标
+准中可能不能正常编译或产生不同结果。\cpp{}标准库中所用标识符的完整列表可在本标准
+的库名索引中找到。
+
+\diffref{headers}
+\diffchng{新头。}
+\diffrat 新功能。
+\diffeff 新添加的\cpp{}头有：\tm{<array>}，\tm{<atomic>}，\tm{<chrono>}，
+\tm{<codecvt>}，\tm{<condition\_}- \tm{variable>}，\tm{<forward\_list>}，
+\tm{<future>}，\tm{<initializer\_list>}，\tm{<mutex>}，\tm{<random>}，
+\tm{<ratio>}，\tm{<regex>}，\tm{<scoped\_allocator>}，\tm{<system\_error>}，
+\tm{<thread>}，\tm{<tuple>}，\tm{<typeindex>}，\tm{<type\_}- \tm{traits>}，
+\tm{<unordered\_map>}和\tm{<unordered\_set>}。以下为新添加的\c{}兼容头：
+\tm{<ccomplex>}，\tm{<cfenv>}，\tm{<cinttypes>}，\tm{<cstdalign>}，
+\tm{<cstdint>}，\tm{<ctgmath>}和\tm{<cuchar>}。包含这些头的有效\cpp{} 2003代码在
+本标准中可能无效。
+
+\diffref{swappable.requirements}
+\diffchng{\tm{swap}函数移到不同头中。}
+\diffrat 移除\tm{swap}对\tm{<algorithm>}的依赖。
+\diffeff 需要\tm{swap}来编译的有效\cpp{} 2003代码必须包含\tm{<utility>}。
+
+\diffref{namespace.posix}
+\diffchng{新保留命名空间。}
+\diffrat \newfeat
+\diffeff 全局命名空间\tm{posix}现在保留给标准。使用顶层命名空间\tm{posix}的有效
+\cpp{} 2003代码在本标准下是无效的。
+
+\diffref{res.on.macro.definitions}
+\diffchng{对宏名的额外限制。}
+\diffrat 避免难以诊断或不可移植的结构。
+\diffeff 属性标识符名不再用于宏名。定义\tm{override}，\tm{final}，\tm{carries\_dependency}
+或\tm{noreturn}的有效\cpp{} 2003代码在本标准中不再有效。
+
+\ssect{第21章：语言支持库}{diff.cpp03.language.support}
+21.6.2.1
+
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第22章：诊断库}{diff.cpp03.diagnostics}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第23章：通用功能库}{diff.cpp03.utilities}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第24章：字符串库}{diff.cpp03.strings}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第26章：容器库}{diff.cpp03.containers}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第28章：算法库}{diff.cpp03.algorithms}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第29章：数值库}{diff.cpp03.numerics}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第30章：输入/输出库}{diff.cpp03.input.output}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\sect{\cpp{}与\isocppelv}{diff.cpp11}
+\paragraph{}
+<++>
+
+\ssect{第\ref{lex}章：词法惯例}{diff.cpp11.lex}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第\ref{basic}章：基本概念}{diff.cpp11.basic}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第\ref{expr}章：表达式}{diff.cpp11.expr}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第\ref{dcl.dcl}章：声明}{diff.cpp11.dcl.dcl}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第\ref{dcl.decl}章：声明子}{diff.cpp11.dcl.decl}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第\ref{library}章：标准库介绍}{diff.cpp11.library}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第30章：输入/输出库}{diff.cpp11.input.output}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\sect{\cpp{}与\isocppfor}{diff.cpp14}
+\paragraph{}
+<++>
+
+\ssect{第\ref{lex}章：词法惯例}{diff.cpp14.lex}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第\ref{expr}章：表达式}{diff.cpp14.expr}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第\ref{dcl.dcl}章：声明}{diff.cpp14.dcl.dcl}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第\ref{dcl.decl}章：声明子}{diff.cpp14.decl}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第\ref{special}章：特殊成员函数}{diff.cpp14.special}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第\ref{temp}章：模板}{diff.cpp14.temp}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第\ref{temp}章：异常处理}{diff.cpp14.except}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第\ref{library}章：标准库介绍}{diff.cpp14.library}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第23章：通用功能库}{diff.cpp14.utilities}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第24章：字符串库}{diff.cpp14.string}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{第26章：容器库}{diff.cpp14.containers}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\ssect{附录\ref{depr}}{diff.cpp14.depr}
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\diffref{<++>}
+\diffchng{<++>}<++>
+\diffrat <++>
+\diffeff <++>
+\diffdiff <++>
+\diffuse <++>
+
+\sect{\c{}标准库}{diff.library}
+\paragraph{}
+<++>
+
+\ssect{头的修改}{diff.mods.to.headers}
+\paragraph{}
+<++>
+
+\paragraph{}
+<++>
+
+\paragraph{}
+<++>
+
+\paragraph{}
+<++>
+
+\ssect{定义的修改}{diff.mods.to.definitions}
+\sssect{类型\tm{char16\_t}和\tm{char32\_t}}{diff.char16}
+\paragraph{}
+<++>
+
+\sssect{类型\tm{wchar\_t}}{diff.wchar.t}
+\paragraph{}
+<++>
+
+\sssect{头\tm{<assert.h>}}{diff.header.assert.h}
+\paragraph{}
+<++>
+
+\sssect{头\tm{<iso646.h>}}{diff.header.iso646.h}
+\paragraph{}
+<++>
+
+\sssect{头\tm{<stdalign.h>}}{diff.header.stdalign.h}
+\paragraph{}
+<++>
+
+\sssect{头\tm{<stdbool.h>}}{diff.header.stdbool.h}
+\paragraph{}
+<++>
+
+\sssect{宏\tm{NULL}}{diff.null}
+\paragraph{}
+<++>
+
+\ssect{声明的修改}{diff.mods.to.declarations}
+\paragraph{}
+<++>
+
+\paragraph{}
+<++>
+
+\paragraph{}
+<++>
+
+\ssect{行为的修改}{diff.mods.to.behavior}
+\paragraph{}
+<++>
+
+\paragraph{}
+<++>
+
+\sssect{宏\tm{offsetof(\nt{type}, \nt{member-designator})}}{diff.offsetof}
+\paragraph{}
+<++>
+
+\sssect{内存分配函数}{diff.malloc}
+\paragraph{}
+<++>
+

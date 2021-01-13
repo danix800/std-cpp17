@@ -1490,29 +1490,23 @@ cv限定版本为\tm{T1}的左操作数和类型的非cv限定版本为\tm{T2}�
 
 \synsym{operator-function-id}
   \synprd{\tm{operator} \nt{operator}}
-\synsym[one of]{operator}
-\begin{table}[h!]
-  \vspace*{-2em}\hspace*{-3.6em}
-  \makebox[\textwidth]{
-    \newcommand{\cir}{\textasciicircum}
-    \newcommand{\til}{\textasciitilde}
-    \newcommand{\ttl}{\textless}
-    \newcommand{\ttg}{\textgreater}
-    \begin{tabular}{lllllllll}
-      \tm{new} & \tm{delete} & \tm{new[]} & \tm{delete[]} & & & & &           \\
-      \tm{+} & \tm{-} & \tm{*} & \tm{/} & \tm{\%} & \tm{\cir} & \tm{\&} &
-        \tm{|} & \tm{\til}                                                    \\
-      \tm{!} & \tm{=} & \tm{<} & \tm{>} & \tm{+=} & \tm{-=} & \tm{*=} &
-        \tm{/=} & \tm{\%=}                                                    \\
-      \tm{\cir{}=} & \tm{\&=} & \tm{|=} & \tm{\ttl{}\ttl{}} & \tm{\ttg{}\ttg} &
-        \tm{\ttg{}\ttg{}=} & \tm{\ttl{}\ttl{}=} & \tm{==} & \tm{!=}           \\
-        \tm{<=} & \tm{>=} & \tm{\&\&} & \tm{||} & \tm{++} & \tm{-{}-} & \tm{,} &
-        \tm{->*} & \tm{->}                                                    \\
-      \tm{()} & \tm{[]} & & & & & & &                                         \\
-    \end{tabular}
-  }
-\end{table}
-\vspace*{-1.0em}                                                              \\
+\synsym[one of]{operator} { % for \newcommand
+  \newcommand{\cir}{\textasciicircum}
+  \newcommand{\til}{\textasciitilde}
+  \newcommand{\ttl}{\textless}
+  \newcommand{\ttg}{\textgreater}
+  \synprd{\tm{new \ delete new[] delete[]}}
+  \synprd{\tm{+ \ \ \ - \ \ \ \ \ * \ \ \ \ / \ \ \ \ \ \ \ \% \ \ \ \ \cir \ \
+              \ \ \ \& \ \ \ \ | \ \ \ \ \til}}
+  \synprd{\tm{! \ \ = \ \ \ \ \ < \ \ \ \ > \ \ \ \ \ \ \ += \ \ \ -= \ \ \ *= \
+              \ \ /= \ \ \ \%=}}
+  \synprd{\tm{\cir= \ \ \&= \ \ \ \ |= \ \ \ \ttl{}\ttl \ \ \ \ \ \ \ \ttg{}\ttg
+              \ \ \ \ \ttg{}\ttg= \ \ \ttl{}\ttl= \ \ == \ \ \ !=}}
+  \synprd{\tm{\ttl= \ \ \ttg= \ \ \ \ \&\& \ \ \ || \ \ \ \ \ \ ++ \ \ \ -- \ \
+              \ \ , \ \ \ \ ->* \ \ ->}}
+  \synprd[]{\tm{() \ \ []}}
+} % for \newcommand
+
 「注：最后两个为函数调用（\ref{expr.call}）和下标（\ref{expr.sub}）运算符。运算
 符\tm{new[]}，\tm{delete[]}，\tm{()}和\tm{[]}由多于一个标记形成。」
 

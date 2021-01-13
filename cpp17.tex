@@ -1,7 +1,14 @@
 \documentclass[cn,9pt,fancy,hide,normal]{elegantbook}
 
+\newcommand{\cpp}{C++}
+\newcommand{\isocppthr}{ISO C++ 2003}
+\newcommand{\isocppelv}{ISO C++ 2011}
+\newcommand{\isocppfor}{ISO C++ 2014}
+\newcommand{\isoc}{ISO C}
+\renewcommand{\c}{C}
+
 \title{ISO/IEC 14882:2017(E) }
-\subtitle{编程语言：C++}
+\subtitle{编程语言：\cpp}
 
 \author{danix800}
 \institute{ISO/IEC}
@@ -21,6 +28,7 @@
 (\arabic{paragraph}.\arabic{enumi}.\arabic{enumii}.\arabic*) \quad \quad \quad
 \quad \quad \ --}}
 
+\usepackage{tablefootnote}
 \usepackage{multirow}
 % footnote counter is interrupted by chapter (start over from 1 in new chapters)
 % remove this feature, so the counter increases throughout the whole document.
@@ -59,6 +67,9 @@
 
 \newcommand{\sect}[2]{\section[#1]{#1\hfill[#2\label{#2}]}}
 \newcommand{\ssect}[2]{\subsection[#1]{#1\hfill[#2\label{#2}]}}
+
+\renewcommand{\appendixname}{附录 \thechapter}
+\newcommand{\annex}[2]{\chapter[#1]{#1\hfill[#2\label{#2}]}}
 
 \newcounter{ssssectcntr} % create new counter for \subsubsubsection
 \newcommand{\sssect}[2]{
@@ -114,40 +125,40 @@
 \mainmatter
 \hypersetup{pageanchor=true}
 
+\include{phrase}
+
 %chapters
 
-% \include{chapters/foreword}            % xi  ~ xi
-% \include{chapters/1.scope}             % 1   ~ 1
-% \include{chapters/2.refs}              % 2   ~ 2
-% \include{chapters/3.defs}              % 3   ~ 6
-% \include{chapters/4.intro}             % 7   ~ 21
-% \include{chapters/5.lex}               % 22  ~ 38
-% \include{chapters/6.basic}             % 39  ~ 85
-% \include{chapters/7.conv}              % 86  ~ 92
-% \include{chapters/8.expr}              % 93  ~ 143
-% \include{chapters/9.stmt}              % 144 ~ 154
-% \include{chapters/10.dcl.dcl}          % 155 ~ 200
-% \include{chapters/11.dcl.decl}         % 201 ~ 236
-% \include{chapters/12.class}            % 237 ~ 254
-% \include{chapters/13.class.derived}    % 255 ~ 266
-% \include{chapters/14.class.access}     % 267 ~ 277
-% \include{chapters/15.special}          % 278 ~ 308
-% \include{chapters/16.over}             % 309 ~ 341
-% \include{chapters/17.temp}             % 342 ~ 421
-% \include{chapters/18.except}           % 422 ~ 431
+\include{chapters/foreword}            % xi  ~ xi
+\include{chapters/1.scope}             % 1   ~ 1
+\include{chapters/2.refs}              % 2   ~ 2
+\include{chapters/3.defs}              % 3   ~ 6
+\include{chapters/4.intro}             % 7   ~ 21
+\include{chapters/5.lex}               % 22  ~ 38
+\include{chapters/6.basic}             % 39  ~ 85
+\include{chapters/7.conv}              % 86  ~ 92
+\include{chapters/8.expr}              % 93  ~ 143
+\include{chapters/9.stmt}              % 144 ~ 154
+\include{chapters/10.dcl.dcl}          % 155 ~ 200
+\include{chapters/11.dcl.decl}         % 201 ~ 236
+\include{chapters/12.class}            % 237 ~ 254
+\include{chapters/13.class.derived}    % 255 ~ 266
+\include{chapters/14.class.access}     % 267 ~ 277
+\include{chapters/15.special}          % 278 ~ 308
+\include{chapters/16.over}             % 309 ~ 341
+\include{chapters/17.temp}             % 342 ~ 421
+\include{chapters/18.except}           % 422 ~ 431
 \include{chapters/19.cpp}              % 432 ~ 444
 \include{chapters/20.library}          % 445 ~ 475
-% \include{chapters/21.language.support} % 476 ~ 510
-% \include{chapters/22.diagnostics}      % 511 ~ 527
+\include{chapters/21.language.support} % 476 ~ 510
+\include{chapters/22.diagnostics}      % 511 ~ 527
 
 % annexes
-\setcounter{chapter}{0} % start from 0
-\renewcommand{\thechapter}{\Alph{chapter}}
-\renewcommand{\chaptername}{附录 \thechapter}
+\appendix
 
-%\include{chapters/annex.a.gram}
-%\include{chapters/annex.b.implimits}
-\include{chapters/annex.c.diff}
-\include{chapters/annex.d.depr}
+\include{chapters/annex.a.gram}
+\include{chapters/annex.b.implimits}
+% \include{chapters/annex.c.diff}         % 1432 - 1455
+% \include{chapters/annex.d.depr}
 
 \end{document}

@@ -661,8 +661,8 @@ C0控制和基本拉丁Unicode块中）。如果值不能使用单个UTF-8编码
 包含多个\textit{c-char}的\texttt{char16\_t}字符字面值为病态的。
 
 \paragraph{}
-以字母\texttt{u}开头的字符字面值，如
-\texttt{u\sq{}y\sq}，
+以字母\texttt{U}开头的字符字面值，如
+\texttt{U\sq{}y\sq}，
 其类型为\texttt{char32\_t}。包含单个\textit{c-char}的\texttt{char32\_t}字符字面
 值的值等于其ISO 10646码点值。包含多个\textit{c-char}的\texttt{char32\_t}字符
 字面值为病态的。
@@ -1002,7 +1002,7 @@ z\sq}。宽字符字面值类型为\texttt{wchar\_t}。\footnote{适用于字符
   \synprd[]{\textit{identifier}}
 
 \paragraph{}
-如一个标记即可以匹配\textit{user-defined-literal}又可以匹配其他\textit{literal}i
+如一个标记即可以匹配\textit{user-defined-literal}又可以匹配其他\textit{literal}
 类型，则该标记被当作后者。「例：\texttt{123\_km}为\textit{user-defined-literal}，
 而\texttt{12LL}为\textit{整型字面值}。」\textit{user-defined-literal}中
 \textit{ud-prefix}之前的语法非结束符被当成可匹配该结束符的最长字符序列。
